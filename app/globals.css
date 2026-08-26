@@ -1,1 +1,11 @@
 @import "tailwindcss";
+
+#info-box {
+    width: 30%;
+    padding: 20px;
+}
+
+#regional-map {
+    width: 70%;
+    padding: 20px;
+}
