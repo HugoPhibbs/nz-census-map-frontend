@@ -2,8 +2,8 @@
 
 import { Box, Typography } from "@mui/material";
 
-export default function InfoBox({ region_id}: {region_id: number | null}) {
+export default function InfoBox({ areaId }: { areaId: number | null }) {
     return <Box id ={"info-box"}>
-        <Typography>Region ID: {region_id}</Typography>
+        <Typography>Area ID: {areaId}</Typography>
     </Box>
 }
