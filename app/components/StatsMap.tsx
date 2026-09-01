@@ -9,7 +9,8 @@ import * as maplibregl from 'maplibre-gl';
 import { setWorkerUrl, MapLayerMouseEvent } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import api from "../api";
-import { stringToUint8Array } from "next/dist/server/app-render/encryption-utils";
+import { scaleSequential } from "d3-scale";
+import { interpolateInferno } from "d3-scale-chromatic";
 
 setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
@@ -17,12 +18,20 @@ type DBRow = Record<string, string | number>;
 
 const MAP_COLOURS = {
   "background": "#DBF3FA",
-  "areaFill": "#FFB38A",
+  "areaFill": "grey",
   "areaBorder": "white",
   "areaBorderHover": "black",
   "areaBorderSelected": "black",
   "areaFillSelected": "#FF9248"
 }
+
+const MAP_STYLE = {
+  version: 8 as const,
+  sources: {},
+  layers: [{ id: "background", type: "background" as const, paint: { "background-color": MAP_COLOURS["background"] } }],
+};
+
+const INTERACTIVE_LAYERS = ["ta-areas-fill", "sa3-areas-fill", "sa2-areas-fill"];
 
 function AreaLayer({
   layerId, maxZoom, minZoom, chosenAreaId,
@@ -42,13 +51,14 @@ function AreaLayer({
       maxzoom={maxZoom}
       paint={{
         "fill-color": [
-          "case",
-          ["boolean", ["feature-state", "selected"], false], MAP_COLOURS["areaFillSelected"],
+          "coalesce",
+          ["feature-state", "fillColor"],
           MAP_COLOURS["areaFill"],
         ],
         "fill-opacity": 0.8,
       }}
     />
+
     <Layer
       id={`${layerId}-areas-border`}
       type="line"
@@ -119,13 +129,99 @@ function MapFilter({ chosenVariable, setChosenVariable }: { chosenVariable: stri
   </Box>
 }
 
-const MAP_STYLE = {
-  version: 8 as const,
-  sources: {},
-  layers: [{ id: "background", type: "background" as const, paint: { "background-color": MAP_COLOURS["background"] } }],
-};
+function updateMapStatsEffect(chosenVariable: any, setMapStats: any, setMinVariableValue: any, setMaxVariableValue: any) {
+  const CENSUS_YEAR = 2023; // Set as a constant for now.
 
-const INTERACTIVE_LAYERS = ["ta-areas-fill", "sa3-areas-fill", "sa2-areas-fill"];
+  if (chosenVariable) {
+    api.get(`/stats/variable/${chosenVariable}/${CENSUS_YEAR}`)
+      .then((res) => {
+        let newMapStats: Record<string, DBRow> = {};
+        let newMinVariableValue: number = Infinity;
+        let newMaxVariableValue: number = -Infinity;
+
+        console.log(res.data[0]);
+
+        for (let row of res.data) {
+          newMapStats[`${row.census_year}-${row.area_code}`] = row;
+          if (row.variable_value && row.variable_value < newMinVariableValue) {
+            newMinVariableValue = row.variable_value;
+          }
+          if (row.variable_value && row.variable_value > newMaxVariableValue) {
+            newMaxVariableValue = row.variable_value;
+          }
+        }
+        setMapStats(newMapStats);
+        setMinVariableValue(newMinVariableValue);
+        setMaxVariableValue(newMaxVariableValue);
+      });
+  }
+}
+
+function handleMapClick(e: MapLayerMouseEvent, mapRef: any, selectedFeature: any, setChosenAreaId: any) {
+  const feature = e.features?.[0];
+  const map = mapRef.current?.getMap();
+
+  if (!map) return;
+
+  if (selectedFeature.current) {
+    map.setFeatureState(selectedFeature.current, { selected: false });
+    selectedFeature.current = null;
+  }
+
+  if (feature?.id !== undefined && feature.sourceLayer) {
+    const next = { source: "areas", sourceLayer: feature.sourceLayer, id: feature.id };
+    map.setFeatureState(next, { selected: true });
+    selectedFeature.current = next;
+  }
+  setChosenAreaId(feature?.properties?.area_id ?? null);
+}
+
+function handleMouseMove(e: MapLayerMouseEvent, mapRef: any, hoveredFeature: any, clearHover: () => void) {
+  const feature = e.features?.[0];
+  const map = mapRef.current?.getMap();
+  if (!map) return;
+
+  // Check if already hovering on this feature
+  if (feature && hoveredFeature.current?.id === feature.id && hoveredFeature.current?.sourceLayer === feature.sourceLayer) {
+    return;
+  }
+
+  clearHover();
+
+  if (feature?.id !== undefined && feature.sourceLayer) {
+    const next = { source: "areas", sourceLayer: feature.sourceLayer, id: feature.id };
+    map.setFeatureState(next, { hover: true });
+    hoveredFeature.current = next;
+  }
+}
+
+function areaColouringEffect(mapRef: any, mapStats: Record<string, DBRow> | null, minVariableValue: any, maxVariableValue: any) {
+  const map = mapRef.current?.getMap();
+  if (!map || !mapStats || minVariableValue === null || maxVariableValue === null) return;
+
+  const colorScale = scaleSequential(interpolateInferno)
+    .domain([minVariableValue, maxVariableValue]);
+
+  for (const [areaId, row] of Object.entries(mapStats)) {
+    const value = row.variable_value as number | undefined;
+    if (value === undefined) continue;
+
+    const featureId = areaId;
+    const areaCode = row.area_code as string;
+
+    let sourceLayer = "sa2";
+    if (areaCode.length == 5) {
+      sourceLayer = "sa3";
+    } else if (areaCode.length == 3) {
+      sourceLayer = "ta";
+    }
+
+    map.setFeatureState(
+      { source: "areas", sourceLayer, id: featureId },
+      { fillColor: colorScale(value) }
+    );
+  }
+}
 
 export default function StatsMap({ chosenAreaId, setChosenAreaId }: { chosenAreaId: string | null; setChosenAreaId: (id: string | null) => void }) {
 
@@ -139,56 +235,6 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId }: { chosenArea
   const [minVariableValue, setMinVariableValue] = useState<number | null>(null);
   const [maxVariableValue, setMaxVariableValue] = useState<number | null>(null);
 
-  const CENSUS_YEAR = 2023; // Set as a constant for now.
-
-  useEffect(() => {
-    if (chosenVariable) {
-      api.get(`/stats/variable/${chosenVariable}/${CENSUS_YEAR}`)
-        .then((res) => {
-          let newMapStats: Record<string, DBRow> = {};
-          for (let row of res.data) {
-            let areaCode: string = row.area_code;
-            delete row.area_code;
-            newMapStats[areaCode] = row;
-            if (minVariableValue === null || row.variable_value < minVariableValue) {
-              setMinVariableValue(row.variable_value);
-            }
-            if (maxVariableValue === null || row.variable_value > maxVariableValue) {
-              setMaxVariableValue(row.variable_value);
-            }
-          }
-          console.log(newMapStats);
-          console.log("minVariableValue", minVariableValue);
-          console.log("maxVariableValue", maxVariableValue);
-          setMapStats(newMapStats);
-        });
-    }
-  }, [chosenVariable]);
-
-  useEffect(() => {
-    let protocol = new Protocol();
-    maplibregl.addProtocol("pmtiles", protocol.tile);
-    return () => maplibregl.removeProtocol("pmtiles");
-  }, []);
-
-  const handleClick = (e: MapLayerMouseEvent) => {
-    const feature = e.features?.[0];
-    const map = mapRef.current?.getMap();
-    if (!map) return;
-
-    if (selectedFeature.current) {
-      map.setFeatureState(selectedFeature.current, { selected: false });
-      selectedFeature.current = null;
-    }
-
-    if (feature?.id !== undefined && feature.sourceLayer) {
-      const next = { source: "areas", sourceLayer: feature.sourceLayer, id: feature.id };
-      map.setFeatureState(next, { selected: true });
-      selectedFeature.current = next;
-    }
-    setChosenAreaId(feature?.properties?.area_id ?? null);
-  };
-
   const clearHover = () => {
     const map = mapRef.current?.getMap();
     if (map && hoveredFeature.current) {
@@ -197,24 +243,19 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId }: { chosenArea
     hoveredFeature.current = null;
   };
 
-  const handleMouseMove = (e: MapLayerMouseEvent) => {
-    const feature = e.features?.[0];
-    const map = mapRef.current?.getMap();
-    if (!map) return;
+  useEffect(() => {
+    let protocol = new Protocol();
+    maplibregl.addProtocol("pmtiles", protocol.tile);
+    return () => maplibregl.removeProtocol("pmtiles");
+  }, []);
 
-    // Check if already hovering on this feature
-    if (feature && hoveredFeature.current?.id === feature.id && hoveredFeature.current?.sourceLayer === feature.sourceLayer) {
-      return;
-    }
+  useEffect(() => {
+    updateMapStatsEffect(chosenVariable, setMapStats, setMinVariableValue, setMaxVariableValue);
+  }, [chosenVariable]);
 
-    clearHover();
-
-    if (feature?.id !== undefined && feature.sourceLayer) {
-      const next = { source: "areas", sourceLayer: feature.sourceLayer, id: feature.id };
-      map.setFeatureState(next, { hover: true });
-      hoveredFeature.current = next;
-    }
-  };
+  useEffect(() => {
+    areaColouringEffect(mapRef, mapStats, minVariableValue, maxVariableValue);
+  }, [mapStats, minVariableValue, maxVariableValue]);
 
   return (
     <Box id={"regional-map"}>
@@ -225,11 +266,9 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId }: { chosenArea
         style={{ width: "100%", height: "100%" }}
         mapStyle={MAP_STYLE}
         interactiveLayerIds={INTERACTIVE_LAYERS}
-        onMouseMove={handleMouseMove}
+        onMouseMove={(e: MapLayerMouseEvent) => handleMouseMove(e, mapRef, hoveredFeature, clearHover)}
         onMouseLeave={clearHover}
-        onClick={(e: MapLayerMouseEvent) => {
-          handleClick(e);
-        }}
+        onClick={(e: MapLayerMouseEvent) => handleMapClick(e, mapRef, selectedFeature, setChosenAreaId)}
         cursor="pointer"
       >
         <Source
