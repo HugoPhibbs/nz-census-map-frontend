@@ -10,7 +10,7 @@ import { useState } from 'react';
 setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
 export default function Home() {
-const [chosenAreaId, setChosenAreaId] = useState<number | null>(null);
+const [chosenAreaId, setChosenAreaId] = useState<string | null>(null);
 
   return (
     <Box style={{ width: "100%", height: "100vh", display: "flex" }}>
