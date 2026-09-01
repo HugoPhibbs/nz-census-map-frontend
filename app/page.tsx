@@ -1,6 +1,6 @@
 "use client";
 import { Box } from '@mui/material';
-import RegionalMap from './components/RegionalMap';
+import StatsMap from './components/StatsMap';
 import {Map, Source, Layer} from '@vis.gl/react-maplibre';
 import {setWorkerUrl} from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css'; 
@@ -14,7 +14,7 @@ const [chosenAreaId, setChosenAreaId] = useState<number | null>(null);
 
   return (
     <Box style={{ width: "100%", height: "100vh", display: "flex" }}>
-      <RegionalMap chosenAreaId={chosenAreaId} setChosenAreaId={setChosenAreaId} />
+      <StatsMap chosenAreaId={chosenAreaId} setChosenAreaId={setChosenAreaId} />
       <InfoBox areaId={chosenAreaId} />
     </Box>
   )

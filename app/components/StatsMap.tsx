@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Box } from "@mui/material";
+import { Box, FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 import { Protocol } from "pmtiles";
 
 import Map, { Source, Layer } from "react-map-gl/maplibre";
 import * as maplibregl from 'maplibre-gl';
-import { setWorkerUrl, MapLayerMouseEvent} from 'maplibre-gl';
+import { setWorkerUrl, MapLayerMouseEvent } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { min } from "d3";
+import api from "../api";
 
 setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
@@ -78,16 +78,48 @@ function AreaLayer({
   </>
 }
 
+function MapFilter({ chosenVariable, setChosenVariable }: { chosenVariable: string | null; setChosenVariable: (variable: string) => void }) {
+
+  let [variableOptions, setVariableOptions] = useState<string[]>([]);
+
+  useEffect(() => {
+    api.get(`/stats/variable/names`)
+    .then((res) => setVariableOptions(res.data));
+  }, [])
+
+  return <Box>
+    <FormControl id ="map-filter">
+      <InputLabel id="select-variable">Display by</InputLabel>
+      <Select value={chosenVariable} onChange={(e) => e.target.value && setChosenVariable(e.target.value)} label="Display by">
+        {variableOptions.map((option) => (
+          <MenuItem key={option} value={option}>
+            {option}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+  </Box>
+}
+
 const MAP_STYLE = {
   version: 8 as const,
   sources: {},
-  layers: [{ id: "background", type: "background" as const, paint: { "background-color": "#DBF3FA" } }],
+  layers: [{ id: "background", type: "background" as const, paint: { "background-color": MAP_COLOURS["background"] } }],
 };
 
 const INTERACTIVE_LAYERS = ["ta-areas-fill", "sa3-areas-fill", "sa2-areas-fill"];
 
-export default function RegionalMap({ chosenAreaId, setChosenAreaId }: { chosenAreaId: number | null; setChosenAreaId: (id: number | null) => void }) {
+export default function StatsMap({ chosenAreaId, setChosenAreaId }: { chosenAreaId: number | null; setChosenAreaId: (id: number | null) => void }) {
   const [hoveredId, setHoveredId] = useState<number | null>(null);
+  const [chosenVariable, setChosenVariable] = useState<string | null>(null);
+  const [mapStats, setMapStats] = useState<any>(null);
+
+  useEffect(() => {
+    if (chosenVariable) {
+      api.get(`/stats/variable/${chosenVariable}`)
+        .then((res) => setMapStats(res.data));
+    }
+  }, [chosenVariable]);
 
   useEffect(() => {
     let protocol = new Protocol();
@@ -97,6 +129,7 @@ export default function RegionalMap({ chosenAreaId, setChosenAreaId }: { chosenA
 
   return (
     <Box id={"regional-map"}>
+      <MapFilter chosenVariable={chosenVariable} setChosenVariable={setChosenVariable} />
       <Map
         initialViewState={{ longitude: 174, latitude: -41, zoom: 4.5 }}
         style={{ width: "100%", height: "100%" }}
