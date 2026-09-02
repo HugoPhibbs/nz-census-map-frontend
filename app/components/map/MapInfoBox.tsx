@@ -16,7 +16,7 @@ function MapColourIndicator({ min, max, variableUnit }: { min: number | null; ma
             <Box
                 sx={{
                     background: `linear-gradient(to right, ${stops})`,
-                }}  
+                }}
                 id="map-colour-indicator"
             />
             <Box sx={{ display: "flex", justifyContent: "space-between", fontSize: 12, mt: 0.5 }}>
@@ -60,9 +60,13 @@ function formatVariableStat(value: number | null, unit: string | null): string {
 }
 
 function HoverInfoBox({ hoveredAreaName, hoveredAreaStat, variableUnit }: { hoveredAreaName: string | null; hoveredAreaId: string | null; hoveredAreaStat: number | null; variableUnit: string | null }) {
+    const showNameOnly = hoveredAreaName && !hoveredAreaStat;
+    const showNameAndStat = hoveredAreaName && hoveredAreaStat;
+
     return (
         <Box id={"hover-info-box"}>
-            {hoveredAreaName && <p>{hoveredAreaName}: {formatVariableStat(hoveredAreaStat, variableUnit)}</p>}
+            {showNameOnly && <p>{hoveredAreaName}</p>}
+            {showNameAndStat && <p>{hoveredAreaName}: {formatVariableStat(hoveredAreaStat, variableUnit)}</p>}
         </Box>
     );
 }
@@ -85,14 +89,17 @@ export default function MapInfoBox({
     hoveredAreaId,
 }: MapInfoBoxProps) {
     return (
-        <Box id={"map-info-box"} sx = {{zIndex: 1}}>
-            <HoverInfoBox
-                hoveredAreaName={hoveredAreaName}
-                hoveredAreaStat={hoveredAreaStat}
-                variableUnit={variableUnit}
-                hoveredAreaId={hoveredAreaId}
-            />
-            <MapColourIndicator min={min} max={max} variableUnit={variableUnit} />
-        </Box>
+        <>
+            {(hoveredAreaName || (min && max)) &&
+                <Box id={"map-info-box"} sx={{ zIndex: 1 }}>
+                    <HoverInfoBox
+                        hoveredAreaName={hoveredAreaName}
+                        hoveredAreaStat={hoveredAreaStat}
+                        variableUnit={variableUnit}
+                        hoveredAreaId={hoveredAreaId}
+                    />
+                    <MapColourIndicator min={min} max={max} variableUnit={variableUnit} />
+                </Box>}
+        </>
     );
 }
