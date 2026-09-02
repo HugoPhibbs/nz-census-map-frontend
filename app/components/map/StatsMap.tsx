@@ -118,7 +118,7 @@ function areaColouringEffect(mapRef: any, mapStats: Record<string, DBRow> | null
   }
 }
 
-export default function StatsMap({ chosenAreaId, setChosenAreaId }: { chosenAreaId: string | null; setChosenAreaId: (id: string | null) => void }) {
+export default function StatsMap({ chosenAreaId, setChosenAreaId, variableIdsToNameMap }: { chosenAreaId: string | null; setChosenAreaId: (id: string | null) => void; variableIdsToNameMap: Record<string, string> }) {
 
   const mapRef = useRef<MapRef>(null);
   const hoveredFeature = useRef<{ source: string; sourceLayer: string; id: string | number } | null>(null);
@@ -135,6 +135,8 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId }: { chosenArea
   const [hoveredAreaStat, setHoveredAreaStat] = useState<number | null>(null);
 
   const [variableIdToUnitMap, setVariableIdToUnitMap] = useState<Record<string, string>>({});
+
+  const [mapGranularity, setMapGranularity] = useState<string | null>(null);
 
   const clearHover = () => {
     const map = mapRef.current?.getMap();
@@ -188,11 +190,22 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId }: { chosenArea
     areaColouringEffect(mapRef, mapStats, minVariableValue, maxVariableValue);
   }, [mapStats, minVariableValue, maxVariableValue]);
 
+  const ZOOM_RANGES: Record<string, [number, number]> = {
+    "ta": [0, 6],
+    "sa3": [6, 8],
+    "sa2": [8, 24],
+  }
+
+  const getZoomRangeForLayer = (layerId: string) => {
+    if (mapGranularity === "auto") return ZOOM_RANGES[layerId];
+    return (mapGranularity === layerId ? [0, 24] : [24, 24]);
+  }
+
   return (
     <>
-      
+
       <Box id={"stats-map"}>
-        <MapFilter chosenVariable={chosenVariable} setChosenVariable={setChosenVariable} />
+        <MapFilter chosenVariable={chosenVariable} setChosenVariable={setChosenVariable} variableIdsToNameMap={variableIdsToNameMap} mapGranularity={mapGranularity} setMapGranularity={setMapGranularity} />
 
         <MapInfoBox
           min={minVariableValue}
@@ -215,7 +228,6 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId }: { chosenArea
           cursor="pointer"
           attributionControl={false}
         >
-          {/* <AttributionControl position="bottom-left" compact /> */}
           <Source
             id="areas"
             type="vector"
@@ -224,9 +236,14 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId }: { chosenArea
           >
             <Layer id="base-fill" type="fill" source="areas" source-layer="coastline"
               paint={{ "fill-color": MAP_COLOURS["areaFill"], "fill-opacity": 0.8 }} />
-            <AreaLayer layerId="ta" maxZoom={8} chosenAreaId={chosenAreaId} />
-            <AreaLayer layerId="sa3" minZoom={8} maxZoom={10} chosenAreaId={chosenAreaId} />
-            <AreaLayer layerId="sa2" minZoom={10} chosenAreaId={chosenAreaId} />
+            {/* <AreaLayer layerId="ta" maxZoom={6} chosenAreaId={chosenAreaId} />
+              <AreaLayer layerId="sa3" minZoom={6} maxZoom={8} chosenAreaId={chosenAreaId} />
+              <AreaLayer layerId="sa2" minZoom={8} chosenAreaId={chosenAreaId} /> */}
+
+            {(["ta", "sa3", "sa2"] as const).map((id) => {
+              const [minZoom, maxZoom] = getZoomRangeForLayer(id);
+              return <AreaLayer key={id} layerId={id} chosenAreaId={chosenAreaId} minZoom={minZoom} maxZoom={maxZoom} />;
+            })}
           </Source>
         </Map>
       </Box>
