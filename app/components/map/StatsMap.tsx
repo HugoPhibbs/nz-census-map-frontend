@@ -1,29 +1,24 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Box, FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+import { Box } from "@mui/material";
 import { Protocol } from "pmtiles";
+import { useEffect, useRef, useState } from "react";
 
-import Map, { Source, Layer, MapRef } from "react-map-gl/maplibre";
-import * as maplibregl from 'maplibre-gl';
-import { setWorkerUrl, MapLayerMouseEvent } from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
-import api from "../api";
 import { scaleSequential } from "d3-scale";
-import { interpolateInferno } from "d3-scale-chromatic";
+import { interpolatePlasma } from "d3-scale-chromatic";
+import * as maplibregl from 'maplibre-gl';
+import { MapLayerMouseEvent, setWorkerUrl } from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import Map, { Layer, MapRef, Source, AttributionControl } from "react-map-gl/maplibre";
+import api from "../../api";
+import AreaLayer from "./AreaLayer";
+import MAP_COLOURS from "./MapColours";
+import MapFilter from "./MapFilter";
+import MapInfoBox from "./MapInfoBox";
 
 setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
 type DBRow = Record<string, string | number>;
-
-const MAP_COLOURS = {
-  "background": "#DBF3FA",
-  "areaFill": "grey",
-  "areaBorder": "white",
-  "areaBorderHover": "black",
-  "areaBorderSelected": "black",
-  "areaFillSelected": "#FF9248"
-}
 
 const MAP_STYLE = {
   version: 8 as const,
@@ -33,101 +28,6 @@ const MAP_STYLE = {
 
 const INTERACTIVE_LAYERS = ["ta-areas-fill", "sa3-areas-fill", "sa2-areas-fill"];
 
-function AreaLayer({
-  layerId, maxZoom, minZoom, chosenAreaId,
-}: {
-  layerId: string;
-  maxZoom?: number;
-  minZoom?: number;
-  chosenAreaId: string | null;
-}) {
-  return <>
-    <Layer
-      id={`${layerId}-areas-fill`}
-      type="fill"
-      source="areas"
-      source-layer={layerId}
-      minzoom={minZoom}
-      maxzoom={maxZoom}
-      paint={{
-        "fill-color": [
-          "coalesce",
-          ["feature-state", "fillColor"],
-          MAP_COLOURS["areaFill"],
-        ],
-        "fill-opacity": 0.8,
-      }}
-    />
-
-    <Layer
-      id={`${layerId}-areas-border`}
-      type="line"
-      source="areas"
-      source-layer={layerId}
-      minzoom={minZoom}
-      maxzoom={maxZoom}
-      paint={{ "line-color": MAP_COLOURS["areaBorder"], "line-width": 1 }}
-    />
-
-    <Layer
-      id={`${layerId}-areas-hover`}
-      type="line"
-      source="areas"
-      source-layer={layerId}
-      minzoom={minZoom}
-      maxzoom={maxZoom}
-      paint={{
-        "line-color": [
-          "case",
-          ["boolean", ["feature-state", "hover"], false],
-          MAP_COLOURS["areaBorderHover"],
-          "rgba(0,0,0,0)",
-        ],
-        "line-width": 2,
-      }}
-    />
-
-    <Layer
-      id={`${layerId}-areas-selected`}
-      type="line"
-      source="areas"
-      source-layer={layerId}
-      minzoom={minZoom}
-      maxzoom={maxZoom}
-      paint={{
-        "line-color": [
-          "case",
-          ["boolean", ["feature-state", "selected"], false], MAP_COLOURS["areaBorderSelected"],
-          "rgba(0,0,0,0)",
-        ],
-        "line-width": 2,
-      }}
-    />
-  </>
-}
-
-function MapFilter({ chosenVariable, setChosenVariable }: { chosenVariable: string | null; setChosenVariable: (variable: string) => void }) {
-
-  let [variableOptions, setVariableOptions] = useState<string[]>([]);
-
-  useEffect(() => {
-    api.get(`/stats/variable/names`)
-      .then((res) => setVariableOptions(res.data));
-  }, [])
-
-  return <Box>
-    <FormControl id="map-filter">
-      <InputLabel id="select-variable">Display by</InputLabel>
-      <Select value={chosenVariable ?? ''} onChange={(e) => e.target.value && setChosenVariable(e.target.value)} label="Display by">
-        {variableOptions.map((option) => (
-          <MenuItem key={option} value={option}>
-            {option}
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
-  </Box>
-}
 
 function updateMapStatsEffect(chosenVariable: any, setMapStats: any, setMinVariableValue: any, setMaxVariableValue: any) {
   const CENSUS_YEAR = 2023; // Set as a constant for now.
@@ -139,10 +39,10 @@ function updateMapStatsEffect(chosenVariable: any, setMapStats: any, setMinVaria
         let newMinVariableValue: number = Infinity;
         let newMaxVariableValue: number = -Infinity;
 
-        console.log(res.data[0]);
+        console.log("first row of data:", res.data[0]);
 
         for (let row of res.data) {
-          newMapStats[`${row.census_year}-${row.area_code}`] = row;
+          newMapStats[`${row.census_year}-${row.area_code}`] = row; // This matches area_id from the pimtiles file
           if (row.variable_value && row.variable_value < newMinVariableValue) {
             newMinVariableValue = row.variable_value;
           }
@@ -176,15 +76,10 @@ function handleMapClick(e: MapLayerMouseEvent, mapRef: any, selectedFeature: any
   setChosenAreaId(feature?.properties?.area_id ?? null);
 }
 
-function handleMouseMove(e: MapLayerMouseEvent, mapRef: any, hoveredFeature: any, clearHover: () => void) {
+function setHoveredFeature(e: MapLayerMouseEvent, mapRef: any, hoveredFeature: any, clearHover: () => void) {
   const feature = e.features?.[0];
   const map = mapRef.current?.getMap();
   if (!map) return;
-
-  // Check if already hovering on this feature
-  if (feature && hoveredFeature.current?.id === feature.id && hoveredFeature.current?.sourceLayer === feature.sourceLayer) {
-    return;
-  }
 
   clearHover();
 
@@ -199,7 +94,7 @@ function areaColouringEffect(mapRef: any, mapStats: Record<string, DBRow> | null
   const map = mapRef.current?.getMap();
   if (!map || !mapStats || minVariableValue === null || maxVariableValue === null) return;
 
-  const colorScale = scaleSequential(interpolateInferno)
+  const colorScale = scaleSequential(interpolatePlasma)
     .domain([minVariableValue, maxVariableValue]);
 
   for (const [areaId, row] of Object.entries(mapStats)) {
@@ -235,18 +130,54 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId }: { chosenArea
   const [minVariableValue, setMinVariableValue] = useState<number | null>(null);
   const [maxVariableValue, setMaxVariableValue] = useState<number | null>(null);
 
+  const [hoveredAreaName, setHoveredAreaName] = useState<string | null>(null);
+  const [hoveredAreaId, setHoveredAreaId] = useState<string | null>(null);
+  const [hoveredAreaStat, setHoveredAreaStat] = useState<number | null>(null);
+
+  const [variableIdToUnitMap, setVariableIdToUnitMap] = useState<Record<string, string>>({});
+
   const clearHover = () => {
     const map = mapRef.current?.getMap();
     if (map && hoveredFeature.current) {
       map.setFeatureState(hoveredFeature.current, { hover: false });
     }
     hoveredFeature.current = null;
+    setHoveredAreaId(null);
+    setHoveredAreaName(null);
+    setHoveredAreaStat(null);
+  };
+
+  const handleMapHover = (e: MapLayerMouseEvent) => {
+    const feature = e.features?.[0];
+    const featureId = feature?.id;
+    const sourceLayer = feature?.sourceLayer;
+
+    if (
+      hoveredFeature.current?.id === featureId &&
+      hoveredFeature.current?.sourceLayer === sourceLayer
+    ) {
+      return;
+    }
+
+    setHoveredFeature(e, mapRef, hoveredFeature, clearHover);
+
+    const areaId = (feature?.properties?.area_id as string) ?? null;
+    setHoveredAreaId(areaId);
+    setHoveredAreaName((feature?.properties?.area_name as string) ?? null); // or whatever name field you actually want
+    setHoveredAreaStat(areaId ? mapStats?.[areaId]?.variable_value as number ?? null : null);
   };
 
   useEffect(() => {
     let protocol = new Protocol();
     maplibregl.addProtocol("pmtiles", protocol.tile);
     return () => maplibregl.removeProtocol("pmtiles");
+  }, []);
+
+  useEffect(() => {
+    api.get(`/stats/variable/ids/to-unit`)
+      .then((res) => {
+        setVariableIdToUnitMap(res.data);
+      });
   }, []);
 
   useEffect(() => {
@@ -258,32 +189,47 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId }: { chosenArea
   }, [mapStats, minVariableValue, maxVariableValue]);
 
   return (
-    <Box id={"regional-map"}>
-      <MapFilter chosenVariable={chosenVariable} setChosenVariable={setChosenVariable} />
-      <Map
-        ref={mapRef}
-        initialViewState={{ longitude: 174, latitude: -41, zoom: 4.5 }}
-        style={{ width: "100%", height: "100%" }}
-        mapStyle={MAP_STYLE}
-        interactiveLayerIds={INTERACTIVE_LAYERS}
-        onMouseMove={(e: MapLayerMouseEvent) => handleMouseMove(e, mapRef, hoveredFeature, clearHover)}
-        onMouseLeave={clearHover}
-        onClick={(e: MapLayerMouseEvent) => handleMapClick(e, mapRef, selectedFeature, setChosenAreaId)}
-        cursor="pointer"
-      >
-        <Source
-          id="areas"
-          type="vector"
-          url={`pmtiles://${process.env.NEXT_PUBLIC_API_HOST}/area-boundaries.pmtiles`}
-          promoteId={{ ta: "area_id", sa3: "area_id", sa2: "area_id" }}
+    <>
+      
+      <Box id={"stats-map"}>
+        <MapFilter chosenVariable={chosenVariable} setChosenVariable={setChosenVariable} />
+
+        <MapInfoBox
+          min={minVariableValue}
+          max={maxVariableValue}
+          hoveredAreaName={hoveredAreaName}
+          hoveredAreaId={hoveredAreaId}
+          hoveredAreaStat={hoveredAreaStat}
+          variableUnit={chosenVariable && variableIdToUnitMap[chosenVariable]}
+        />
+
+        <Map
+          ref={mapRef}
+          initialViewState={{ longitude: 174, latitude: -41, zoom: 4.5 }}
+          style={{ width: "100%", height: "100%" }}
+          mapStyle={MAP_STYLE}
+          interactiveLayerIds={INTERACTIVE_LAYERS}
+          onMouseMove={(e: MapLayerMouseEvent) => handleMapHover(e)}
+          onMouseLeave={clearHover}
+          onClick={(e: MapLayerMouseEvent) => handleMapClick(e, mapRef, selectedFeature, setChosenAreaId)}
+          cursor="pointer"
+          attributionControl={false}
         >
-          <Layer id="base-fill" type="fill" source="areas" source-layer="coastline"
-            paint={{ "fill-color": MAP_COLOURS["areaFill"], "fill-opacity": 0.8 }} />
-          <AreaLayer layerId="ta" maxZoom={8} chosenAreaId={chosenAreaId} />
-          <AreaLayer layerId="sa3" minZoom={8} maxZoom={10} chosenAreaId={chosenAreaId} />
-          <AreaLayer layerId="sa2" minZoom={10} chosenAreaId={chosenAreaId} />
-        </Source>
-      </Map>
-    </Box>
+          {/* <AttributionControl position="bottom-left" compact /> */}
+          <Source
+            id="areas"
+            type="vector"
+            url={`pmtiles://${process.env.NEXT_PUBLIC_API_HOST}/area-boundaries.pmtiles`}
+            promoteId={{ ta: "area_id", sa3: "area_id", sa2: "area_id" }}
+          >
+            <Layer id="base-fill" type="fill" source="areas" source-layer="coastline"
+              paint={{ "fill-color": MAP_COLOURS["areaFill"], "fill-opacity": 0.8 }} />
+            <AreaLayer layerId="ta" maxZoom={8} chosenAreaId={chosenAreaId} />
+            <AreaLayer layerId="sa3" minZoom={8} maxZoom={10} chosenAreaId={chosenAreaId} />
+            <AreaLayer layerId="sa2" minZoom={10} chosenAreaId={chosenAreaId} />
+          </Source>
+        </Map>
+      </Box>
+    </>
   );
 }

@@ -4,7 +4,7 @@ import { Box, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import api from "../api";
 
-export default function InfoBox({ areaId }: { areaId: string | null }) {
+export default function InfoPanel({ areaId }: { areaId: string | null }) {
     const [areaStats, setAreaStats] = useState<Record<string, any> | null>(null);
 
     useEffect(() => {
@@ -22,9 +22,9 @@ export default function InfoBox({ areaId }: { areaId: string | null }) {
             .then(res => {
                 const nextAreaStats: Record<string, any> = {};
                 for (const row of res.data) {
-                    const variableName = row.variable_name;
+                    const variable_id = row.variable_id;
                     const variableValue = row.variable_value;
-                    nextAreaStats[variableName] = variableValue;
+                    nextAreaStats[variable_id] = variableValue;
                 }
                 setAreaStats(nextAreaStats);
             })
@@ -32,8 +32,8 @@ export default function InfoBox({ areaId }: { areaId: string | null }) {
 
     return <Box id={"info-box"}>
         <Typography>Area ID: {areaId}</Typography>
-        {areaStats && Object.entries(areaStats).map(([variableName, variableValue]) => (
-            <Typography key={variableName}>{variableName}: {variableValue}</Typography>
+        {areaStats && Object.entries(areaStats).map(([variable_id, variableValue]) => (
+            <Typography key={variable_id}>{variable_id}: {variableValue}</Typography>
         ))}
     </Box>
 }
