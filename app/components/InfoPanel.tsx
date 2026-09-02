@@ -4,8 +4,24 @@ import { Box, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import api from "../api";
 
-export default function InfoPanel({ areaId }: { areaId: string | null }) {
+export default function InfoPanel({ areaId, variableIdsToNameMap }: { areaId: string | null; variableIdsToNameMap: Record<string, string> }) {
     const [areaStats, setAreaStats] = useState<Record<string, any> | null>(null);
+    const [areaName, setAreaName] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!areaId) {
+            setAreaStats(null);
+            setAreaName(null);
+            return;
+        }
+        const area_id_split = areaId?.split("-") ?? null;
+
+        api.get("/area", { "params": { "area_code": area_id_split[1], "census_year": area_id_split[0] } })
+            .then(res => {
+                console.log(res.data)
+                setAreaName(res.data["area_name"]);
+            })
+    }, [areaId])
 
     useEffect(() => {
         const areaIdSplit = areaId?.split("-") ?? null;
@@ -31,9 +47,9 @@ export default function InfoPanel({ areaId }: { areaId: string | null }) {
     }, [areaId])
 
     return <Box id={"info-box"}>
-        <Typography>Area ID: {areaId}</Typography>
+        <Typography component="h2">{areaName}</Typography>
         {areaStats && Object.entries(areaStats).map(([variable_id, variableValue]) => (
-            <Typography key={variable_id}>{variable_id}: {variableValue}</Typography>
+            <Typography key={variable_id}>{variableIdsToNameMap[variable_id]}: {variableValue}</Typography>
         ))}
     </Box>
 }
