@@ -1,16 +1,66 @@
 @import "tailwindcss";
 
-#info-box {
-    width: 30%;
-    padding: 20px;
+#inner-content {
+    width: 100%;
+    height: 95vh;
+    display: flex;
 }
 
-#regional-map {
-    width: 70%;
-    padding: 20px;
+#title-bar {
+    background: white;
+    color: black;
+    padding: 0.5em;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+#content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+#info-box {
+    width: 20%;
+    padding: 0.5em;
+    /* border: 1px solid #ccc;
+    border-radius: 6px; */
+}
+
+#stats-map {
+    width: 80%;
+    position: relative;
 }
 
 #map-filter {
+    position:absolute;
+    top: 2em;
+    left: 2em;
     width: 20em;
     padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.9);
+}
+
+#map-colour-indicator-box {
+    width: 100%;
+}
+
+#map-colour-indicator {
+    height: 12px;
+    border-radius: 1em;
+}
+
+#map-info-box {
+    position: absolute;
+    bottom: 2em;
+    right: 2em;
+    width: 12em;
+    padding: 0.5em;
+    border: 1px solid #ccc;
+    border-radius: 1em;
+    background-color: rgba(255, 255, 255, 0.9);
 }
