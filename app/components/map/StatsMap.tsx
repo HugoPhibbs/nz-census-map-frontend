@@ -136,7 +136,7 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId, variableIdsToN
 
   const [variableIdToUnitMap, setVariableIdToUnitMap] = useState<Record<string, string>>({});
 
-  const [mapGranularity, setMapGranularity] = useState<string | null>(null);
+  const [mapGranularity, setMapGranularity] = useState<string | null>("auto");
 
   const clearHover = () => {
     const map = mapRef.current?.getMap();
@@ -190,10 +190,10 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId, variableIdsToN
     areaColouringEffect(mapRef, mapStats, minVariableValue, maxVariableValue);
   }, [mapStats, minVariableValue, maxVariableValue]);
 
-  const ZOOM_RANGES: Record<string, [number, number]> = {
-    "ta": [0, 6],
+  const ZOOM_RANGES: Record<string, [number | undefined, number | undefined]> = {
+    "ta": [undefined, 6],
     "sa3": [6, 8],
-    "sa2": [8, 24],
+    "sa2": [8, undefined],
   }
 
   const getZoomRangeForLayer = (layerId: string) => {
@@ -233,12 +233,13 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId, variableIdsToN
             type="vector"
             url={`pmtiles://${process.env.NEXT_PUBLIC_API_HOST}/area-boundaries.pmtiles`}
             promoteId={{ ta: "area_id", sa3: "area_id", sa2: "area_id" }}
+            maxzoom={11}
           >
             <Layer id="base-fill" type="fill" source="areas" source-layer="coastline"
               paint={{ "fill-color": MAP_COLOURS["areaFill"], "fill-opacity": 0.8 }} />
-            {/* <AreaLayer layerId="ta" maxZoom={6} chosenAreaId={chosenAreaId} />
+            <AreaLayer layerId="ta" maxZoom={6} chosenAreaId={chosenAreaId} />
               <AreaLayer layerId="sa3" minZoom={6} maxZoom={8} chosenAreaId={chosenAreaId} />
-              <AreaLayer layerId="sa2" minZoom={8} chosenAreaId={chosenAreaId} /> */}
+              <AreaLayer layerId="sa2" minZoom={8} chosenAreaId={chosenAreaId} />
 
             {(["ta", "sa3", "sa2"] as const).map((id) => {
               const [minZoom, maxZoom] = getZoomRangeForLayer(id);

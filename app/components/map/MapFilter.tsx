@@ -87,9 +87,9 @@ export default function MapFilter({ chosenVariable, setChosenVariable, variableI
         label="Show areas by"
       >
         <MenuItem value="auto">Auto</MenuItem>
-        <MenuItem value="sa2">SA2</MenuItem>
-        <MenuItem value="sa3">SA3</MenuItem>
-        <MenuItem value="ta">TA</MenuItem>
+        <MenuItem value="sa2">Statistical area 2</MenuItem>
+        <MenuItem value="sa3">Statistical area 3</MenuItem>
+        <MenuItem value="ta">Territorial authority</MenuItem>
       </Select>
     </FormControl>
   </Box>
