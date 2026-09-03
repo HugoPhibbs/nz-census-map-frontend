@@ -125,8 +125,6 @@ export default function InfoPanel({ areaId, variableIdsToNameMap }: { areaId: st
                     </Typography>
                 </Box>
             )
-
         }
-
     </Box>
 }
