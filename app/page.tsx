@@ -1,11 +1,12 @@
 "use client";
-import { Box, Icon, IconButton } from '@mui/material';
+import { Box, Icon, IconButton, Typography } from '@mui/material';
 import StatsMap from './components/map/StatsMap';
 import { setWorkerUrl } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import InfoPanel from './components/InfoPanel';
 import { useEffect, useState } from 'react';
 import api from './api';
+import TitleBar from './components/TitleBar';
 
 setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
@@ -23,19 +24,7 @@ export default function Home() {
 
   return (
     <Box id="content">
-      <Box id="title-bar">
-        <h1>New Zealand Census Map</h1>
-        <IconButton
-          component="a"
-          href="https://github.com/HugoPhibbs/nz-census-map"
-          target="_blank"
-          aria-label="Open GitHub repository"
-        >
-          <Icon>
-            <img src={"./github-logo.svg"} alt="GitHub Logo" />
-          </Icon>
-        </IconButton>
-      </Box>
+      <TitleBar/>
       <Box id="inner-content">
         <StatsMap chosenAreaId={chosenAreaId} setChosenAreaId={setChosenAreaId} variableIdsToNameMap={variableIdsToNameMap} />
         <InfoPanel areaId={chosenAreaId} variableIdsToNameMap={variableIdsToNameMap} />
