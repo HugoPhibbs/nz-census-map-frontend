@@ -17,7 +17,7 @@
     background: var(--title-bar-colour);
     color: black;
     height: 7vh;
-    padding: 0.5em;
+    padding: 0.5em 1em 0.5em 1em;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
