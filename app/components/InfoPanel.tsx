@@ -38,7 +38,7 @@ type GroupedVariablesProps = {
 
 function GroupedVariables({ groupName, groupVariableIds, areaVariables, variableIdsToNameMap }: GroupedVariablesProps) {
     return (
-        <Accordion>
+        <Accordion elevation={0}>
             <AccordionSummary>
                 <Typography>{groupName}</Typography>
             </AccordionSummary>
@@ -50,7 +50,7 @@ function GroupedVariables({ groupName, groupVariableIds, areaVariables, variable
                             {groupVariableIds.map((variableId) => (
                                 <TableRow key={variableId}>
                                     <TableCell>{variableIdsToNameMap[variableId]}</TableCell>
-                                    <TableCell>{roundToDP(areaVariables?.[variableId].variable_value, 1)?? "N/A"}</TableCell>
+                                    <TableCell>{roundToDP(areaVariables?.[variableId].variable_value, 1) ?? "N/A"}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -102,15 +102,31 @@ export default function InfoPanel({ areaId, variableIdsToNameMap }: { areaId: st
     }, [areaId])
 
     return <Box id={"info-panel"}>
-        <Typography component="h2">{areaName}</Typography>
-        {Object.entries(VARIABLE_GROUPS).map(([groupName, groupVariableIds]) => (
-            <GroupedVariables
-                key={groupName}
-                groupName={groupName}   
-                groupVariableIds={groupVariableIds}
-                areaVariables={areaVariables}
-                variableIdsToNameMap={variableIdsToNameMap}
-            />
-        ))}
+        {
+            areaId ? (
+                <>
+                    <Typography component="h2" id="info-panel-title">
+                        {areaName}
+                    </Typography>
+                    {Object.entries(VARIABLE_GROUPS).map(([groupName, groupVariableIds]) => (
+                        <GroupedVariables
+                            key={groupName}
+                            groupName={groupName}
+                            groupVariableIds={groupVariableIds}
+                            areaVariables={areaVariables}
+                            variableIdsToNameMap={variableIdsToNameMap}
+                        />
+                    ))}
+                </>
+            ) : (
+                <Box id="info-panel-hint">
+                    <Typography component="h2" id="info-panel-hint-text">
+                        Click an area to view details
+                    </Typography>
+                </Box>
+            )
+
+        }
+
     </Box>
 }
