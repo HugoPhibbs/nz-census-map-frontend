@@ -1,3 +1,4 @@
-export function roundToTwoDecimalPlaces(value: number) {
-  return Math.round(value * 100) / 100;
+export function roundToDP(value: number, dp: number) {
+  const multiplier = Math.pow(10, dp);
+  return Math.round(value * multiplier) / multiplier;
 }

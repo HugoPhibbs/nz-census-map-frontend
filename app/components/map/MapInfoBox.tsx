@@ -1,6 +1,6 @@
 "use client";
 import { Box } from "@mui/material";
-import { roundToTwoDecimalPlaces } from "@/app/utils";
+import { roundToDP } from "@/app/utils";
 import { interpolatePlasma } from "d3-scale-chromatic";
 
 function MapColourIndicator({ min, max, variableUnit }: { min: number | null; max: number | null; variableUnit: string | null }) {
@@ -40,7 +40,7 @@ function formatVariableStat(value: number | null, unit: string | null): string {
     if (value === null || unit === null) {
         return "";
     }
-    value = roundToTwoDecimalPlaces(value);
+    value = roundToDP(value, 2);
 
     if (unit == "NZD") {
         return `$${value}`;
