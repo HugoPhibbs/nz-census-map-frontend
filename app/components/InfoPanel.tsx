@@ -101,7 +101,7 @@ export default function InfoPanel({ areaId, variableIdsToNameMap }: { areaId: st
             })
     }, [areaId])
 
-    return <Box id={"info-box"}>
+    return <Box id={"info-panel"}>
         <Typography component="h2">{areaName}</Typography>
         {Object.entries(VARIABLE_GROUPS).map(([groupName, groupVariableIds]) => (
             <GroupedVariables
