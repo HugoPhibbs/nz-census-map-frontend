@@ -4,6 +4,7 @@ import { Accordion, AccordionDetails, AccordionSummary, Box, Table, TableBody, T
 import { useEffect, useState } from "react";
 import api from "../api";
 import { roundToDP } from "../utils";
+import {styled} from "@mui/material/styles";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 const DETAILED_VARIABLE_GROUPS = {
@@ -33,26 +34,49 @@ const GENERAL_VARIABLE_IDS = [
 
 type GroupedVariablesProps = {
     groupName: string;
-    groupVariableIds: string[];
+    groupVariableIds: string[][];
     areaVariables: Record<string, any> | null;
     variableIdsToNameMap: Record<string, string>;
-};
+    expanded: boolean;
+    onChange: any;
+};  
 
-function GroupedVariables({ groupName, groupVariableIds, areaVariables, variableIdsToNameMap }: GroupedVariablesProps) {
+const VariableTableCell = styled(TableCell)({
+    padding: "0.2em",
+});
+
+function GroupedVariables({ groupName, groupVariableIds, areaVariables, variableIdsToNameMap, expanded, onChange }: GroupedVariablesProps) {
     return (
-        <Accordion elevation={0}>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography>{groupName}</Typography>
+        <Accordion elevation={0} className="grouped-variables-accordion" disableGutters onChange={onChange(groupName)} expanded={expanded}
+            sx={{
+                '&:not(:last-child)': {
+                    borderBottom: 0,
+                },
+                '&::before': {
+                    display: 'none',
+                },
+                '&:last-of-type': {
+                    borderRadius: 0, // Only way I could find to remove the bottom accordion border radius
+                },
+            }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />} className="grouped-variables-accordion-summary" sx={{
+                backgroundColor: "var(--title-bar-colour)",
+                minHeight: "2em"
+            }}>
+                <Typography component={"h3"} className="grouped-variables-accordion-title" 
+                sx={{fontSize: "0.8em"}}>
+                    {groupName}
+                </Typography>
             </AccordionSummary>
 
             <AccordionDetails>
                 <TableContainer>
-                    <Table>
+                    <Table size="small">
                         <TableBody>
                             {groupVariableIds.map((variableInfo) => (
                                 <TableRow key={variableInfo[0]}>
-                                    <TableCell>{variableInfo[1] ? variableInfo[1] : variableIdsToNameMap[variableInfo[0]]}</TableCell>
-                                    <TableCell>{roundToDP(areaVariables?.[variableInfo[0]].variable_value, 1) ?? "N/A"}</TableCell>
+                                    <VariableTableCell>{variableInfo[1] ? variableInfo[1] : variableIdsToNameMap[variableInfo[0]]}</VariableTableCell>
+                                    <VariableTableCell>{areaVariables?.[variableInfo[0]]?.variable_value ? roundToDP(areaVariables?.[variableInfo[0]].variable_value, 1) : "N/A"}</VariableTableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -66,6 +90,7 @@ function GroupedVariables({ groupName, groupVariableIds, areaVariables, variable
 export default function InfoPanel({ areaId, variableIdsToNameMap }: { areaId: string | null; variableIdsToNameMap: Record<string, string> }) {
     const [areaVariables, setAreaVariables] = useState<Record<string, any> | null>(null);
     const [areaName, setAreaName] = useState<string | null>(null);
+    const [expandedGroupName, setExpandedGroupName] = useState<string | false>(false);
 
     useEffect(() => {
         if (!areaId) {
@@ -80,7 +105,7 @@ export default function InfoPanel({ areaId, variableIdsToNameMap }: { areaId: st
                 console.log(res.data)
                 setAreaName(res.data["area_name"]);
             })
-    }, [areaId])
+    }, [areaId]);
 
     useEffect(() => {
         const areaIdSplit = areaId?.split("-") ?? null;
@@ -101,7 +126,11 @@ export default function InfoPanel({ areaId, variableIdsToNameMap }: { areaId: st
                 }
                 setAreaVariables(nextAreaVariables);
             })
-    }, [areaId])
+    }, [areaId]);
+
+    const handleGroupAccordionChange = (groupName: string) => (_, newExpanded: boolean) => {
+        setExpandedGroupName(newExpanded ? groupName : false);
+    };
 
     return <Box id={"info-panel"}>
         {
@@ -111,12 +140,12 @@ export default function InfoPanel({ areaId, variableIdsToNameMap }: { areaId: st
                         {areaName}
                     </Typography>
                     <TableContainer>
-                        <Table>
+                        <Table size="small">
                             <TableBody>
                                 {GENERAL_VARIABLE_IDS.map((variableInfo) => (
                                     <TableRow key={variableInfo[0]}>
-                                        <TableCell>{variableInfo[1] ? variableInfo[1] : variableIdsToNameMap[variableInfo[0]]}</TableCell>
-                                        <TableCell>{roundToDP(areaVariables?.[variableInfo[0]].variable_value, 1) ?? "N/A"   }</TableCell>
+                                        <VariableTableCell>{variableInfo[1] ? variableInfo[1] : variableIdsToNameMap[variableInfo[0]]}</VariableTableCell>
+                                        <VariableTableCell>{areaVariables?.[variableInfo[0]]?   .variable_value ? roundToDP(areaVariables?.[variableInfo[0]].variable_value, 1) : "N/A"}</VariableTableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
@@ -125,15 +154,17 @@ export default function InfoPanel({ areaId, variableIdsToNameMap }: { areaId: st
                     <Typography component="h3" id="info-panel-detailed-title">
                         Detailed Stats
                     </Typography>
-                    {Object.entries(DETAILED_VARIABLE_GROUPS).map(([groupName, groupVariableIds]) => (
-                        <GroupedVariables
-                            key={groupName}
-                            groupName={groupName}
-                            groupVariableIds={groupVariableIds}
-                            areaVariables={areaVariables}
-                            variableIdsToNameMap={variableIdsToNameMap}
-                        />
-                    ))}
+                        {Object.entries(DETAILED_VARIABLE_GROUPS).map(([groupName, groupVariableIds]) => (
+                            <GroupedVariables
+                                key={groupName}
+                                groupName={groupName}
+                                groupVariableIds={groupVariableIds}
+                                areaVariables={areaVariables}
+                                variableIdsToNameMap={variableIdsToNameMap}
+                                expanded={expandedGroupName === groupName}
+                                onChange={handleGroupAccordionChange}
+                            />
+                        ))}
                 </>
             ) : (
                 <Box id="info-panel-hint">
