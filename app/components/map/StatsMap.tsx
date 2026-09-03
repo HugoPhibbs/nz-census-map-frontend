@@ -15,10 +15,25 @@ import AreaLayer from "./AreaLayer";
 import MAP_COLOURS from "./MapColours";
 import MapFilter from "./MapFilter";
 import MapInfoBox from "./MapInfoBox";
+// import { layers, namedFlavor } from "@protomaps/basemaps";
 
 setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
 type DBRow = Record<string, string | number>;
+
+// const MAP_STYLE = {
+//   version: 8 as const,
+//   glyphs: "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf",
+//   sprite: "https://protomaps.github.io/basemaps-assets/sprites/v4/light",
+//   sources: {
+//     basemap: {
+//       type: "vector" as const,
+//       url: `pmtiles://${process.env.NEXT_PUBLIC_API_HOST}/nz-basemap.pmtiles`,
+//       attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
+//     },
+//   },
+//   layers: layers("basemap", namedFlavor("light"), { lang: "en" }),
+// };
 
 const MAP_STYLE = {
   version: 8 as const,
@@ -197,7 +212,7 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId, variableIdsToN
   }
 
   const getZoomRangeForLayer = (layerId: string) => {
-    if (mapGranularity === "auto") return ZOOM_RANGES[layerId];
+    if (mapGranularity === "auto") return ZOOM_RANGES[layerId]; 
     return (mapGranularity === layerId ? [0, 24] : [24, 24]);
   }
 
