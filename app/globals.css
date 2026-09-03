@@ -74,6 +74,15 @@
     font-weight: bold;
 }
 
+.grouped-variables-accordion {
+    border: 1px solid var(--light-grey-border);
+}
+
+.grouped-variables-accordion-summary {
+    background-color: var(--title-bar-colour);
+    min-height: 5em;
+}
+
 #stats-map {
     width: 75%;
     position: relative;
