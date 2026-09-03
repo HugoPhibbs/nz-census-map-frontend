@@ -4,30 +4,32 @@ import { Accordion, AccordionDetails, AccordionSummary, Box, Table, TableBody, T
 import { useEffect, useState } from "react";
 import api from "../api";
 import { roundToDP } from "../utils";
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
-const VARIABLE_GROUPS = {
-    "General": [
-        "pop_resident_usual",
-        "median_age",
-        "avg_children_born",
-    ],
+const DETAILED_VARIABLE_GROUPS = {
     "Employment": [
-        "median_personal_income",
-        "avg_hours_worked_per_week",
+        ["median_personal_income"],
+        ["avg_hours_worked_per_week"],
     ],
     "Ethnicities": [
-        "perc_ethnicity_pacific",
-        "perc_ethnicity_other",
-        "perc_ethnicity_mela",
-        "perc_ethnicity_maori",
-        "perc_ethnicity_european",
-        "perc_ethnicity_asian"
+        ["perc_ethnicity_pacific"],
+        ["perc_ethnicity_other"],
+        ["perc_ethnicity_mela"],
+        ["perc_ethnicity_maori"],
+        ["perc_ethnicity_european"],
+        ["perc_ethnicity_asian"]
     ],
     "Birthplace": [
-        "perc_birthplace_nz",
-        "perc_birthplace_overseas"
+        ["perc_birthplace_nz"],
+        ["perc_birthplace_overseas"]
     ],
 }
+
+const GENERAL_VARIABLE_IDS = [
+    ["pop_resident_usual"],
+    ["median_age"],
+    ["avg_children_born", "Total fertility rate"],
+]
 
 type GroupedVariablesProps = {
     groupName: string;
@@ -39,7 +41,7 @@ type GroupedVariablesProps = {
 function GroupedVariables({ groupName, groupVariableIds, areaVariables, variableIdsToNameMap }: GroupedVariablesProps) {
     return (
         <Accordion elevation={0}>
-            <AccordionSummary>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography>{groupName}</Typography>
             </AccordionSummary>
 
@@ -47,10 +49,10 @@ function GroupedVariables({ groupName, groupVariableIds, areaVariables, variable
                 <TableContainer>
                     <Table>
                         <TableBody>
-                            {groupVariableIds.map((variableId) => (
-                                <TableRow key={variableId}>
-                                    <TableCell>{variableIdsToNameMap[variableId]}</TableCell>
-                                    <TableCell>{roundToDP(areaVariables?.[variableId].variable_value, 1) ?? "N/A"}</TableCell>
+                            {groupVariableIds.map((variableInfo) => (
+                                <TableRow key={variableInfo[0]}>
+                                    <TableCell>{variableInfo[1] ? variableInfo[1] : variableIdsToNameMap[variableInfo[0]]}</TableCell>
+                                    <TableCell>{roundToDP(areaVariables?.[variableInfo[0]].variable_value, 1) ?? "N/A"}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -108,7 +110,22 @@ export default function InfoPanel({ areaId, variableIdsToNameMap }: { areaId: st
                     <Typography component="h2" id="info-panel-title">
                         {areaName}
                     </Typography>
-                    {Object.entries(VARIABLE_GROUPS).map(([groupName, groupVariableIds]) => (
+                    <TableContainer>
+                        <Table>
+                            <TableBody>
+                                {GENERAL_VARIABLE_IDS.map((variableInfo) => (
+                                    <TableRow key={variableInfo[0]}>
+                                        <TableCell>{variableInfo[1] ? variableInfo[1] : variableIdsToNameMap[variableInfo[0]]}</TableCell>
+                                        <TableCell>{roundToDP(areaVariables?.[variableInfo[0]].variable_value, 1) ?? "N/A"   }</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                    <Typography component="h3" id="info-panel-detailed-title">
+                        Detailed Stats
+                    </Typography>
+                    {Object.entries(DETAILED_VARIABLE_GROUPS).map(([groupName, groupVariableIds]) => (
                         <GroupedVariables
                             key={groupName}
                             groupName={groupName}
