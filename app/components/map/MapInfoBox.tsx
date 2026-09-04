@@ -50,23 +50,22 @@ function formatVariableStat(value: number | null, unit: string | null): string {
         return `${value}%`;
     }
 
-    // if (unit == "COUNT") {
-    //   return value.toString();
-    // }
-
     console.assert(unit in VARIABLE_UNIT_TO_DISPLAY_NAME, `Unknown unit: ${unit}`);
 
     return `${value} ${VARIABLE_UNIT_TO_DISPLAY_NAME[unit]}`;
 }
 
-function HoverInfoBox({ hoveredAreaName, hoveredAreaStat, variableUnit }: { hoveredAreaName: string | null; hoveredAreaId: string | null; hoveredAreaStat: number | null; variableUnit: string | null }) {
-    const showNameOnly = hoveredAreaName && !hoveredAreaStat;
-    const showNameAndStat = hoveredAreaName && hoveredAreaStat;
+function HoverInfoBox({ hoveredAreaName, hoveredAreaStat, variableUnit, hoveredAreaId }: { hoveredAreaName: string | null; hoveredAreaId: string | null; hoveredAreaStat: number | null; variableUnit: string | null }) {
+    if (!hoveredAreaId) return null; // Nothing being hovered
+
+    let label = hoveredAreaName;
+    if (!label) {
+        label = `${hoveredAreaId.split("-")[1]} (SA1)`; // Fallback to ID (for SA1s, which don't have names)
+    }
 
     return (
         <Box id={"hover-info-box"}>
-            {showNameOnly && <p>{hoveredAreaName}</p>}
-            {showNameAndStat && <p>{hoveredAreaName}: {formatVariableStat(hoveredAreaStat, variableUnit)}</p>}
+            {!!hoveredAreaStat ? <p>{label}: {formatVariableStat(hoveredAreaStat, variableUnit)}</p> : <p>{label}</p>}
         </Box>
     );
 }
@@ -90,7 +89,7 @@ export default function MapInfoBox({
 }: MapInfoBoxProps) {
     return (
         <>
-            {(hoveredAreaName || (min && max)) &&
+            {(hoveredAreaId || (min && max)) &&
                 <Box id={"map-info-box"} sx={{ zIndex: 1 }}>
                     <HoverInfoBox
                         hoveredAreaName={hoveredAreaName}

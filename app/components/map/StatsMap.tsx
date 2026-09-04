@@ -46,7 +46,7 @@ const BASEMAP_LAYERS = layers("stats-map", MAP_FLAVOUR, { lang: "en" }).filter(
   (l) => !IGNORED_LAYERS.includes(l.id)
 )
 
-const INTERACTIVE_LAYERS = ["ta-areas-fill", "sa3-areas-fill", "sa2-areas-fill"];
+const INTERACTIVE_LAYERS = ["ta-areas-fill", "sa3-areas-fill", "sa2-areas-fill", "sa1-areas-fill"];
 
 
 function updateMapStatsEffect(chosenVariable: any, setMapStats: any, setMinVariableValue: any, setMaxVariableValue: any) {
@@ -124,8 +124,10 @@ function areaColouringEffect(mapRef: any, mapStats: Record<string, DBRow> | null
     const featureId = areaId;
     const areaCode = row.area_code as string;
 
-    let sourceLayer = "sa2";
-    if (areaCode.length == 5) {
+    let sourceLayer = "sa1";
+    if (areaCode.length == 6) {
+      sourceLayer = "sa2";
+    } else if (areaCode.length == 5) {
       sourceLayer = "sa3";
     } else if (areaCode.length == 3) {
       sourceLayer = "ta";
@@ -213,7 +215,8 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId, variableIdsToN
   const ZOOM_RANGES: Record<string, [number | undefined, number | undefined]> = {
     "ta": [undefined, 6],
     "sa3": [6, 8],
-    "sa2": [8, undefined],
+    "sa2": [8, 10],
+    "sa1": [10, undefined],
   }
 
   const getZoomRangeForLayer = (layerId: string) => {
@@ -253,10 +256,10 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId, variableIdsToN
             id="stats-map"
             type="vector"
             url={`pmtiles://${process.env.NEXT_PUBLIC_API_HOST}/combined.pmtiles`}
-            promoteId={{ ta: "area_id", sa3: "area_id", sa2: "area_id" }}
+            promoteId={{ ta: "area_id", sa3: "area_id", sa2: "area_id", sa1: "area_id" }}
           >
             {BASEMAP_LAYERS.map((l) => <Layer key={l.id} {...l} />)}
-            {(["ta", "sa3", "sa2"] as const).map((id) => {
+            {(["ta", "sa3", "sa2", "sa1"] as const).map((id) => {
               const [minZoom, maxZoom] = getZoomRangeForLayer(id);
               return <AreaLayer key={id} layerId={id} chosenAreaId={chosenAreaId} minZoom={minZoom} maxZoom={maxZoom} />;
             })}
