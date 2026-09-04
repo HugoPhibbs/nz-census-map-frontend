@@ -1,5 +1,5 @@
 const MAP_COLOURS = {
-  "background": "#DBF3FA",
+  "background": "#86D7EB",
   "areaFill": "grey",
   "areaBorder": "white",
   "areaBorderHover": "black",

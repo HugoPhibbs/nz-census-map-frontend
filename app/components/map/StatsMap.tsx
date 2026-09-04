@@ -15,31 +15,36 @@ import AreaLayer from "./AreaLayer";
 import MAP_COLOURS from "./MapColours";
 import MapFilter from "./MapFilter";
 import MapInfoBox from "./MapInfoBox";
-// import { layers, namedFlavor } from "@protomaps/basemaps";
+import { layers, namedFlavor } from "@protomaps/basemaps";
 
 setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
 type DBRow = Record<string, string | number>;
 
-// const MAP_STYLE = {
-//   version: 8 as const,
-//   glyphs: "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf",
-//   sprite: "https://protomaps.github.io/basemaps-assets/sprites/v4/light",
-//   sources: {
-//     basemap: {
-//       type: "vector" as const,
-//       url: `pmtiles://${process.env.NEXT_PUBLIC_API_HOST}/nz-basemap.pmtiles`,
-//       attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
-//     },
-//   },
-//   layers: layers("basemap", namedFlavor("light"), { lang: "en" }),
-// };
-
 const MAP_STYLE = {
   version: 8 as const,
+  glyphs: "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf",
+  sprite: "https://protomaps.github.io/basemaps-assets/sprites/v4/light",
   sources: {},
   layers: [{ id: "background", type: "background" as const, paint: { "background-color": MAP_COLOURS["background"] } }],
 };
+
+const IGNORED_LAYERS = [
+  "landuse",
+  "pois",
+  "buildings",
+  "boundaries",
+  "background" // Only way I could figure out how to set the background to what I want for non-existent tiles
+]
+
+const MAP_FLAVOUR = {
+  ...namedFlavor("light"),
+  "water": MAP_COLOURS["background"],
+};
+
+const BASEMAP_LAYERS = layers("stats-map", MAP_FLAVOUR, { lang: "en" }).filter(
+  (l) => !IGNORED_LAYERS.includes(l.id)
+)
 
 const INTERACTIVE_LAYERS = ["ta-areas-fill", "sa3-areas-fill", "sa2-areas-fill"];
 
@@ -84,7 +89,7 @@ function handleMapClick(e: MapLayerMouseEvent, mapRef: any, selectedFeature: any
   }
 
   if (feature?.id !== undefined && feature.sourceLayer) {
-    const next = { source: "areas", sourceLayer: feature.sourceLayer, id: feature.id };
+    const next = { source: "stats-map", sourceLayer: feature.sourceLayer, id: feature.id };
     map.setFeatureState(next, { selected: true });
     selectedFeature.current = next;
   }
@@ -99,7 +104,7 @@ function setHoveredFeature(e: MapLayerMouseEvent, mapRef: any, hoveredFeature: a
   clearHover();
 
   if (feature?.id !== undefined && feature.sourceLayer) {
-    const next = { source: "areas", sourceLayer: feature.sourceLayer, id: feature.id };
+    const next = { source: "stats-map", sourceLayer: feature.sourceLayer, id: feature.id };
     map.setFeatureState(next, { hover: true });
     hoveredFeature.current = next;
   }
@@ -127,7 +132,7 @@ function areaColouringEffect(mapRef: any, mapStats: Record<string, DBRow> | null
     }
 
     map.setFeatureState(
-      { source: "areas", sourceLayer, id: featureId },
+      { source: "stats-map", sourceLayer, id: featureId },
       { fillColor: colorScale(value) }
     );
   }
@@ -233,8 +238,7 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId, variableIdsToN
 
         <Map
           ref={mapRef}
-          initialViewState={{ longitude: 174, latitude: -41, zoom: 4.5 }}
-          style={{ width: "100%", height: "100%" }}
+          initialViewState={{ longitude: 174, latitude: -41, zoom: 3.5 }} // Centered on approx the tasman, zoom includes outlying islands
           mapStyle={MAP_STYLE}
           interactiveLayerIds={INTERACTIVE_LAYERS}
           onMouseMove={(e: MapLayerMouseEvent) => handleMapHover(e)}
@@ -242,20 +246,16 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId, variableIdsToN
           onClick={(e: MapLayerMouseEvent) => handleMapClick(e, mapRef, selectedFeature, setChosenAreaId)}
           cursor="pointer"
           attributionControl={false}
+          onZoomEnd={(e) => console.log("zoom settled at:", e.viewState.zoom)}
+          maxBounds = {[-205.400391,-49.667628,-169.628906,-30.977609]}
         >
           <Source
-            id="areas"
+            id="stats-map"
             type="vector"
-            url={`pmtiles://${process.env.NEXT_PUBLIC_API_HOST}/area-boundaries.pmtiles`}
+            url={`pmtiles://${process.env.NEXT_PUBLIC_API_HOST}/combined.pmtiles`}
             promoteId={{ ta: "area_id", sa3: "area_id", sa2: "area_id" }}
-            maxzoom={11}
           >
-            <Layer id="base-fill" type="fill" source="areas" source-layer="coastline"
-              paint={{ "fill-color": MAP_COLOURS["areaFill"], "fill-opacity": 0.8 }} />
-            <AreaLayer layerId="ta" maxZoom={6} chosenAreaId={chosenAreaId} />
-              <AreaLayer layerId="sa3" minZoom={6} maxZoom={8} chosenAreaId={chosenAreaId} />
-              <AreaLayer layerId="sa2" minZoom={8} chosenAreaId={chosenAreaId} />
-
+            {BASEMAP_LAYERS.map((l) => <Layer key={l.id} {...l} />)}
             {(["ta", "sa3", "sa2"] as const).map((id) => {
               const [minZoom, maxZoom] = getZoomRangeForLayer(id);
               return <AreaLayer key={id} layerId={id} chosenAreaId={chosenAreaId} minZoom={minZoom} maxZoom={maxZoom} />;

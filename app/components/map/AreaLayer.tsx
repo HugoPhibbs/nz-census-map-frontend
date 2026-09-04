@@ -15,7 +15,7 @@ export default function AreaLayer({
     <Layer
       id={`${layerId}-areas-fill`}
       type="fill"
-      source="areas"
+      source="stats-map"
       source-layer={layerId}
       minzoom={minZoom}
       maxzoom={maxZoom}
@@ -25,14 +25,14 @@ export default function AreaLayer({
           ["feature-state", "fillColor"],
           MAP_COLOURS["areaFill"],
         ],
-        "fill-opacity": 0.8,
+        "fill-opacity": 0.6,
       }}
     />
 
     <Layer
       id={`${layerId}-areas-border`}
       type="line"
-      source="areas"
+      source="stats-map"
       source-layer={layerId}
       minzoom={minZoom}
       maxzoom={maxZoom}
@@ -42,7 +42,7 @@ export default function AreaLayer({
     <Layer
       id={`${layerId}-areas-hover`}
       type="line"
-      source="areas"
+      source="stats-map"
       source-layer={layerId}
       minzoom={minZoom}
       maxzoom={maxZoom}
@@ -60,7 +60,7 @@ export default function AreaLayer({
     <Layer
       id={`${layerId}-areas-selected`}
       type="line"
-      source="areas"
+      source="stats-map"
       source-layer={layerId}
       minzoom={minZoom}
       maxzoom={maxZoom}
