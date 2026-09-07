@@ -2,14 +2,14 @@
 
 import { Box } from "@mui/material";
 import { Protocol } from "pmtiles";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 
 import { scaleSequential } from "d3-scale";
 import { interpolatePlasma } from "d3-scale-chromatic";
 import * as maplibregl from 'maplibre-gl';
 import { MapLayerMouseEvent, setWorkerUrl } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import Map, { Layer, MapRef, Source, AttributionControl } from "react-map-gl/maplibre";
+import Map, { Layer, MapRef, Source } from "react-map-gl/maplibre";
 import api from "../../api";
 import AreaLayer from "./AreaLayer";
 import MAP_COLOURS from "./MapColours";
@@ -77,6 +77,10 @@ function updateMapStatsEffect(chosenVariable: any, setMapStats: any, setMinVaria
   }
 }
 
+function layerIdToSourceId(sourceId: string): string {
+  return sourceId === "sa1" ? "sa1-map" : "stats-map";
+}
+
 function handleMapClick(e: MapLayerMouseEvent, mapRef: any, selectedFeature: any, setChosenAreaId: any) {
   const feature = e.features?.[0];
   const map = mapRef.current?.getMap();
@@ -89,7 +93,7 @@ function handleMapClick(e: MapLayerMouseEvent, mapRef: any, selectedFeature: any
   }
 
   if (feature?.id !== undefined && feature.sourceLayer) {
-    const next = { source: "stats-map", sourceLayer: feature.sourceLayer, id: feature.id };
+    const next = { source: layerIdToSourceId(feature.sourceLayer), sourceLayer: feature.sourceLayer, id: feature.id };
     map.setFeatureState(next, { selected: true });
     selectedFeature.current = next;
   }
@@ -104,7 +108,7 @@ function setHoveredFeature(e: MapLayerMouseEvent, mapRef: any, hoveredFeature: a
   clearHover();
 
   if (feature?.id !== undefined && feature.sourceLayer) {
-    const next = { source: "stats-map", sourceLayer: feature.sourceLayer, id: feature.id };
+    const next = { source: layerIdToSourceId(feature.sourceLayer), sourceLayer: feature.sourceLayer, id: feature.id };
     map.setFeatureState(next, { hover: true });
     hoveredFeature.current = next;
   }
@@ -134,7 +138,7 @@ function areaColouringEffect(mapRef: any, mapStats: Record<string, DBRow> | null
     }
 
     map.setFeatureState(
-      { source: "stats-map", sourceLayer, id: featureId },
+      { source: layerIdToSourceId(sourceLayer), sourceLayer, id: featureId },
       { fillColor: colorScale(value) }
     );
   }
@@ -160,7 +164,7 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId, variableIdsToN
 
   const [mapGranularity, setMapGranularity] = useState<string | null>("auto");
 
-  const clearHover = () => {
+  const clearHover = useCallback(() => {
     const map = mapRef.current?.getMap();
     if (map && hoveredFeature.current) {
       map.setFeatureState(hoveredFeature.current, { hover: false });
@@ -169,9 +173,9 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId, variableIdsToN
     setHoveredAreaId(null);
     setHoveredAreaName(null);
     setHoveredAreaStat(null);
-  };
+  }, []);
 
-  const handleMapHover = (e: MapLayerMouseEvent) => {
+  const handleMapHover = useCallback((e: MapLayerMouseEvent) => {
     const feature = e.features?.[0];
     const featureId = feature?.id;
     const sourceLayer = feature?.sourceLayer;
@@ -187,9 +191,9 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId, variableIdsToN
 
     const areaId = (feature?.properties?.area_id as string) ?? null;
     setHoveredAreaId(areaId);
-    setHoveredAreaName((feature?.properties?.area_name as string) ?? null); // or whatever name field you actually want
+    setHoveredAreaName((feature?.properties?.area_name as string) ?? null);
     setHoveredAreaStat(areaId ? mapStats?.[areaId]?.variable_value as number ?? null : null);
-  };
+  }, [mapStats]);
 
   useEffect(() => {
     let protocol = new Protocol();
@@ -214,13 +218,13 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId, variableIdsToN
 
   const ZOOM_RANGES: Record<string, [number | undefined, number | undefined]> = {
     "ta": [undefined, 6],
-    "sa3": [6, 8],
-    "sa2": [8, 10],
-    "sa1": [10, undefined],
+    "sa3": [6, 9],
+    "sa2": [9, 12],
+    "sa1": [12, undefined],
   }
 
   const getZoomRangeForLayer = (layerId: string) => {
-    if (mapGranularity === "auto") return ZOOM_RANGES[layerId]; 
+    if (mapGranularity === "auto") return ZOOM_RANGES[layerId];
     return (mapGranularity === layerId ? [0, 24] : [24, 24]);
   }
 
@@ -250,22 +254,42 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId, variableIdsToN
           cursor="pointer"
           attributionControl={false}
           onZoomEnd={(e) => console.log("zoom settled at:", e.viewState.zoom)}
-          maxBounds = {[-205.400391,-49.667628,-169.628906,-30.977609]}
+          maxBounds={[-205.400391, -49.667628, -169.628906, -30.977609]}
         >
           <Source
             id="stats-map"
             type="vector"
             url={`pmtiles://${process.env.NEXT_PUBLIC_API_HOST}/combined.pmtiles`}
-            promoteId={{ ta: "area_id", sa3: "area_id", sa2: "area_id", sa1: "area_id" }}
+            promoteId={{ ta: "area_id", sa3: "area_id", sa2: "area_id" }} // Keys for featureIds per layer
           >
             {BASEMAP_LAYERS.map((l) => <Layer key={l.id} {...l} />)}
-            {(["ta", "sa3", "sa2", "sa1"] as const).map((id) => {
+            {(["ta", "sa3", "sa2"] as const).map((id) => {
               const [minZoom, maxZoom] = getZoomRangeForLayer(id);
-              return <AreaLayer key={id} layerId={id} chosenAreaId={chosenAreaId} minZoom={minZoom} maxZoom={maxZoom} />;
+              return <AreaLayer key={id} layerId={id} sourceId={"stats-map"} minZoom={minZoom} maxZoom={maxZoom} />;
             })}
           </Source>
+
+          <Source
+            id="sa1-map"
+            type="vector"
+            url={`pmtiles://${process.env.NEXT_PUBLIC_API_HOST}/sa1.pmtiles`}
+            promoteId={{ sa1: "area_id" }}
+          >
+            {(() => {
+              const [minZoom, maxZoom] = getZoomRangeForLayer("sa1");
+              return (
+                <AreaLayer
+                  key={"sa1"}
+                  layerId={"sa1"}
+                  sourceId={"sa1-map"}
+                  minZoom={minZoom}
+                  maxZoom={maxZoom}
+                />
+              );
+            })()}
+          </Source>
         </Map>
-      </Box>
+      </Box >
     </>
   );
 }

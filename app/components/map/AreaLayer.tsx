@@ -4,18 +4,18 @@ import {Layer} from "react-map-gl/maplibre";
 import MAP_COLOURS from "./MapColours";
 
 export default function AreaLayer({
-  layerId, maxZoom, minZoom, chosenAreaId,
+  layerId, maxZoom, minZoom, sourceId
 }: {
   layerId: string;
   maxZoom?: number;
   minZoom?: number;
-  chosenAreaId: string | null;
+  sourceId: string;
 }) {
   return <>
     <Layer
       id={`${layerId}-areas-fill`}
       type="fill"
-      source="stats-map"
+      source={sourceId}
       source-layer={layerId}
       minzoom={minZoom}
       maxzoom={maxZoom}
@@ -32,17 +32,17 @@ export default function AreaLayer({
     <Layer
       id={`${layerId}-areas-border`}
       type="line"
-      source="stats-map"
+      source={sourceId}
       source-layer={layerId}
       minzoom={minZoom}
       maxzoom={maxZoom}
-      paint={{ "line-color": MAP_COLOURS["areaBorder"], "line-width": 1 }}
+      paint={{ "line-color": MAP_COLOURS["areaBorder"], "line-width": layerId === "sa1" ? 0.5: 1 }}
     />
 
     <Layer
       id={`${layerId}-areas-hover`}
       type="line"
-      source="stats-map"
+      source={sourceId}
       source-layer={layerId}
       minzoom={minZoom}
       maxzoom={maxZoom}
@@ -60,7 +60,7 @@ export default function AreaLayer({
     <Layer
       id={`${layerId}-areas-selected`}
       type="line"
-      source="stats-map"
+      source={sourceId}
       source-layer={layerId}
       minzoom={minZoom}
       maxzoom={maxZoom}
