@@ -96,18 +96,15 @@
     padding: 0.5em;
     border: 1px solid var(--light-grey-border);
     border-radius: 6px;
-    background-color: var(--translucent-white);
     display: flex;
     flex-direction: column;
     gap: 0.5em;
 }
 
-#map-variable-filter {
-    background-color: inherit;
-}
-
-#map-granularity-filter {
-    background-color: inherit;
+.map-filter-dropdown {
+    background-color: var(--translucent-white);
+    z-index: 1;
+    font-size: 5em;
 }
 
 #map-colour-indicator-box {

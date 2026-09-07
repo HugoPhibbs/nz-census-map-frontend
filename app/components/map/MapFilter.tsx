@@ -1,49 +1,25 @@
-// "use client";
-
-// import api from "@/app/api";
-// import { Box, FormControl, InputLabel, MenuItem, Select } from "@mui/material";
-// import { useEffect, useState } from "react";
-
-// export default function MapFilter({ chosenVariable, setChosenVariable }: { chosenVariable: string | null; setChosenVariable: (variable: string) => void }) {
-
-//   let [variableOptions, setVariableOptions] = useState<Record<string, string>>({});
-
-//   useEffect(() => {
-//     api.get(`/stats/variable/ids/to-name`, { "params": { "drop_pop_vars": true } })
-//       .then((res) => {
-//         const filtered = Object.fromEntries(
-//           Object.entries(res.data).filter(([id, _]: [any, any]) => !id.startsWith("pop_"))
-//         );
-//         setVariableOptions(filtered as Record<string, string>);
-//       });
-//   }, [])
-
-//   return <Box>
-//     <FormControl id="map-filter" sx={{zIndex:1}}>
-//       <InputLabel id="select-variable">Display by</InputLabel>
-//       <Select value={chosenVariable ?? ''} onChange={(e) => e.target.value && setChosenVariable(e.target.value)} label="Display by">
-//         {Object.entries(variableOptions).map(([key, value]) => (
-//           <MenuItem key={key} value={key}>
-//             {value}
-//           </MenuItem>
-//         ))}
-//       </Select>
-//     </FormControl>
-//   </Box>
-// }
-
 "use client";
 
 import api from "@/app/api";
-import { Box, FormControl, InputLabel, Menu, MenuItem, Select } from "@mui/material";
+import { Box, FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 import { useEffect, useState } from "react";
+
+function MapFilterFormControl({ children }) {
+  return (
+    <FormControl className={"map-filter-dropdown"} size={"small"}>
+      {children}
+    </FormControl>
+  )
+}
 
 export default function MapFilter({ chosenVariable, setChosenVariable, variableIdsToNameMap, mapGranularity, setMapGranularity }: { chosenVariable: string | null; setChosenVariable: (variable: string) => void; variableIdsToNameMap: Record<string, string>; mapGranularity: string | null; setMapGranularity: (granularity: string | null) => void }) {
 
   let [variableOptions, setVariableOptions] = useState<Record<string, string>>({});
 
-  const ITEM_HEIGHT = 48;
+  const ITEM_HEIGHT = 36;
+  const ITEM_PADDING_TOP = 8;
   const VISIBLE_ITEMS = 8;
+  const menuMaxHeight = ITEM_HEIGHT * VISIBLE_ITEMS + ITEM_PADDING_TOP;
 
   useEffect(() => {
     const filtered = Object.fromEntries(
@@ -52,23 +28,28 @@ export default function MapFilter({ chosenVariable, setChosenVariable, variableI
     setVariableOptions(filtered as Record<string, string>);
   }, [variableIdsToNameMap])
 
+  const menuProps = {
+    PaperProps: {
+      sx: {
+        maxHeight: ITEM_HEIGHT * VISIBLE_ITEMS + ITEM_PADDING_TOP,
+        fontSize: 13,
+        "& .MuiMenuItem-root": { fontSize: 13, minHeight: "auto" },
+      },
+    },
+  };
+
   return <Box id="map-filter">
-    <FormControl id="map-variable-filter" sx={{ zIndex: 1 }}>
+    <MapFilterFormControl>
       <InputLabel id="select-variable">Display by</InputLabel>
       <Select
         value={chosenVariable ?? ''}
         onChange={(e) => e.target.value && setChosenVariable(e.target.value)}
         label="Display by"
-      // MenuProps={{
-      //   slotProps: {
-      //     paper: {
-      //       style: {
-      //         maxHeight: ITEM_HEIGHT * VISIBLE_ITEMS + 8,
-      //         width: 250,
-      //       },
-      //     },
-      //   },
-      // }}
+        // slotProps={{
+        //   paper: {
+        //     style: { maxHeight: menuMaxHeight },
+        //   },
+        // }}
       >
         {Object.entries(variableOptions).map(([key, value]) => (
           <MenuItem key={key} value={key}>
@@ -77,9 +58,9 @@ export default function MapFilter({ chosenVariable, setChosenVariable, variableI
         ))}
       </Select>
 
-    </FormControl>
+    </MapFilterFormControl>
 
-    <FormControl id="map-granularity-filter" sx={{ zIndex: 1}}>
+    <MapFilterFormControl>
       <InputLabel id="select-granularity">Granularity</InputLabel>
       <Select
         value={mapGranularity ?? ''}
@@ -92,6 +73,6 @@ export default function MapFilter({ chosenVariable, setChosenVariable, variableI
         <MenuItem value="sa3">Statistical area 3</MenuItem>
         <MenuItem value="ta">Territorial authority</MenuItem>
       </Select>
-    </FormControl>
+    </MapFilterFormControl>
   </Box>
 }
