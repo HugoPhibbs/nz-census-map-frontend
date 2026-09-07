@@ -28,16 +28,6 @@ export default function MapFilter({ chosenVariable, setChosenVariable, variableI
     setVariableOptions(filtered as Record<string, string>);
   }, [variableIdsToNameMap])
 
-  const menuProps = {
-    PaperProps: {
-      sx: {
-        maxHeight: ITEM_HEIGHT * VISIBLE_ITEMS + ITEM_PADDING_TOP,
-        fontSize: 13,
-        "& .MuiMenuItem-root": { fontSize: 13, minHeight: "auto" },
-      },
-    },
-  };
-
   return <Box id="map-filter">
     <MapFilterFormControl>
       <InputLabel id="select-variable">Display by</InputLabel>
@@ -45,11 +35,22 @@ export default function MapFilter({ chosenVariable, setChosenVariable, variableI
         value={chosenVariable ?? ''}
         onChange={(e) => e.target.value && setChosenVariable(e.target.value)}
         label="Display by"
-        // slotProps={{
-        //   paper: {
-        //     style: { maxHeight: menuMaxHeight },
-        //   },
-        // }}
+        className="map-filter-select"
+        MenuProps={{
+          anchorOrigin: {
+            vertical: "bottom",
+            horizontal: "left",
+          },
+          transformOrigin: {
+            vertical: "top",
+            horizontal: "left",
+          },
+          slotProps: {
+            paper: {
+              style: { maxHeight: menuMaxHeight },
+            },
+          },
+        }}
       >
         {Object.entries(variableOptions).map(([key, value]) => (
           <MenuItem key={key} value={key}>
@@ -61,11 +62,12 @@ export default function MapFilter({ chosenVariable, setChosenVariable, variableI
     </MapFilterFormControl>
 
     <MapFilterFormControl>
-      <InputLabel id="select-granularity">Granularity</InputLabel>
+      <InputLabel id="select-granularity">Area type</InputLabel>
       <Select
         value={mapGranularity ?? ''}
         onChange={(e) => e.target.value && setMapGranularity(e.target.value)}
         label="Show areas by"
+        className="map-filter-select"
       >
         <MenuItem value="auto">Auto</MenuItem>
         <MenuItem value="sa1">Statistical area 1</MenuItem>

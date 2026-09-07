@@ -3,8 +3,8 @@
 import { Accordion, AccordionDetails, AccordionSummary, Box, Table, TableBody, TableCell, TableContainer, TableRow, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import api from "../api";
-import { roundToDP } from "../utils";
-import {styled} from "@mui/material/styles";
+import { roundToDP, formatSA1Code } from "../utils";
+import { styled } from "@mui/material/styles";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 const DETAILED_VARIABLE_GROUPS = {
@@ -27,7 +27,7 @@ const DETAILED_VARIABLE_GROUPS = {
 }
 
 const GENERAL_VARIABLE_IDS = [
-    ["pop_resident_usual"],
+    ["pop_resident_usual", "Population"],
     ["median_age"],
     ["avg_children_born", "Total fertility rate"],
 ]
@@ -39,11 +39,21 @@ type GroupedVariablesProps = {
     variableIdsToNameMap: Record<string, string>;
     expanded: boolean;
     onChange: any;
-};  
+};
 
 const VariableTableCell = styled(TableCell)({
     padding: "0.2em",
 });
+
+function formatVariableValue(variableValue: any): string {
+    if (variableValue === null || variableValue === undefined) {
+        return "N/A";
+    }
+    if (typeof variableValue === "number") {
+        return roundToDP(variableValue, 1).toLocaleString();
+    }
+    return variableValue.toString();
+}
 
 function GroupedVariables({ groupName, groupVariableIds, areaVariables, variableIdsToNameMap, expanded, onChange }: GroupedVariablesProps) {
     return (
@@ -63,8 +73,8 @@ function GroupedVariables({ groupName, groupVariableIds, areaVariables, variable
                 backgroundColor: "var(--title-bar-colour)",
                 minHeight: "2em"
             }}>
-                <Typography component={"h3"} className="grouped-variables-accordion-title" 
-                sx={{fontSize: "0.8em"}}>
+                <Typography component={"h3"} className="grouped-variables-accordion-title"
+                    sx={{ fontSize: "0.8em" }}>
                     {groupName}
                 </Typography>
             </AccordionSummary>
@@ -76,7 +86,7 @@ function GroupedVariables({ groupName, groupVariableIds, areaVariables, variable
                             {groupVariableIds.map((variableInfo) => (
                                 <TableRow key={variableInfo[0]}>
                                     <VariableTableCell>{variableInfo[1] ? variableInfo[1] : variableIdsToNameMap[variableInfo[0]]}</VariableTableCell>
-                                    <VariableTableCell>{areaVariables?.[variableInfo[0]]?.variable_value ? roundToDP(areaVariables?.[variableInfo[0]].variable_value, 1) : "N/A"}</VariableTableCell>
+                                    <VariableTableCell>{formatVariableValue(areaVariables?.[variableInfo[0]]?.variable_value)}</VariableTableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -85,6 +95,20 @@ function GroupedVariables({ groupName, groupVariableIds, areaVariables, variable
             </AccordionDetails>
         </Accordion>
     )
+}
+
+function areaIdToAreaType(areaId: string | null): string | null {
+    if (!areaId) return null;
+    const areaCode = areaId.split("-")[1];
+    if (areaCode.length === 7) {
+        return "Statistical area 1";
+    } else if (areaCode.length === 6) {
+        return "Statistical area 2";
+    } else if (areaCode.length === 5) {
+        return "Statistical area 3";
+    } else {
+        return "Territorial authority";
+    }
 }
 
 export default function InfoPanel({ areaId, variableIdsToNameMap }: { areaId: string | null; variableIdsToNameMap: Record<string, string> }) {
@@ -99,8 +123,15 @@ export default function InfoPanel({ areaId, variableIdsToNameMap }: { areaId: st
             return;
         }
         const area_id_split = areaId?.split("-") ?? null;
+        const area_code = area_id_split[1];
+        console.log(area_code);
 
-        api.get("/area", { "params": { "area_code": area_id_split[1], "census_year": area_id_split[0] } })
+        if (area_code.length == 7) { // SA1 (no names)
+            setAreaName(formatSA1Code(area_code));
+            return;
+        }
+
+        api.get("/area", { "params": { "area_code": area_code, "census_year": area_id_split[0] } })
             .then(res => {
                 console.log(res.data)
                 setAreaName(res.data["area_name"]);
@@ -128,9 +159,19 @@ export default function InfoPanel({ areaId, variableIdsToNameMap }: { areaId: st
             })
     }, [areaId]);
 
-    const handleGroupAccordionChange = (groupName: string) => (_, newExpanded: boolean) => {
+    const handleGroupAccordionChange = (groupName: string) => (_: any, newExpanded: boolean) => {
         setExpandedGroupName(newExpanded ? groupName : false);
     };
+
+    let generalVariables = GENERAL_VARIABLE_IDS.map((variableInfo) => ({
+        variableName: variableInfo[1] ? variableInfo[1] : variableIdsToNameMap[variableInfo[0]],
+        variableValue: areaVariables?.[variableInfo[0]]?.variable_value ?? null,
+    }));
+
+    generalVariables.push({
+        variableName: "Area type",
+        variableValue: areaIdToAreaType(areaId),
+    })
 
     return <Box id={"info-panel"}>
         {
@@ -142,18 +183,20 @@ export default function InfoPanel({ areaId, variableIdsToNameMap }: { areaId: st
                     <TableContainer>
                         <Table size="small">
                             <TableBody>
-                                {GENERAL_VARIABLE_IDS.map((variableInfo) => (
-                                    <TableRow key={variableInfo[0]}>
-                                        <VariableTableCell>{variableInfo[1] ? variableInfo[1] : variableIdsToNameMap[variableInfo[0]]}</VariableTableCell>
-                                        <VariableTableCell>{areaVariables?.[variableInfo[0]]?   .variable_value ? roundToDP(areaVariables?.[variableInfo[0]].variable_value, 1) : "N/A"}</VariableTableCell>
+                                {generalVariables.map((variable) => (
+                                    <TableRow key={variable.variableName}>
+                                        <VariableTableCell>{variable.variableName}</VariableTableCell>
+                                        <VariableTableCell>{formatVariableValue(variable.variableValue)}</VariableTableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
                     </TableContainer>
-                    <Typography component="h3" id="info-panel-detailed-title">
-                        Detailed Stats
-                    </Typography>
+
+                    <Box>
+                        <Typography component="h3" id="info-panel-detailed-title">
+                            Detailed Stats
+                        </Typography>
                         {Object.entries(DETAILED_VARIABLE_GROUPS).map(([groupName, groupVariableIds]) => (
                             <GroupedVariables
                                 key={groupName}
@@ -165,6 +208,7 @@ export default function InfoPanel({ areaId, variableIdsToNameMap }: { areaId: st
                                 onChange={handleGroupAccordionChange}
                             />
                         ))}
+                    </Box>    
                 </>
             ) : (
                 <Box id="info-panel-hint">

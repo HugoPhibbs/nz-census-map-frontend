@@ -43,10 +43,13 @@
     overflow-y: auto;
     scrollbar-gutter: stable;
     border-left: 1px solid var(--light-grey-border);
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
 }
 
 #info-panel-title {
-    font-size: 1em;
+    font-size: 1.2em;
     font-weight: bold;
 }
 
@@ -92,7 +95,7 @@
     position: absolute;
     top: 2em;
     left: 2em;
-    width: 20em;
+    width: 15em;
     padding: 0.5em;
     border: 1px solid var(--light-grey-border);
     border-radius: 6px;
@@ -101,8 +104,11 @@
     gap: 0.5em;
 }
 
-.map-filter-dropdown {
+.map-filter-select {
     background-color: var(--translucent-white);
+}
+
+.map-filter-dropdown {
     z-index: 1;
     font-size: 5em;
 }
@@ -120,9 +126,12 @@
     position: absolute;
     bottom: 2em;
     right: 2em;
-    width: 12em;
+    width: 16em;
     padding: 0.5em;
     border: 1px solid var(--light-grey-border);
     border-radius: 1em;
     background-color: var(--translucent-white);
+    display: flex;
+    flex-direction: column;
+    gap: 0.4em;
 }

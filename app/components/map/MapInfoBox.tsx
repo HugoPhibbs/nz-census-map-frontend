@@ -1,6 +1,6 @@
 "use client";
 import { Box } from "@mui/material";
-import { roundToDP } from "@/app/utils";
+import { roundToDP, formatSA1Code } from "@/app/utils";
 import { interpolatePlasma } from "d3-scale-chromatic";
 
 function MapColourIndicator({ min, max, variableUnit }: { min: number | null; max: number | null; variableUnit: string | null }) {
@@ -60,7 +60,7 @@ function HoverInfoBox({ hoveredAreaName, hoveredAreaStat, variableUnit, hoveredA
 
     let label = hoveredAreaName;
     if (!label) {
-        label = `${hoveredAreaId.split("-")[1]} (SA1)`; // Fallback to ID (for SA1s, which don't have names)
+        label = formatSA1Code(hoveredAreaId.split("-")[1]); // Fallback to ID (for SA1s, which don't have names)
     }
 
     return (
