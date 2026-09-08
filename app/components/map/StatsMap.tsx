@@ -74,6 +74,10 @@ function updateMapStatsEffect(chosenVariable: any, setMapStats: any, setMinVaria
         setMinVariableValue(newMinVariableValue);
         setMaxVariableValue(newMaxVariableValue);
       });
+  } else {
+    setMapStats(null);
+    setMinVariableValue(null);
+    setMaxVariableValue(null);
   }
 }
 
@@ -116,7 +120,18 @@ function setHoveredFeature(e: MapLayerMouseEvent, mapRef: any, hoveredFeature: a
 
 function areaColouringEffect(mapRef: any, mapStats: Record<string, DBRow> | null, minVariableValue: any, maxVariableValue: any) {
   const map = mapRef.current?.getMap();
-  if (!map || !mapStats || minVariableValue === null || maxVariableValue === null) return;
+  if (!map) return;
+  
+   if (!mapStats) {
+    // Fallback to default grey colouring if no stats are available
+    for (const sourceLayer of ["ta", "sa3", "sa2", "sa1"]) {
+      map.removeFeatureState({
+        source: layerIdToSourceId(sourceLayer),
+        sourceLayer,
+      });
+    }
+    return;
+  }
 
   const colorScale = scaleSequential(interpolatePlasma)
     .domain([minVariableValue, maxVariableValue]);
