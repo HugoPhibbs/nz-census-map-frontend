@@ -62,78 +62,78 @@ export default function MapViewOptions({
   }
 
   return (
-    <Accordion id="map-filter">
-      <AccordionSummary id = "map-view-options-summary" expandIcon={<ExpandMoreIcon/>}>
+    <Accordion id="map-filter" >
+      <AccordionSummary id="map-view-options-summary" expandIcon={<ExpandMoreIcon />}>
         <Typography component="h3">Options</Typography>
       </AccordionSummary>
 
-      <AccordionDetails id = "map-filter-details">
-          <MapViewOptionsFormControl>
-            <InputLabel className="map-filter-label">Display by</InputLabel>
-            <Select
-              value={chosenVariableLocal}
-              onChange={(e) => onVariableChange(e)}
-              label="Display by"
-              defaultValue="none"
-              className="map-filter-select"
-              MenuProps={{
-                anchorOrigin: {
-                  vertical: "bottom",
-                  horizontal: "left",
+      <AccordionDetails id="map-filter-details">
+        <MapViewOptionsFormControl>
+          <InputLabel className="map-filter-label">Display by</InputLabel>
+          <Select
+            value={chosenVariableLocal}
+            onChange={(e) => onVariableChange(e)}
+            label="Display by"
+            defaultValue="none"
+            className="map-filter-select"
+            MenuProps={{
+              anchorOrigin: {
+                vertical: "bottom",
+                horizontal: "left",
+              },
+              transformOrigin: {
+                vertical: "top",
+                horizontal: "left",
+              },
+              slotProps: {
+                paper: {
+                  style: { maxHeight: menuMaxHeight },
+                  sx: { '& .MuiMenuItem-root': { fontSize: '0.8rem' } },
                 },
-                transformOrigin: {
-                  vertical: "top",
-                  horizontal: "left",
-                },
-                slotProps: {
-                  paper: {
-                    style: { maxHeight: menuMaxHeight },
-                    sx: { '& .MuiMenuItem-root': { fontSize: '0.8rem' } },
-                  },
-                },
-              }}
-            >
-              {Object.entries(variableOptions).map(([option_key, label]) => (
-                <MenuItem key={option_key} value={option_key}>
-                  {label}
-                </MenuItem>
-              ))}
-            </Select>
+              },
+            }}
+          >
+            {Object.entries(variableOptions).map(([option_key, label]) => (
+              <MenuItem key={option_key} value={option_key}>
+                {label}
+              </MenuItem>
+            ))}
+          </Select>
 
-          </MapViewOptionsFormControl>
+        </MapViewOptionsFormControl>
 
-          <MapViewOptionsFormControl>
-            <InputLabel className="map-filter-label" >Area type</InputLabel>
-            <Select
-              value={mapGranularity ?? ''}
-              onChange={(e) => e.target.value && setMapGranularity(e.target.value)}
-              label="Show areas by"
-              className="map-filter-select"
-              MenuProps={{
-                slotProps: {
-                  paper: {
-                    sx: { '& .MuiMenuItem-root': { fontSize: '0.8rem' } },
-                  },
+        <MapViewOptionsFormControl>
+          <InputLabel className="map-filter-label" >Area type</InputLabel>
+          <Select
+            value={mapGranularity ?? ''}
+            onChange={(e) => e.target.value && setMapGranularity(e.target.value)}
+            label="Show areas by"
+            className="map-filter-select"
+            MenuProps={{
+              slotProps: {
+                paper: {
+                  sx: { '& .MuiMenuItem-root': { fontSize: '0.8rem' } },
                 },
-              }}
-            >
-              <MenuItem value="auto">Auto</MenuItem>
-              <MenuItem value="sa1">Statistical area 1</MenuItem>
-              <MenuItem value="sa2">Statistical area 2</MenuItem>
-              <MenuItem value="sa3">Statistical area 3</MenuItem>
-              <MenuItem value="ta">Territorial authority</MenuItem>
-            </Select>
-          </MapViewOptionsFormControl>
+              },
+            }}
+          >
+            <MenuItem value="auto">Auto</MenuItem>
+            <MenuItem value="sa1">Statistical area 1</MenuItem>
+            <MenuItem value="sa2">Statistical area 2</MenuItem>
+            <MenuItem value="sa3">Statistical area 3</MenuItem>
+            <MenuItem value="ta">Territorial authority</MenuItem>
+          </Select>
+        </MapViewOptionsFormControl>
 
-          <Box>
-            <Button
-              variant="contained"
-              onClick={resetView}
-              id="reset-map-view-button"
-            >
-              Reset
-            </Button>
-          </Box>
+        <Box>
+          <Button
+            variant="contained"
+            onClick={resetView}
+            id="reset-map-view-button"
+          >
+            Reset
+          </Button>
+        </Box>
       </AccordionDetails>
     </Accordion>
   )
