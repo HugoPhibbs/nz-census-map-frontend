@@ -96,19 +96,27 @@
     position: absolute;
     top: 2em;
     left: 2em;
-    width: 15em;
     padding: 0;
-    border: 1px solid var(--light-grey-border);
-    border-radius: 6px;
-    background-color: var(--translucent-white-50); 
     z-index: 1;
+    width: 7em;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;   /* allow children to spill outside this box */
+}
+
+#map-filter .MuiCollapse-root {
+    width: 15em;
 }
 
 #map-filter-details {
     display: flex;
     flex-direction: column;
     gap: 0.5em;
-    padding: 0.5em;
+    padding: 1em 0.5em 0.5em 0.5em;
+    width: 15em;
+    border: 1px solid var(--light-grey-border);
+    border-radius: 0 6px 6px 6px;
+    background-color: var(--translucent-white-50);
 }
 
 #map-view-options-summary {
@@ -117,6 +125,7 @@
     border-radius: 6px;
     min-height: 3em;
     transition: border-radius 300ms ease;
+    max-width: 7em;
 }
 
 #map-view-options-summary > * {
