@@ -13,7 +13,7 @@ import Map, { Layer, MapRef, Source } from "react-map-gl/maplibre";
 import api from "../../api";
 import AreaLayer from "./AreaLayer";
 import MAP_COLOURS from "./MapColours";
-import MapFilter from "./MapFilter";
+import MapViewOptions from "./MapViewOptions";
 import MapInfoBox from "./MapInfoBox";
 import { layers, namedFlavor } from "@protomaps/basemaps";
 
@@ -28,6 +28,8 @@ const MAP_STYLE = {
   sources: {},
   layers: [{ id: "background", type: "background" as const, paint: { "background-color": MAP_COLOURS["background"] } }],
 };
+
+const DEFAULT_VIEW = { longitude: 174, latitude: -41, zoom: 3.5 }
 
 const IGNORED_LAYERS = [
   "landuse",
@@ -121,8 +123,8 @@ function setHoveredFeature(e: MapLayerMouseEvent, mapRef: any, hoveredFeature: a
 function areaColouringEffect(mapRef: any, mapStats: Record<string, DBRow> | null, minVariableValue: any, maxVariableValue: any) {
   const map = mapRef.current?.getMap();
   if (!map) return;
-  
-   if (!mapStats) {
+
+  if (!mapStats) {
     // Fallback to default grey colouring if no stats are available
     for (const sourceLayer of ["ta", "sa3", "sa2", "sa1"]) {
       map.removeFeatureState({
@@ -232,10 +234,10 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId, variableIdsToN
   }, [mapStats, minVariableValue, maxVariableValue]);
 
   const ZOOM_RANGES: Record<string, [number | undefined, number | undefined]> = {
-    "ta": [undefined, 6],
+    "ta": [0, 6],
     "sa3": [6, 9],
     "sa2": [9, 12],
-    "sa1": [12, undefined],
+    "sa1": [12, 24],
   }
 
   const getZoomRangeForLayer = (layerId: string) => {
@@ -243,11 +245,30 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId, variableIdsToN
     return (mapGranularity === layerId ? [0, 24] : [24, 24]);
   }
 
+  const resetZoom = () => {
+    const map = mapRef.current?.getMap();
+    if (!map) return;
+
+    map.flyTo({
+      center: [DEFAULT_VIEW.longitude, DEFAULT_VIEW.latitude],
+      zoom: DEFAULT_VIEW.zoom,
+      duration: 1000,
+      bearing: 0,
+      pitch: 0
+    });
+  }
+
   return (
     <>
 
       <Box id={"stats-map"}>
-        <MapFilter chosenVariable={chosenVariable} setChosenVariable={setChosenVariable} variableIdsToNameMap={variableIdsToNameMap} mapGranularity={mapGranularity} setMapGranularity={setMapGranularity} />
+        <MapViewOptions
+          resetZoom={resetZoom}
+          setChosenVariable={setChosenVariable}
+          variableIdsToNameMap={variableIdsToNameMap}
+          mapGranularity={mapGranularity}
+          setMapGranularity={setMapGranularity}
+        />
 
         <MapInfoBox
           min={minVariableValue}
@@ -260,7 +281,7 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId, variableIdsToN
 
         <Map
           ref={mapRef}
-          initialViewState={{ longitude: 174, latitude: -41, zoom: 3.5 }} // Centered on approx the tasman, zoom includes outlying islands
+          initialViewState={DEFAULT_VIEW} // Centered on approx the tasman, zoom includes outlying islands
           mapStyle={MAP_STYLE}
           interactiveLayerIds={INTERACTIVE_LAYERS}
           onMouseMove={(e: MapLayerMouseEvent) => handleMapHover(e)}
