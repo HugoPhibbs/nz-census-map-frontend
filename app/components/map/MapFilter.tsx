@@ -12,9 +12,10 @@ function MapFilterFormControl({ children }) {
   )
 }
 
-export default function MapFilter({ chosenVariable, setChosenVariable, variableIdsToNameMap, mapGranularity, setMapGranularity }: { chosenVariable: string | null; setChosenVariable: (variable: string) => void; variableIdsToNameMap: Record<string, string>; mapGranularity: string | null; setMapGranularity: (granularity: string | null) => void }) {
+export default function MapFilter({ chosenVariable, setChosenVariable, variableIdsToNameMap, mapGranularity, setMapGranularity }: { chosenVariable: string | null; setChosenVariable: (variable: string| null) => void; variableIdsToNameMap: Record<string, string>; mapGranularity: string | null; setMapGranularity: (granularity: string | null) => void }) {
 
-  let [variableOptions, setVariableOptions] = useState<Record<string, string>>({});
+  const [variableOptions, setVariableOptions] = useState<Record<string, string>>({});
+  const [chosenVariableLocal, setChosenVariableLocal] = useState<string | null>("none");
 
   const ITEM_HEIGHT = 36;
   const ITEM_PADDING_TOP = 8;
@@ -25,16 +26,27 @@ export default function MapFilter({ chosenVariable, setChosenVariable, variableI
     const filtered = Object.fromEntries(
       Object.entries(variableIdsToNameMap).filter(([id, _]: [any, any]) => !id.startsWith("pop_"))
     );
-    setVariableOptions(filtered as Record<string, string>);
+    setVariableOptions({ ...{"none": "None"}, ...filtered});
   }, [variableIdsToNameMap])
+
+  const onChangeHandle = (e: any) => {
+    const val = e.target.value;
+    setChosenVariableLocal(val);
+    if (val === "none") {
+      setChosenVariable(null);
+      return;
+    }
+    setChosenVariable(e.target.value);
+  }
 
   return <Box id="map-filter">
     <MapFilterFormControl>
       <InputLabel id="select-variable">Display by</InputLabel>
       <Select
-        value={chosenVariable ?? ''}
-        onChange={(e) => e.target.value && setChosenVariable(e.target.value)}
+        value={chosenVariableLocal}
+        onChange={(e) => onChangeHandle(e)}
         label="Display by"
+        defaultValue="none"
         className="map-filter-select"
         MenuProps={{
           anchorOrigin: {
@@ -52,9 +64,9 @@ export default function MapFilter({ chosenVariable, setChosenVariable, variableI
           },
         }}
       >
-        {Object.entries(variableOptions).map(([key, value]) => (
-          <MenuItem key={key} value={key}>
-            {value}
+        {Object.entries(variableOptions).map(([option_key, label]) => (
+          <MenuItem key={option_key} value={option_key}>
+            {label}
           </MenuItem>
         ))}
       </Select>

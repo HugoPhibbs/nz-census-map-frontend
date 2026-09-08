@@ -126,7 +126,7 @@
     position: absolute;
     bottom: 2em;
     right: 2em;
-    max-width: 16em;
+    max-width: 14em;
     min-width: 10em;
     padding: 0.5em;
     border: 1px solid var(--light-grey-border);
