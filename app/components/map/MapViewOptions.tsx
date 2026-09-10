@@ -1,6 +1,5 @@
 "use client";
 
-import api from "@/app/api";
 import { Box, FormControl, InputLabel, MenuItem, Select, Button, Typography, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import { useEffect, useState } from "react";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
