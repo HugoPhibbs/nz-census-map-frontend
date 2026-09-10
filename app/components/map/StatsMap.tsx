@@ -4,7 +4,7 @@ import { Box } from "@mui/material";
 import { Protocol } from "pmtiles";
 import { useEffect, useRef, useCallback, useState } from "react";
 
-import { scaleSequential } from "d3-scale";
+import { scaleSequential, scaleSequentialQuantile } from "d3-scale";
 import { interpolatePlasma } from "d3-scale-chromatic";
 import * as maplibregl from 'maplibre-gl';
 import { MapLayerMouseEvent, setWorkerUrl } from 'maplibre-gl';
@@ -134,6 +134,12 @@ function areaColouringEffect(mapRef: any, mapStats: Record<string, DBRow> | null
     }
     return;
   }
+
+  // const filteredValues = Object.values(mapStats)
+  //   .map((row) => row.variable_value as number | undefined)
+  //   .filter((v): v is number => v !== undefined && v !== null && Number.isFinite(v));
+
+  // const colorScale = scaleSequentialQuantile(filteredValues, interpolatePlasma)
 
   const colorScale = scaleSequential(interpolatePlasma)
     .domain([minVariableValue, maxVariableValue]);
