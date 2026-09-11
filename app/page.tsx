@@ -7,6 +7,7 @@ import InfoPanel from './components/InfoPanel';
 import { useEffect, useState } from 'react';
 import api from './api';
 import TitleBar from './components/TitleBar';
+import axios from 'axios';
 
 setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
@@ -16,7 +17,7 @@ export default function Home() {
   const [variableIdsToNameMap, setVariableIdsToNameMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    api.get(`/stats/variable/ids/to-name`, { "params": { "drop_pop_vars": true } })
+    axios.get(`/api/stats/variable/ids/to-name`, { "params": { "drop_pop_vars": true } })
       .then((res) => {
         setVariableIdsToNameMap(res.data);
       });

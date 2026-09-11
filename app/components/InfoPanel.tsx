@@ -6,6 +6,8 @@ import api from "../api";
 import { roundToDP, formatSA1Code } from "../utils";
 import { styled } from "@mui/material/styles";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import axios from 'axios';
+
 
 const DETAILED_VARIABLE_GROUPS = {
     "Employment": [
@@ -131,7 +133,7 @@ export default function InfoPanel({ areaId, variableIdsToNameMap }: { areaId: st
             return;
         }
 
-        api.get("/area", { "params": { "area_code": area_code, "census_year": area_id_split[0] } })
+        axios.get("/api/area", { "params": { "area_code": area_code, "census_year": area_id_split[0] } })
             .then(res => {
                 console.log(res.data)
                 setAreaName(res.data["area_name"]);
@@ -148,7 +150,7 @@ export default function InfoPanel({ areaId, variableIdsToNameMap }: { areaId: st
         const censusYear = parseInt(areaIdSplit[0]);
         const areaCode = areaIdSplit[1];
 
-        api.get("/stats/area",
+        axios.get("/api/stats/area",
             { "params": { "census_year": censusYear, "area_code": areaCode } })
             .then(res => {
                 const nextAreaVariables: Record<string, any> = {};

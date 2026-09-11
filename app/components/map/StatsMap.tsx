@@ -16,6 +16,8 @@ import MAP_COLOURS from "./MapColours";
 import MapViewOptions from "./MapViewOptions";
 import MapInfoBox from "./MapInfoBox";
 import { layers, namedFlavor } from "@protomaps/basemaps";
+import axios from 'axios';
+
 
 setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
@@ -55,7 +57,7 @@ function updateMapStatsEffect(chosenVariable: any, setMapStats: any, setMinVaria
   const CENSUS_YEAR = 2023; // Set as a constant for now.
 
   if (chosenVariable) {
-    api.get(`/stats/variable/${chosenVariable}/${CENSUS_YEAR}`)
+    axios.get(`/api/stats/variable/${chosenVariable}/${CENSUS_YEAR}`)
       .then((res) => {
         let newMapStats: Record<string, DBRow> = {};
         let newMinVariableValue: number = Infinity;
@@ -225,7 +227,7 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId, variableIdsToN
   }, []);
 
   useEffect(() => {
-    api.get(`/stats/variable/ids/to-unit`)
+    axios.get(`/api/stats/variable/ids/to-unit`)
       .then((res) => {
         setVariableIdToUnitMap(res.data);
       });
@@ -301,7 +303,7 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId, variableIdsToN
           <Source
             id="stats-map"
             type="vector"
-            url={`pmtiles://${process.env.NEXT_PUBLIC_API_HOST}/combined.pmtiles`}
+            url={`pmtiles://${process.env.NEXT_PUBLIC_API_HOST}/pmtiles/combined.pmtiles`}
             promoteId={{ ta: "area_id", sa3: "area_id", sa2: "area_id" }} // Keys for featureIds per layer
           >
             {BASEMAP_LAYERS.map((l) => <Layer key={l.id} {...l} />)}
@@ -314,7 +316,7 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId, variableIdsToN
           <Source
             id="sa1-map"
             type="vector"
-            url={`pmtiles://${process.env.NEXT_PUBLIC_API_HOST}/sa1.pmtiles`}
+            url={`pmtiles://${process.env.NEXT_PUBLIC_API_HOST}/pmtiles/sa1.pmtiles`}
             promoteId={{ sa1: "area_id" }}
           >
             {(() => {
