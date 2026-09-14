@@ -300,7 +300,9 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap }: { se
           attributionControl={false}
           onZoomEnd={(e) => console.log("zoom settled at:", e.viewState.zoom)}
           maxBounds={MAP_BOUNDS}
-        >
+          >
+          {/* Inserting the API link directly here avoids forwarding range headers to Next's own API proxy, so easier to just embed directly */}
+          
           <Source
             id="stats-map"
             type="vector"
