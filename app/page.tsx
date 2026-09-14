@@ -5,7 +5,6 @@ import { setWorkerUrl } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import InfoPanel from './components/InfoPanel';
 import { useEffect, useState } from 'react';
-import api from './api';
 import TitleBar from './components/TitleBar';
 import axios from 'axios';
 
@@ -27,7 +26,7 @@ export default function Home() {
     <Box id="content">
       <TitleBar/>
       <Box id="inner-content">
-        <StatsMap chosenAreaId={chosenAreaId} setChosenAreaId={setChosenAreaId} variableIdsToNameMap={variableIdsToNameMap} />
+        <StatsMap setChosenAreaId={setChosenAreaId} variableIdsToNameMap={variableIdsToNameMap} />
         <InfoPanel areaId={chosenAreaId} variableIdsToNameMap={variableIdsToNameMap} />
       </Box>
     </Box>

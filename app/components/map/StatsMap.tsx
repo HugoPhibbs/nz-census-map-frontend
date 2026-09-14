@@ -10,7 +10,6 @@ import * as maplibregl from 'maplibre-gl';
 import { MapLayerMouseEvent, setWorkerUrl } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import Map, { Layer, MapRef, Source } from "react-map-gl/maplibre";
-import api from "../../api";
 import AreaLayer from "./AreaLayer";
 import MAP_COLOURS from "./MapColours";
 import MapViewOptions from "./MapViewOptions";
@@ -32,6 +31,8 @@ const MAP_STYLE = {
 };
 
 const DEFAULT_VIEW = { longitude: 174, latitude: -41, zoom: 3.5 }
+
+const MAP_BOUNDS: [number, number, number, number] = [-205.400391, -49.667628, -169.628906, -30.977609];
 
 const IGNORED_LAYERS = [
   "landuse",
@@ -169,7 +170,7 @@ function areaColouringEffect(mapRef: any, mapStats: Record<string, DBRow> | null
   }
 }
 
-export default function StatsMap({ chosenAreaId, setChosenAreaId, variableIdsToNameMap }: { chosenAreaId: string | null; setChosenAreaId: (id: string | null) => void; variableIdsToNameMap: Record<string, string> }) {
+export default function StatsMap({ setChosenAreaId, variableIdsToNameMap }: { setChosenAreaId: (id: string | null) => void; variableIdsToNameMap: Record<string, string> }) {
 
   const mapRef = useRef<MapRef>(null);
   const hoveredFeature = useRef<{ source: string; sourceLayer: string; id: string | number } | null>(null);
@@ -298,7 +299,7 @@ export default function StatsMap({ chosenAreaId, setChosenAreaId, variableIdsToN
           cursor="pointer"
           attributionControl={false}
           onZoomEnd={(e) => console.log("zoom settled at:", e.viewState.zoom)}
-          maxBounds={[-205.400391, -49.667628, -169.628906, -30.977609]}
+          maxBounds={MAP_BOUNDS}
         >
           <Source
             id="stats-map"
