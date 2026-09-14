@@ -4,7 +4,7 @@ import { Box, FormControl, InputLabel, MenuItem, Select, Button, Typography, Acc
 import { useEffect, useState } from "react";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
-function MapViewOptionsFormControl({ children }) {
+function MapViewOptionsFormControl({ children } : {children: React.ReactNode}) {
   return (
     <FormControl className={"map-filter-dropdown"} size={"small"}>
       {children}
