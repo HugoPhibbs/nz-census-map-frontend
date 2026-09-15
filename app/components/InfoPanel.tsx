@@ -68,21 +68,10 @@ function formatVariableValue(variableValue: any): string {
 
 function GroupedVariables({ groupName, groupVariableIds, areaVariables, variableIdsToNameMap, expanded, onChange }: GroupedVariablesProps) {
     return (
-        <Accordion elevation={0} className="grouped-variables-accordion" disableGutters onChange={onChange(groupName)} expanded={expanded}
-            sx={{
-                '&:not(:last-child)': {
-                    borderBottom: 0,
-                },
-                '&::before': {
-                    display: 'none',
-                },
-                '&:last-of-type': {
-                    borderRadius: 0, // Only way I could find to remove the bottom accordion border radius
-                },
-            }}>
+        <Accordion elevation={0} className="grouped-variables-accordion" disableGutters onChange={onChange(groupName)} expanded={expanded}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />} className="grouped-variables-accordion-summary" sx={{
                 backgroundColor: "var(--title-bar-colour)",
-                minHeight: "2em"
+                minHeight: "2em",
             }}>
                 <Typography component={"h3"} className="grouped-variables-accordion-title"
                     sx={{ fontSize: "0.8em" }}>
