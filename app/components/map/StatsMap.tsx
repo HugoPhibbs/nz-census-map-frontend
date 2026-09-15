@@ -170,7 +170,13 @@ function areaColouringEffect(mapRef: any, mapStats: Record<string, DBRow> | null
   }
 }
 
-export default function StatsMap({ setChosenAreaId, variableIdsToNameMap }: { setChosenAreaId: (id: string | null) => void; variableIdsToNameMap: Record<string, string> }) {
+type StatsMapProps = {
+  setChosenAreaId: (id: string | null) => void;
+  variableIdsToNameMap: Record<string, string>;
+  variableIdsToUnitMap: Record<string, string>;
+};
+
+export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variableIdsToUnitMap }: StatsMapProps) {
 
   const mapRef = useRef<MapRef>(null);
   const hoveredFeature = useRef<{ source: string; sourceLayer: string; id: string | number } | null>(null);
@@ -185,8 +191,6 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap }: { se
   const [hoveredAreaName, setHoveredAreaName] = useState<string | null>(null);
   const [hoveredAreaId, setHoveredAreaId] = useState<string | null>(null);
   const [hoveredAreaStat, setHoveredAreaStat] = useState<number | null>(null);
-
-  const [variableIdToUnitMap, setVariableIdToUnitMap] = useState<Record<string, string>>({});
 
   const [mapGranularity, setMapGranularity] = useState<string | null>("auto");
 
@@ -225,13 +229,6 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap }: { se
     let protocol = new Protocol();
     maplibregl.addProtocol("pmtiles", protocol.tile);
     return () => maplibregl.removeProtocol("pmtiles");
-  }, []);
-
-  useEffect(() => {
-    axios.get(`/api/stats/variable/ids/to-unit`)
-      .then((res) => {
-        setVariableIdToUnitMap(res.data);
-      });
   }, []);
 
   useEffect(() => {
@@ -285,7 +282,7 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap }: { se
           hoveredAreaName={hoveredAreaName}
           hoveredAreaId={hoveredAreaId}
           hoveredAreaStat={hoveredAreaStat}
-          variableUnit={chosenVariable && variableIdToUnitMap[chosenVariable]}
+          variableUnit={chosenVariable && variableIdsToUnitMap[chosenVariable]}
         />
 
         <Map

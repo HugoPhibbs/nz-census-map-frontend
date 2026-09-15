@@ -14,6 +14,7 @@ export default function Home() {
   const [chosenAreaId, setChosenAreaId] = useState<string | null>(null);
 
   const [variableIdsToNameMap, setVariableIdsToNameMap] = useState<Record<string, string>>({});
+  const [variableIdsToUnitMap, setVariableIdToUnitMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
     axios.get(`/api/stats/variable/ids/to-name`, { "params": { "drop_pop_vars": true } })
@@ -22,12 +23,19 @@ export default function Home() {
       });
   }, [])
 
+  useEffect(() => {
+    axios.get(`/api/stats/variable/ids/to-unit`)
+      .then((res) => {
+        setVariableIdToUnitMap(res.data);
+      });
+  }, []);
+
   return (
     <Box id="content">
       <TitleBar/>
       <Box id="inner-content">
-        <StatsMap setChosenAreaId={setChosenAreaId} variableIdsToNameMap={variableIdsToNameMap} />
-        <InfoPanel areaId={chosenAreaId} variableIdsToNameMap={variableIdsToNameMap} />
+        <StatsMap setChosenAreaId={setChosenAreaId} variableIdsToNameMap={variableIdsToNameMap} variableIdsToUnitMap={variableIdsToUnitMap} />
+        <InfoPanel areaId={chosenAreaId} variableIdsToNameMap={variableIdsToNameMap} variableIdsToUnitMap={variableIdsToUnitMap} />
       </Box>
     </Box>
   );
