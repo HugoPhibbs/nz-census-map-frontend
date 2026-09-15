@@ -191,7 +191,7 @@ export default function InfoPanel({ areaId, variableIdsToNameMap }: { areaId: st
                     <Typography component="h2" id="info-panel-title">
                         {areaName}
                     </Typography>
-                    <TableContainer>
+                    <TableContainer id="info-panel-general-table-container">
                         <Table size="small">
                             <TableBody>
                                 {generalVariables.map((variable) => (

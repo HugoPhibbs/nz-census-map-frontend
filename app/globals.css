@@ -49,6 +49,10 @@
     gap: 1em;
 }
 
+#info-panel-general-table-container {
+    flex-shrink: 0;
+}
+
 #info-panel-title {
     font-size: 1.2em;
     font-weight: bold;
