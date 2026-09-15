@@ -1,8 +1,11 @@
 # NZ Census Maps Frontend
+
 ![Build](https://github.com/HugoPhibbs/nz-census-map-frontend/actions/workflows/build.yml/badge.svg)
 ![Deployment](https://img.shields.io/github/deployments/HugoPhibbs/nz-census-map-frontend/Production?label=Deployment)
 
-* Built with Next.js, with Maplibre for mapping graphics
+_Main repository: [nz-census-map](github.com/HugoPhibbs/nz-census-map)_
+
+Built with Next.js and TypeScript, with Maplibre for mapping graphics.
 
 ## Getting started
 * To install dependencies:
