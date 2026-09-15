@@ -49,6 +49,10 @@
     gap: 1em;
 }
 
+#info-panel-general-table-container {
+    flex-shrink: 0;
+}
+
 #info-panel-title {
     font-size: 1.2em;
     font-weight: bold;
@@ -80,6 +84,25 @@
 
 .grouped-variables-accordion {
     border: 1px solid var(--light-grey-border);
+    overflow: hidden;
+}
+
+/* Remove the bottom border of all accordions except the last one */
+.grouped-variables-accordion:not(:last-child) {
+  border-bottom: 0;
+}
+
+/* Remove the default dividers that Material UI adds between accordions */
+.grouped-variables-accordion::before {
+  display: none;
+}
+
+.grouped-variables-accordion:first-of-type {
+  border-radius: 6px 6px 0 0;
+}
+
+.grouped-variables-accordion:last-of-type {
+  border-radius: 0 0 6px 6px;
 }
 
 .grouped-variables-accordion-summary {

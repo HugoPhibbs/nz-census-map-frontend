@@ -1,6 +1,6 @@
 "use client";
 import { Box } from "@mui/material";
-import { roundToDP, formatSA1Code } from "@/app/utils";
+import { formatSA1Code, formatVariableStat } from "@/app/utils";
 import { interpolatePlasma } from "d3-scale-chromatic";
 
 function MapColourIndicator({ min, max, variableUnit }: { min: number | null; max: number | null; variableUnit: string | null }) {
@@ -25,34 +25,6 @@ function MapColourIndicator({ min, max, variableUnit }: { min: number | null; ma
             </Box>
         </Box>
     );
-}
-
-function formatVariableStat(value: number | null, unit: string | null): string {
-    const VARIABLE_UNIT_TO_DISPLAY_NAME: Record<string, string> = {
-        "HOUR": "hrs",
-        "COUNT": "people",
-        "NZD": "$",
-        "YEAR": "yrs",
-        "RATE": "p/w",
-        "PERCENTAGE": "%"
-    };
-
-    if (value === null || unit === null) {
-        return "";
-    }
-    value = roundToDP(value, 2);
-
-    if (unit == "NZD") {
-        return `$${value}`;
-    }
-
-    if (unit == "PERCENTAGE") {
-        return `${value}%`;
-    }
-
-    console.assert(unit in VARIABLE_UNIT_TO_DISPLAY_NAME, `Unknown unit: ${unit}`);
-
-    return `${value} ${VARIABLE_UNIT_TO_DISPLAY_NAME[unit]}`;
 }
 
 function HoverInfoBox({ hoveredAreaName, hoveredAreaStat, variableUnit, hoveredAreaId }: { hoveredAreaName: string | null; hoveredAreaId: string | null; hoveredAreaStat: number | null; variableUnit: string | null }) {
