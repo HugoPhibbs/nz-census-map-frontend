@@ -25,6 +25,16 @@ const DETAILED_VARIABLE_GROUPS = {
         ["perc_birthplace_nz"],
         ["perc_birthplace_overseas"]
     ],
+    "Health": [
+        ["perc_difficulty_hearing"],
+        ["perc_difficulty_remembering_concentrating"],
+        ["perc_difficulty_walking"],
+        ["perc_difficulty_washing"],
+        ["perc_difficulty_seeing"],
+        ["perc_difficulty_communicating"],
+        ["perc_regular_smoker"]
+    ]
+
 }
 
 const GENERAL_VARIABLE_IDS = [
