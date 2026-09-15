@@ -41,7 +41,7 @@ function InfoButton() {
 export default function TitleBar() {
 
     return (<Box id="title-bar">
-        <Typography variant="h1" id="main-title">NZ StatMap</Typography>
+        <Typography variant="h1" id="main-title">NZ Census Map</Typography>
 
         <Box id="title-bar-buttons-box">
             <InfoButton />
