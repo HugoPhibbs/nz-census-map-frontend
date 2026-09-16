@@ -134,7 +134,6 @@ export default function InfoPanel({ areaId, variableIdsToNameMap, variableIdsToU
         }
         const area_id_split = areaId?.split("-") ?? null;
         const area_code = area_id_split[1];
-        console.log(area_code);
 
         if (area_code.length == 7) { // SA1 (no names)
             setAreaName(formatSA1Code(area_code));
@@ -143,7 +142,6 @@ export default function InfoPanel({ areaId, variableIdsToNameMap, variableIdsToU
 
         axios.get("/api/area", { "params": { "area_code": area_code, "census_year": area_id_split[0] } })
             .then(res => {
-                console.log(res.data)
                 setAreaName(res.data["area_name"]);
             })
     }, [areaId]);

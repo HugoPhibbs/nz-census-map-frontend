@@ -64,8 +64,6 @@ function updateMapStatsEffect(chosenVariable: any, setMapStats: any, setMinVaria
         let newMinVariableValue: number = Infinity;
         let newMaxVariableValue: number = -Infinity;
 
-        console.log("first row of data:", res.data[0]);
-
         for (let row of res.data) {
           newMapStats[`${row.census_year}-${row.area_code}`] = row; // This matches area_id from the pimtiles file
           if (row.variable_value && row.variable_value < newMinVariableValue) {
@@ -295,7 +293,6 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
           onClick={(e: MapLayerMouseEvent) => handleMapClick(e, mapRef, selectedFeature, setChosenAreaId)}
           cursor="pointer"
           attributionControl={false}
-          onZoomEnd={(e) => console.log("zoom settled at:", e.viewState.zoom)}
           maxBounds={MAP_BOUNDS}
           >
           {/* Inserting the API link directly here avoids forwarding range headers to Next's own API proxy, so easier to just embed directly */}

@@ -19,7 +19,7 @@ function MapColourIndicator({ min, max, variableUnit }: { min: number | null; ma
                 }}
                 id="map-colour-indicator"
             />
-            <Box sx={{ display: "flex", justifyContent: "space-between", fontSize: 12, mt: 0.5 }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginTop: 0.5 }}>
                 <span>{formatVariableStat(min, variableUnit)}</span>
                 <span>{formatVariableStat(max, variableUnit)}</span>
             </Box>

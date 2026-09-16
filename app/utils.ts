@@ -21,7 +21,7 @@ export function formatVariableStat(value: number | null, unit: string | null): s
     const valueStr = roundToDP(value, 1).toLocaleString();
     
     if (unit === "PERCENTAGE") {
-        return `${value}%`;
+        return `${valueStr}%`;
     }
 
     if (unit === "HOUR") {
