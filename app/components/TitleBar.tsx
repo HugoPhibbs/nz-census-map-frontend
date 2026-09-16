@@ -28,9 +28,11 @@ function InfoButton() {
                 }}
             >
                 <Box id="website-info-box">
-                    <p>Built by Hugo Phibbs <br />
-                        Data sourced from <Link href="https://www.stats.govt.nz" target="_blank" rel="noopener"> Stats NZ</Link> <br />
-                        Maps created with <Link href="https://maplibre.org/" target="_blank" rel="noopener"> MapLibre</Link>
+                    <p>
+                        Census data: <Link href="https://www.stats.govt.nz" target="_blank" rel="noopener"> Stats NZ</Link> <br/>
+                        Map basemap: <Link href="https://docs.protomaps.com/basemaps/downloads" target="_blank" rel="noopener"> Protomaps</Link> <br/>
+                        Map visuals: <Link href="https://maplibre.org/" target="_blank" rel="noopener"> MapLibre</Link> <br/>
+                        Built by: <Link href="https://github.com/HugoPhibbs" target="_blank" rel="noopener"> Hugo Phibbs</Link> 
                     </p>
                 </Box>
             </Popover>
@@ -56,7 +58,6 @@ export default function TitleBar() {
                 </Icon>
             </IconButton>
         </Box>
-
     </Box>
     )
 }
