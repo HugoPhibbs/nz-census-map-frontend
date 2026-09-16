@@ -19,7 +19,7 @@ function MapColourIndicator({ min, max, variableUnit }: { min: number | null; ma
                 }}
                 id="map-colour-indicator"
             />
-            <Box sx={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginTop: 0.5 }}>
+            <Box id="map-info-box-number-indicators">
                 <span>{formatVariableStat(min, variableUnit)}</span>
                 <span>{formatVariableStat(max, variableUnit)}</span>
             </Box>
@@ -62,7 +62,7 @@ export default function MapInfoBox({
     return (
         <>
             {(hoveredAreaId || (min && max)) &&
-                <Box id={"map-info-box"} sx={{ zIndex: 1 }}>
+                <Box id={"map-info-box"}>
                     <HoverInfoBox
                         hoveredAreaName={hoveredAreaName}
                         hoveredAreaStat={hoveredAreaStat}
