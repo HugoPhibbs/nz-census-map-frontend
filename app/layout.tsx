@@ -1,4 +1,5 @@
 import "./globals.css";
+import { StyledEngineProvider } from '@mui/material/styles';
 
 export const metadata = {
   icons: {
@@ -15,7 +16,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body> 
+        {/* Adding this below ensures that globals.css has precedence over MUI styles */}
+        <StyledEngineProvider injectFirst>
+          {children}
+        </StyledEngineProvider> 
+      </body>
     </html>
   )
 }

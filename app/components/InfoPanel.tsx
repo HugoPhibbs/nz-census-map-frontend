@@ -1,9 +1,8 @@
 "use client";
 
-import { Accordion, AccordionDetails, AccordionSummary, Box, Table, TableBody, TableCell, TableContainer, TableRow, Typography } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Table, TableBody, TableCell, TableContainer, TableRow, Typography, Divider } from "@mui/material";
 import { useEffect, useState } from "react";
 import { formatVariableStat, formatSA1Code } from "../utils";
-import { styled } from "@mui/material/styles";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import axios from 'axios';
 
@@ -41,10 +40,6 @@ const GENERAL_VARIABLE_IDS = [
     ["avg_children_born", "Total fertility rate"],
 ]
 
-const VariableTableCell = styled(TableCell)({
-    padding: "0.2em",
-});
-
 type GroupedVariablesProps = {
     groupName: string;
     groupVariables: string[][];
@@ -81,10 +76,7 @@ function prepareGroupVariables(groupName: string, groupVariables: string[][], ar
 function GroupedVariables({ groupName, groupVariables, areaVariables, variableIdsToNameMap, variableIdsToUnitMap, expanded, onChange }: GroupedVariablesProps) {
     return (
         <Accordion elevation={0} className="grouped-variables-accordion" disableGutters onChange={onChange(groupName)} expanded={expanded}>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />} className="grouped-variables-accordion-summary" sx={{
-                backgroundColor: "var(--title-bar-colour)",
-                minHeight: "2em",
-            }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />} className="grouped-variables-accordion-summary">
                 <Typography component={"h3"} className="grouped-variables-accordion-title"
                     sx={{ fontSize: "0.8em" }}>
                     {groupName}
@@ -97,8 +89,8 @@ function GroupedVariables({ groupName, groupVariables, areaVariables, variableId
                         <TableBody>
                             {prepareGroupVariables(groupName, groupVariables, areaVariables, variableIdsToNameMap, variableIdsToUnitMap).map((variableInfo) => (
                                 <TableRow key={variableInfo[0]}>
-                                    <VariableTableCell>{variableInfo[1]}</VariableTableCell>
-                                    <VariableTableCell>{variableInfo[2]}</VariableTableCell>
+                                    <TableCell className="variable-table-cell">{variableInfo[1]}</TableCell>
+                                    <TableCell className="variable-table-cell">{variableInfo[2]}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -197,38 +189,44 @@ export default function InfoPanel({ areaId, variableIdsToNameMap, variableIdsToU
         {
             areaId ? (
                 <>
-                    <Typography component="h2" id="info-panel-title">
-                        {areaName}
-                    </Typography>
-                    <TableContainer id="info-panel-general-table-container">
-                        <Table size="small">
-                            <TableBody>
-                                {generalVariables.map((variable) => (
-                                    <TableRow key={variable.variableId}>
-                                        <VariableTableCell>{variable.variableName}</VariableTableCell>
-                                        <VariableTableCell>{formatVariableStat(variable.variableValue, variableIdsToUnitMap[variable.variableId])}</VariableTableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
+                    <Box id="info-panel-general-info-box">
+                        <Typography component="h2" id="info-panel-title">
+                            {areaName}
+                        </Typography>
+                        <TableContainer id="info-panel-general-table-container">
+                            <Table size="small">
+                                <TableBody>
+                                    {generalVariables.map((variable) => (
+                                        <TableRow key={variable.variableId}>
+                                            <TableCell className="variable-table-cell">{variable.variableName}</TableCell>
+                                            <TableCell className="variable-table-cell">{formatVariableStat(variable.variableValue, variableIdsToUnitMap[variable.variableId])}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    </Box>
 
-                    <Box>
+                    {/* <Divider/> */}
+
+                    <Box id={"info-panel-detailed-box"}>
                         <Typography component="h3" id="info-panel-detailed-title">
                             Detailed Stats
                         </Typography>
-                        {Object.entries(DETAILED_VARIABLE_GROUPS).map(([groupName, groupVariables]) => (
-                            <GroupedVariables
-                                key={groupName}
-                                groupName={groupName}
-                                groupVariables={groupVariables}
-                                areaVariables={areaVariables}
-                                variableIdsToNameMap={variableIdsToNameMap}
-                                variableIdsToUnitMap={variableIdsToUnitMap}
-                                expanded={expandedGroupName === groupName}
-                                onChange={handleGroupAccordionChange}
-                            />
-                        ))}
+                        <Box>
+                            {Object.entries(DETAILED_VARIABLE_GROUPS).map(([groupName, groupVariables]) => (
+                                <GroupedVariables
+                                    key={groupName}
+                                    groupName={groupName}
+                                    groupVariables={groupVariables}
+                                    areaVariables={areaVariables}
+                                    variableIdsToNameMap={variableIdsToNameMap}
+                                    variableIdsToUnitMap={variableIdsToUnitMap}
+                                    expanded={expandedGroupName === groupName}
+                                    onChange={handleGroupAccordionChange}
+                                />
+                            ))}
+                        </Box>
                     </Box>
                 </>
             ) : (
