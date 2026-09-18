@@ -2,6 +2,7 @@ import "./globals.css";
 import { StyledEngineProvider } from '@mui/material/styles';
 
 export const metadata = {
+  title: "NZ Census Map",
   icons: {
     icon: [
       { url: '/favicon.svg', type: 'image/svg+xml' },
