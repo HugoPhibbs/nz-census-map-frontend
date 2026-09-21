@@ -70,9 +70,6 @@ function prepareGroupVariables(
         rows[idx][2] = formattedVariableValue;
     }
 
-    console.log("Variable Avgs:", variableAvgs);
-    console.log(rows)
-
     return rows;
 }
 
@@ -163,7 +160,7 @@ export default function InfoPanel({ areaId, variableIdsToNameMap, variableIdsToU
 
     useEffect(() => {
         axios.get("/api/stats/variable/avgs")
-            .then(res => {setVariableAvgs(res.data); console.log(res.data);})
+            .then(res => setVariableAvgs(res.data))
     }, []);
 
     useEffect(() => {
