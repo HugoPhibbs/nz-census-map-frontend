@@ -17,11 +17,17 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body> 
+      <head>
+        <link rel="preload" as="fetch" crossOrigin="anonymous" href="https://protomaps.github.io/basemaps-assets/fonts/Noto%20Sans%20Italic/0-255.pbf" />
+        <link rel="preload" as="fetch" crossOrigin="anonymous" href="https://protomaps.github.io/basemaps-assets/fonts/Noto%20Sans%20Medium/0-255.pbf" />
+        <link rel="preload" as="fetch" crossOrigin="anonymous" href="https://protomaps.github.io/basemaps-assets/fonts/Noto%20Sans%20Regular/0-255.pbf" />
+        <link rel="preload" as="fetch" crossOrigin="anonymous" href="https://protomaps.github.io/basemaps-assets/fonts/Noto%20Sans%20Medium/256-511.pbf" />
+      </head>
+      <body>
         {/* Adding this below ensures that globals.css has precedence over MUI styles */}
         <StyledEngineProvider injectFirst>
           {children}
-        </StyledEngineProvider> 
+        </StyledEngineProvider>
       </body>
     </html>
   )
