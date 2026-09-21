@@ -1,8 +1,8 @@
 "use client";
 
-import { Accordion, AccordionDetails, AccordionSummary, Box, Table, TableBody, TableCell, TableContainer, TableRow, Typography, Divider } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Table, TableBody, TableHead, TableCell, TableContainer, TableRow, Typography, Divider } from "@mui/material";
 import { useEffect, useState } from "react";
-import { formatVariableStat, formatSA1Code } from "../utils";
+import { formatVariableStat, formatSA1Code, roundToDP } from "../utils";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import axios from 'axios';
 
@@ -40,23 +40,23 @@ const GENERAL_VARIABLE_IDS = [
     ["avg_children_born", "Total fertility rate"],
 ]
 
-type GroupedVariablesProps = {
-    groupName: string;
-    groupVariables: string[][];
-    areaVariables: Record<string, any> | null;
-    variableIdsToNameMap: Record<string, string>;
-    variableIdsToUnitMap: Record<string, string>;
-    expanded: boolean;
-    onChange: any;
-};
 
-function prepareGroupVariables(groupName: string, groupVariables: string[][], areaVariables: Record<string, any> | null, variableIdsToNameMap: Record<string, string>, variableIdsToUnitMap: Record<string, string>) {
+function prepareGroupVariables(
+    groupName: string, 
+    groupVariables: string[][], 
+    areaVariables: Record<string, any> | null, 
+    variableIdsToNameMap: Record<string, string>, 
+    variableIdsToUnitMap: Record<string, string>,
+    variableAvgs: Record<string, any> | null
+) {
     let rows = [];
     for (const variableInfo of groupVariables) {
         const variableId = variableInfo[0];
         const variableName = variableInfo[1] ? variableInfo[1] : variableIdsToNameMap[variableId];
         const variableValue = areaVariables?.[variableId]?.variable_value ?? null;
-        rows.push([variableId, variableName, variableValue]);
+        let variableAvgDiff = variableAvgs?.[variableId] ? variableAvgs[variableId] - variableValue : null;
+        variableAvgDiff = variableAvgDiff ? roundToDP(variableAvgDiff, 1) : null;
+        rows.push([variableId, variableName, variableValue, variableAvgDiff]);
     }
 
     if (groupName === "Ethnicities") {
@@ -70,12 +70,37 @@ function prepareGroupVariables(groupName: string, groupVariables: string[][], ar
         rows[idx][2] = formattedVariableValue;
     }
 
+    console.log("Variable Avgs:", variableAvgs);
+    console.log(rows)
+
     return rows;
 }
 
-function GroupedVariables({ groupName, groupVariables, areaVariables, variableIdsToNameMap, variableIdsToUnitMap, expanded, onChange }: GroupedVariablesProps) {
+function VariableDifferenceCell({ variableDiff }: { variableDiff: number | null }) {
+    if (variableDiff === null) {
+        return <TableCell className="variable-table-cell"></TableCell>;
+    }
     return (
-        <Accordion elevation={0} className="grouped-variables-accordion" disableGutters onChange={onChange(groupName)} expanded={expanded}>
+    <TableCell className="variable-table-cell" sx={{ color: variableDiff > 0 ? "success.main" : "error.main" }}>
+        {`${variableDiff > 0 ? '+' : ''}${variableDiff}`}
+    </TableCell>
+)
+}
+
+type GroupedVariablesProps = {
+    groupName: string;
+    groupVariables: string[][];
+    areaVariables: Record<string, any> | null;
+    variableIdsToNameMap: Record<string, string>;
+    variableIdsToUnitMap: Record<string, string>;
+    expanded: boolean;
+    handleGroupAccordionChange: any;
+    variableAvgs: Record<string, any> | null;
+};
+
+function GroupedVariables({ groupName, groupVariables, areaVariables, variableIdsToNameMap, variableIdsToUnitMap, expanded, handleGroupAccordionChange, variableAvgs }: GroupedVariablesProps) {
+    return (
+        <Accordion elevation={0} className="grouped-variables-accordion" disableGutters onChange={handleGroupAccordionChange(groupName)} expanded={expanded}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />} className="grouped-variables-accordion-summary">
                 <Typography component={"h3"} className="grouped-variables-accordion-title"
                     sx={{ fontSize: "0.8em" }}>
@@ -86,11 +111,20 @@ function GroupedVariables({ groupName, groupVariables, areaVariables, variableId
             <AccordionDetails>
                 <TableContainer>
                     <Table size="small">
+                        {/* <TableHead>
+                            <TableRow>
+                                <TableCell className="variable-table-cell">Variable</TableCell>
+                                <TableCell className="variable-table-cell">Value</TableCell>
+                                <TableCell className="variable-table-cell">Diff to avg</TableCell>
+                            </TableRow>
+                        </TableHead> */}
+
                         <TableBody>
-                            {prepareGroupVariables(groupName, groupVariables, areaVariables, variableIdsToNameMap, variableIdsToUnitMap).map((variableInfo) => (
+                            {prepareGroupVariables(groupName, groupVariables, areaVariables, variableIdsToNameMap, variableIdsToUnitMap, variableAvgs).map((variableInfo) => (
                                 <TableRow key={variableInfo[0]}>
                                     <TableCell className="variable-table-cell">{variableInfo[1]}</TableCell>
                                     <TableCell className="variable-table-cell">{variableInfo[2]}</TableCell>
+                                    <VariableDifferenceCell variableDiff={variableInfo[3]} />
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -106,7 +140,7 @@ function areaIdToAreaType(areaId: string | null): string | null {
     const areaCode = areaId.split("-")[1];
     if (areaCode.length === 7) {
         return "Statistical area 1";
-    } else if (areaCode.length === 6) {
+    } else if (areaCode.length === 6) { 
         return "Statistical area 2";
     } else if (areaCode.length === 5) {
         return "Statistical area 3";
@@ -124,7 +158,13 @@ type InfoPanelProps = {
 export default function InfoPanel({ areaId, variableIdsToNameMap, variableIdsToUnitMap }: InfoPanelProps) {
     const [areaVariables, setAreaVariables] = useState<Record<string, any> | null>(null);
     const [areaName, setAreaName] = useState<string | null>(null);
-    const [expandedGroupName, setExpandedGroupName] = useState<string | false>(false);
+    const [expandedGroupName, setExpandedGroupName] = useState<string | null>(null);
+    const [variableAvgs, setVariableAvgs] = useState<Record<string, any> | null>(null);
+
+    useEffect(() => {
+        axios.get("/api/stats/variable/avgs")
+            .then(res => {setVariableAvgs(res.data); console.log(res.data);})
+    }, []);
 
     useEffect(() => {
         if (!areaId) {
@@ -168,7 +208,7 @@ export default function InfoPanel({ areaId, variableIdsToNameMap, variableIdsToU
     }, [areaId]);
 
     const handleGroupAccordionChange = (groupName: string) => (_: any, newExpanded: boolean) => {
-        setExpandedGroupName(newExpanded ? groupName : false);
+        setExpandedGroupName(newExpanded ? groupName : null);
     };
 
     let generalVariables = GENERAL_VARIABLE_IDS.map((variableInfo) => ({
@@ -221,7 +261,8 @@ export default function InfoPanel({ areaId, variableIdsToNameMap, variableIdsToU
                                     variableIdsToNameMap={variableIdsToNameMap}
                                     variableIdsToUnitMap={variableIdsToUnitMap}
                                     expanded={expandedGroupName === groupName}
-                                    onChange={handleGroupAccordionChange}
+                                    handleGroupAccordionChange={handleGroupAccordionChange}
+                                    variableAvgs={variableAvgs}
                                 />
                             ))}
                         </Box>
