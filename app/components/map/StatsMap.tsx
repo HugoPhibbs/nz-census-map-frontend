@@ -30,7 +30,7 @@ const MAP_STYLE = {
   layers: [{ id: "background", type: "background" as const, paint: { "background-color": MAP_COLOURS["background"] } }],
 };
 
-const DEFAULT_VIEW = { longitude: 174, latitude: -41, zoom: 3.5 }
+const DEFAULT_VIEW = { longitude: 172.58, latitude: -40.14, zoom: 3.5 }
 
 const MAP_BOUNDS: [number, number, number, number] = [-205.400391, -49.667628, -169.628906, -30.977609];
 
