@@ -300,7 +300,7 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
           <Source
             id="stats-map"
             type="vector"
-            url={`pmtiles://${process.env.NEXT_PUBLIC_API_HOST}/pmtiles/combined.pmtiles`}
+            url={`pmtiles://${process.env.NEXT_PUBLIC_GCP_BUCKET_URL}/combined.pmtiles`}
             promoteId={{ ta: "area_id", sa3: "area_id", sa2: "area_id" }} // Keys for featureIds per layer
           >
             {BASEMAP_LAYERS.map((l) => <Layer key={l.id} {...l} />)}
@@ -313,7 +313,7 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
           <Source
             id="sa1-map"
             type="vector"
-            url={`pmtiles://${process.env.NEXT_PUBLIC_API_HOST}/pmtiles/sa1.pmtiles`}
+            url={`pmtiles://${process.env.NEXT_PUBLIC_GCP_BUCKET_URL}/sa1.pmtiles`}
             promoteId={{ sa1: "area_id" }}
           >
             {(() => {
