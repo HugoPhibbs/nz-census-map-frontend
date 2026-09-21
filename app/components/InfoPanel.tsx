@@ -1,6 +1,6 @@
 "use client";
 
-import { Accordion, AccordionDetails, AccordionSummary, Box, Table, TableBody, TableHead, TableCell, TableContainer, TableRow, Typography, Divider } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Table, TableBody, Button, TableHead, TableCell, TableContainer, TableRow, Typography, Divider, useMediaQuery } from "@mui/material";
 import { useEffect, useState } from "react";
 import { formatVariableStat, formatSA1Code, roundToDP } from "../utils";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -42,10 +42,10 @@ const GENERAL_VARIABLE_IDS = [
 
 
 function prepareGroupVariables(
-    groupName: string, 
-    groupVariables: string[][], 
-    areaVariables: Record<string, any> | null, 
-    variableIdsToNameMap: Record<string, string>, 
+    groupName: string,
+    groupVariables: string[][],
+    areaVariables: Record<string, any> | null,
+    variableIdsToNameMap: Record<string, string>,
     variableIdsToUnitMap: Record<string, string>,
     variableAvgs: Record<string, any> | null
 ) {
@@ -78,10 +78,10 @@ function VariableDifferenceCell({ variableDiff }: { variableDiff: number | null 
         return <TableCell className="variable-table-cell"></TableCell>;
     }
     return (
-    <TableCell className="variable-table-cell" sx={{ color: variableDiff > 0 ? "success.main" : "error.main" }}>
-        {`${variableDiff > 0 ? '+' : ''}${variableDiff}`}
-    </TableCell>
-)
+        <TableCell className="variable-table-cell" sx={{ color: variableDiff > 0 ? "success.main" : "error.main" }}>
+            {`${variableDiff > 0 ? '+' : ''}${variableDiff}`}
+        </TableCell>
+    )
 }
 
 type GroupedVariablesProps = {
@@ -137,7 +137,7 @@ function areaIdToAreaType(areaId: string | null): string | null {
     const areaCode = areaId.split("-")[1];
     if (areaCode.length === 7) {
         return "Statistical area 1";
-    } else if (areaCode.length === 6) { 
+    } else if (areaCode.length === 6) {
         return "Statistical area 2";
     } else if (areaCode.length === 5) {
         return "Statistical area 3";
@@ -150,13 +150,25 @@ type InfoPanelProps = {
     areaId: string | null;
     variableIdsToNameMap: Record<string, string>;
     variableIdsToUnitMap: Record<string, string>;
+    setAreaId: (areaId: string | null) => void;
 };
 
-export default function InfoPanel({ areaId, variableIdsToNameMap, variableIdsToUnitMap }: InfoPanelProps) {
+export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, variableIdsToUnitMap }: InfoPanelProps) {
     const [areaVariables, setAreaVariables] = useState<Record<string, any> | null>(null);
     const [areaName, setAreaName] = useState<string | null>(null);
     const [expandedGroupName, setExpandedGroupName] = useState<string | null>(null);
     const [variableAvgs, setVariableAvgs] = useState<Record<string, any> | null>(null);
+    const [transitionIsDone, setTransitionIsDone] = useState<boolean>(true);
+
+    const resetPanelState = () => {
+        setAreaName(null);
+        setAreaId(null);
+        setAreaVariables(null);
+        setExpandedGroupName(null);
+        setVariableAvgs(null);
+    }
+
+    const panelIsLoading = () => areaId && !areaName && !areaVariables;
 
     useEffect(() => {
         axios.get("/api/stats/variable/avgs")
@@ -165,8 +177,7 @@ export default function InfoPanel({ areaId, variableIdsToNameMap, variableIdsToU
 
     useEffect(() => {
         if (!areaId) {
-            setAreaVariables(null);
-            setAreaName(null);
+            resetPanelState();
             return;
         }
         const area_id_split = areaId?.split("-") ?? null;
@@ -220,58 +231,72 @@ export default function InfoPanel({ areaId, variableIdsToNameMap, variableIdsToU
         variableValue: areaIdToAreaType(areaId),
     })
 
-    return <Box id={"info-panel"}>
-        {
-            areaId ? (
-                <>
-                    <Box id="info-panel-general-info-box">
-                        <Typography component="h2" id="info-panel-title">
-                            {areaName}
-                        </Typography>
-                        <TableContainer id="info-panel-general-table-container">
-                            <Table size="small">
-                                <TableBody>
-                                    {generalVariables.map((variable) => (
-                                        <TableRow key={variable.variableId}>
-                                            <TableCell className="variable-table-cell">{variable.variableName}</TableCell>
-                                            <TableCell className="variable-table-cell">{formatVariableStat(variable.variableValue, variableIdsToUnitMap[variable.variableId])}</TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-                    </Box>
+    const isPhone = useMediaQuery('(max-width:600px)');
 
-                    {/* <Divider/> */}
+    return (
+        <Box
+            className={areaId ? "info-panel open" : "info-panel"}
+            onTransitionEnd={(e) => {
+                if (e.target === e.currentTarget) setTransitionIsDone(!!areaId);
+            }}
+        >
+            {
+                (areaId) ? (
+                    ((transitionIsDone || !isPhone) && !panelIsLoading()) && <>
+                        <Box id="info-panel-general-info-box">
+                            <Box className="info-panel-header">
+                                <Typography component="h2" id="info-panel-title">
+                                    {areaName}
+                                </Typography>
 
-                    <Box id={"info-panel-detailed-box"}>
-                        <Typography component="h3" id="info-panel-detailed-title">
-                            Detailed Stats
-                        </Typography>
-                        <Box>
-                            {Object.entries(DETAILED_VARIABLE_GROUPS).map(([groupName, groupVariables]) => (
-                                <GroupedVariables
-                                    key={groupName}
-                                    groupName={groupName}
-                                    groupVariables={groupVariables}
-                                    areaVariables={areaVariables}
-                                    variableIdsToNameMap={variableIdsToNameMap}
-                                    variableIdsToUnitMap={variableIdsToUnitMap}
-                                    expanded={expandedGroupName === groupName}
-                                    handleGroupAccordionChange={handleGroupAccordionChange}
-                                    variableAvgs={variableAvgs}
-                                />
-                            ))}
+                                {(areaId && isPhone) && <Button className={"close-info-panel-button rounded-button"} onClick={() => resetPanelState()}>Close</Button>}
+                            </Box>
+
+                            <TableContainer id="info-panel-general-table-container">
+                                <Table size="small">
+                                    <TableBody>
+                                        {generalVariables.map((variable) => (
+                                            <TableRow key={variable.variableId}>
+                                                <TableCell className="variable-table-cell">{variable.variableName}</TableCell>
+                                                <TableCell className="variable-table-cell">{formatVariableStat(variable.variableValue, variableIdsToUnitMap[variable.variableId])}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
                         </Box>
+
+                        {/* <Divider/> */}
+
+                        <Box id={"info-panel-detailed-box"}>
+                            <Typography component="h3" id="info-panel-detailed-title">
+                                Detailed Stats
+                            </Typography>
+                            <Box>
+                                {Object.entries(DETAILED_VARIABLE_GROUPS).map(([groupName, groupVariables]) => (
+                                    <GroupedVariables
+                                        key={groupName}
+                                        groupName={groupName}
+                                        groupVariables={groupVariables}
+                                        areaVariables={areaVariables}
+                                        variableIdsToNameMap={variableIdsToNameMap}
+                                        variableIdsToUnitMap={variableIdsToUnitMap}
+                                        expanded={expandedGroupName === groupName}
+                                        handleGroupAccordionChange={handleGroupAccordionChange}
+                                        variableAvgs={variableAvgs}
+                                    />
+                                ))}
+                            </Box>
+                        </Box>
+                    </>
+                ) : (
+                    <Box id="info-panel-hint">
+                        <Typography component="h2" id="info-panel-hint-text">
+                            Click an area to view details
+                        </Typography>
                     </Box>
-                </>
-            ) : (
-                <Box id="info-panel-hint">
-                    <Typography component="h2" id="info-panel-hint-text">
-                        Click an area to view details
-                    </Typography>
-                </Box>
-            )
-        }
-    </Box>
+                )
+            }
+        </Box>
+    )
 }

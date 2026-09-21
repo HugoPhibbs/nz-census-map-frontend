@@ -35,7 +35,7 @@ export default function Home() {
       <TitleBar/>
       <Box id="inner-content">
         <StatsMap setChosenAreaId={setChosenAreaId} variableIdsToNameMap={variableIdsToNameMap} variableIdsToUnitMap={variableIdsToUnitMap} />
-        <InfoPanel areaId={chosenAreaId} variableIdsToNameMap={variableIdsToNameMap} variableIdsToUnitMap={variableIdsToUnitMap} />
+        <InfoPanel areaId={chosenAreaId} setAreaId={setChosenAreaId} variableIdsToNameMap={variableIdsToNameMap} variableIdsToUnitMap={variableIdsToUnitMap} />
       </Box>
     </Box>
   );

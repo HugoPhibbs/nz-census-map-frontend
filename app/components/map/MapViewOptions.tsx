@@ -131,6 +131,7 @@ export default function MapViewOptions({
             variant="contained"
             onClick={resetView}
             id="reset-map-view-button"
+            className={"rounded-button"}
           >
             Reset
           </Button>
