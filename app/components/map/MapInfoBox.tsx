@@ -27,21 +27,15 @@ function MapColourIndicator({ min, max, variableUnit }: { min: number | null; ma
     );
 }
 
-function HoverInfoBox({ hoveredAreaName, hoveredAreaStat, variableUnit, hoveredAreaId }: { hoveredAreaName: string | null; hoveredAreaId: string | null; hoveredAreaStat: number | null; variableUnit: string | null }) {
+function HoverInfoBox({ hoveredAreaName, hoveredAreaStat, variableUnit, hoveredAreaId, isPhone }: { hoveredAreaName: string | null; hoveredAreaId: string | null; hoveredAreaStat: number | null; variableUnit: string | null; isPhone: boolean }) {
     if (!hoveredAreaId) return null; // Nothing being hovered
 
-    let label = hoveredAreaName;
-    if (!label) {
-        label = formatSA1Code(hoveredAreaId.split("-")[1]); // Fallback to ID (for SA1s, which don't have names)
-    }
-
-    const isLaptop = useMediaQuery("(min-width: 600px)");
+    const label = hoveredAreaName || formatSA1Code(hoveredAreaId.split("-")[1]); // Fallback to ID (for SA1s, which don't have names)
+    const stat = hoveredAreaStat ? formatVariableStat(hoveredAreaStat, variableUnit) : null;
 
     return (
         <Box id={"hover-info-box"}>
-            {!!hoveredAreaStat ? 
-                <p>{isLaptop ? `${label}: ` : ""}{formatVariableStat(hoveredAreaStat, variableUnit)}</p> 
-                : <p>{isLaptop ? label : ""}</p>}
+            <p>{!isPhone ? (stat ? `${label}: ${stat}` : label) : stat}</p>
         </Box>
     );
 }
@@ -63,6 +57,12 @@ export default function MapInfoBox({
     variableUnit,
     hoveredAreaId,
 }: MapInfoBoxProps) {
+    const isPhone = useMediaQuery("(max-width: 600px)");
+
+    if (isPhone && !(min && max)) {
+        return null;
+    }
+
     return (
         <>
             {(hoveredAreaId || (min && max)) &&
@@ -72,6 +72,7 @@ export default function MapInfoBox({
                         hoveredAreaStat={hoveredAreaStat}
                         variableUnit={variableUnit}
                         hoveredAreaId={hoveredAreaId}
+                        isPhone={isPhone}
                         />
                     <MapColourIndicator min={min} max={max} variableUnit={variableUnit} />
                 </Box>}
