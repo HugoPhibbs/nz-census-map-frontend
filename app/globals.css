@@ -12,24 +12,28 @@ body {
 }
 
 #inner-content {
-    width: 100%;
-    height: 93vh;
+    height: 93dvh;
     display: flex;
     min-height: 0;
 }
 
 @media (max-width: 600px) {
     #inner-content {
-        height: 95vh; /* title bar takes up the other 5vh on mobile */
         display: flex;
+        position: relative;
         flex-direction: column;
+        --info-panel-height: 8dvh; /* shared by .info-panel and #map-info-box */
+    }
+
+    #inner-content:has(.info-panel.open) {
+        --info-panel-height: 45dvh;
     }
 }
 
 #title-bar {
     background: var(--light-grey);
     color: black;
-    height: 7vh;
+    height: 7dvh;
     width: 100%;
     padding: 0.5em 1em 0.5em 1em;
     display: flex;
@@ -39,11 +43,11 @@ body {
     align-items: center;
 }
 
-@media (max-width: 600px) {
+/* @media (max-width: 600px) {
     #title-bar {
-        height: 5vh;
+        height: 8dvh;
     }
-}
+} */
 
 #main-title {
     font-size: 1.3em;
@@ -60,7 +64,7 @@ body {
 .info-panel {
     width: 25%;
     height: 100%;
-    padding: 0.5em 0 0.5em 1em;
+    padding: 0.5em 0.5em 0.5em 1em;
     overflow-y: auto;
     scrollbar-gutter: stable;
     border-left: 1px solid var(--light-grey-border);
@@ -72,21 +76,18 @@ body {
 @media (max-width: 600px) {
     .info-panel {
         width: 100%;
-        height: 5%;
+        height: var(--info-panel-height);
         position: absolute;
         bottom: 0;
         z-index: 1;
         background-color: white;
-        padding: 1em;
-        /* margin-bottom: 1em; */
-        padding-top: 0.5em;
+        padding: 1em 1em 2em 1em;
         border-radius: 12px 12px 0 0;
         transition: height 0.3s ease;
         overflow: hidden;
     }
-    
+
     .info-panel.open {
-        height: 30%;
         overflow-y: auto;
     }
 }
@@ -101,7 +102,7 @@ body {
 }
 
 .variable-table-cell {
-    padding: 0.2em; 
+    padding: 0.2em;
 }
 
 .info-panel-header {
@@ -169,20 +170,20 @@ body {
 
 /* Remove the bottom border of all accordions except the last one */
 .grouped-variables-accordion:not(:last-child) {
-  border-bottom: 0;
+    border-bottom: 0;
 }
 
 /* Remove the default dividers that Material UI adds between accordions */
 .grouped-variables-accordion::before {
-  display: none;
+    display: none;
 }
 
 .grouped-variables-accordion:first-of-type {
-  border-radius: 6px 6px 0 0;
+    border-radius: 6px 6px 0 0;
 }
 
 .grouped-variables-accordion:last-of-type {
-  border-radius: 0 0 6px 6px;
+    border-radius: 0 0 6px 6px;
 }
 
 .grouped-variables-accordion-summary {
@@ -198,7 +199,7 @@ body {
 @media (max-width: 600px) {
     #stats-map {
         width: 100%;
-        height: 97%;
+        height: 100%;
     }
 }
 
@@ -211,7 +212,8 @@ body {
     width: 7em;
     background: transparent;
     box-shadow: none;
-    overflow: visible;   /* allow children to spill outside this box */
+    overflow: visible;
+    /* allow children to spill outside this box */
 }
 
 @media (max-width: 600px) {
@@ -258,12 +260,12 @@ body {
     min-width: 8em;
 }
 
-#map-view-options-summary > * {
+#map-view-options-summary>* {
     margin: 0;
 }
 
 #map-view-options-summary.Mui-expanded {
-    border-radius: 6px 6px 0 0; 
+    border-radius: 6px 6px 0 0;
     border-bottom: 0;
 }
 
@@ -306,6 +308,17 @@ body {
     z-index: 1;
 }
 
+@media (max-width: 600px) {
+    #map-info-box {
+        bottom: calc(var(--info-panel-height) + 0.5em);
+        /* place it just above the info panel */
+        right: 0.5em;
+        max-width: 12em;
+        min-width: 8em;
+        transition: bottom 0.3s ease;
+    }
+}
+
 #map-info-box-number-indicators {
     display: flex;
     justify-content: space-between;
@@ -325,4 +338,25 @@ body {
     box-shadow: none;
     color: black;
     font-size: 0.8em;
+}
+
+.bottom-buffer-box {
+    display: none;
+}
+
+@media (max-width: 600px) {
+    .bottom-buffer-box {
+        display: block;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        height: 1em;
+        z-index: 1;
+    }
+
+    #inner-content:has(.info-panel.open) .bottom-buffer-box {
+        box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.1);
+    }
 }

@@ -266,7 +266,6 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
 
   return (
     <>
-
       <Box id={"stats-map"}>
         <MapViewOptions
           resetZoom={resetZoom}

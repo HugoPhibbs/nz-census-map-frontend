@@ -1,5 +1,5 @@
 "use client";
-import { Box } from "@mui/material";
+import { Box, useMediaQuery } from "@mui/material";
 import { formatSA1Code, formatVariableStat } from "@/app/utils";
 import { interpolatePlasma } from "d3-scale-chromatic";
 
@@ -35,9 +35,13 @@ function HoverInfoBox({ hoveredAreaName, hoveredAreaStat, variableUnit, hoveredA
         label = formatSA1Code(hoveredAreaId.split("-")[1]); // Fallback to ID (for SA1s, which don't have names)
     }
 
+    const isLaptop = useMediaQuery("(min-width: 600px)");
+
     return (
         <Box id={"hover-info-box"}>
-            {!!hoveredAreaStat ? <p>{label}: {formatVariableStat(hoveredAreaStat, variableUnit)}</p> : <p>{label}</p>}
+            {!!hoveredAreaStat ? 
+                <p>{isLaptop ? `${label}: ` : ""}{formatVariableStat(hoveredAreaStat, variableUnit)}</p> 
+                : <p>{isLaptop ? label : ""}</p>}
         </Box>
     );
 }
@@ -68,7 +72,7 @@ export default function MapInfoBox({
                         hoveredAreaStat={hoveredAreaStat}
                         variableUnit={variableUnit}
                         hoveredAreaId={hoveredAreaId}
-                    />
+                        />
                     <MapColourIndicator min={min} max={max} variableUnit={variableUnit} />
                 </Box>}
         </>

@@ -36,6 +36,7 @@ export default function Home() {
       <Box id="inner-content">
         <StatsMap setChosenAreaId={setChosenAreaId} variableIdsToNameMap={variableIdsToNameMap} variableIdsToUnitMap={variableIdsToUnitMap} />
         <InfoPanel areaId={chosenAreaId} setAreaId={setChosenAreaId} variableIdsToNameMap={variableIdsToNameMap} variableIdsToUnitMap={variableIdsToUnitMap} />
+        <Box className="bottom-buffer-box"></Box>
       </Box>
     </Box>
   );
