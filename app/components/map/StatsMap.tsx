@@ -1,6 +1,6 @@
 "use client";
 
-import { Box } from "@mui/material";
+import { Box, useMediaQuery } from "@mui/material";
 import { Protocol } from "pmtiles";
 import { useEffect, useRef, useCallback, useState } from "react";
 
@@ -29,8 +29,6 @@ const MAP_STYLE = {
   sources: {},
   layers: [{ id: "background", type: "background" as const, paint: { "background-color": MAP_COLOURS["background"] } }],
 };
-
-const DEFAULT_VIEW = { longitude: 172.58, latitude: -40.14, zoom: 3.5 }
 
 const MAP_BOUNDS: [number, number, number, number] = [-205.400391, -49.667628, -169.628906, -30.977609];
 
@@ -192,6 +190,10 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
 
   const [mapGranularity, setMapGranularity] = useState<string | null>("auto");
 
+  const isPhone = useMediaQuery('(max-width:600px)');
+  const defaultView = { longitude: 172.58, latitude: -40.14, zoom: isPhone ? 2.5 : 3.5 };
+  console.log("defaultView", defaultView);
+
   const clearHover = useCallback(() => {
     const map = mapRef.current?.getMap();
     if (map && hoveredFeature.current) {
@@ -254,8 +256,8 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
     if (!map) return;
 
     map.flyTo({
-      center: [DEFAULT_VIEW.longitude, DEFAULT_VIEW.latitude],
-      zoom: DEFAULT_VIEW.zoom,
+      center: [defaultView.longitude, defaultView.latitude],
+      zoom: defaultView.zoom,
       duration: 1000,
       bearing: 0,
       pitch: 0
@@ -285,7 +287,7 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
 
         <Map
           ref={mapRef}
-          initialViewState={DEFAULT_VIEW} // Centered on approx the tasman, zoom includes outlying islands
+          initialViewState={defaultView} // Centered on approx the tasman, zoom includes outlying islands
           mapStyle={MAP_STYLE}
           interactiveLayerIds={INTERACTIVE_LAYERS}
           onMouseMove={(e: MapLayerMouseEvent) => handleMapHover(e)}
@@ -294,9 +296,9 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
           cursor="pointer"
           attributionControl={false}
           maxBounds={MAP_BOUNDS}
-          >
+        >
           {/* Inserting the API link directly here avoids forwarding range headers to Next's own API proxy, so easier to just embed directly */}
-          
+
           <Source
             id="stats-map"
             type="vector"
