@@ -24,6 +24,7 @@ const DETAILED_VARIABLE_GROUPS = {
         ["perc_birthplace_overseas"]
     ],
     "Health": [
+        ["avg_children_born", "Total fertility rate"],
         ["perc_difficulty_hearing", "Difficulty hearing"],
         ["perc_difficulty_remembering_concentrating", "Difficulty remembering/concentrating"],
         ["perc_difficulty_walking", "Difficulty walking"],
@@ -36,8 +37,8 @@ const DETAILED_VARIABLE_GROUPS = {
 
 const GENERAL_VARIABLE_IDS = [
     ["pop_resident_usual", "Population"],
+    ["median_personal_income"],
     ["median_age"],
-    ["avg_children_born", "Total fertility rate"],
 ]
 
 
@@ -54,7 +55,7 @@ function prepareGroupVariables(
         const variableId = variableInfo[0];
         const variableName = variableInfo[1] ? variableInfo[1] : variableIdsToNameMap[variableId];
         const variableValue = areaVariables?.[variableId]?.variable_value ?? null;
-        let variableAvgDiff = variableAvgs?.[variableId] ? variableAvgs[variableId] - variableValue : null;
+        let variableAvgDiff = variableAvgs?.[variableId] ? variableValue - variableAvgs[variableId] : null;
         variableAvgDiff = variableAvgDiff ? roundToDP(variableAvgDiff, 1) : null;
         rows.push([variableId, variableName, variableValue, variableAvgDiff]);
     }
@@ -165,7 +166,6 @@ export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, var
         setAreaId(null);
         setAreaVariables(null);
         setExpandedGroupName(null);
-        setVariableAvgs(null);
     }
 
     const panelIsLoading = () => areaId && !areaName && !areaVariables;
