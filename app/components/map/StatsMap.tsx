@@ -192,7 +192,6 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
 
   const isPhone = useMediaQuery('(max-width:600px)');
   const defaultView = { longitude: 172.58, latitude: -40.14, zoom: isPhone ? 2.5 : 3.5 };
-  console.log("defaultView", defaultView);
 
   const clearHover = useCallback(() => {
     const map = mapRef.current?.getMap();
