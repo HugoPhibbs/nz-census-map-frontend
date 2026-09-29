@@ -30,7 +30,7 @@ const MAP_STYLE = {
   layers: [{ id: "background", type: "background" as const, paint: { "background-color": MAP_COLOURS["background"] } }],
 };
 
-const MAP_BOUNDS: [number, number, number, number] = [-205.400391, -49.667628, -169.628906, -30.977609];
+const MAP_BOUNDS: [number, number, number, number] = [-205.400391, -60, -169.628906, -20];
 
 const IGNORED_LAYERS = [
   "landuse",
@@ -191,7 +191,10 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
   const [mapGranularity, setMapGranularity] = useState<string | null>("auto");
 
   const isPhone = useMediaQuery('(max-width:600px)');
-  const defaultView = { longitude: 172.58, latitude: -40.14, zoom: isPhone ? 2.5 : 3.5 };
+  // const defaultView = { longitude: 172.58, latitude: -40.14,   zoom: isPhone ? 2.5 : 4.2};
+  const defaultView = isPhone ?
+    { longitude: 172.58, latitude: -41.5, zoom: 4.2} :
+   { longitude: 172.58, latitude: -40.7, zoom: 4.3};
 
   const clearHover = useCallback(() => {
     const map = mapRef.current?.getMap();
