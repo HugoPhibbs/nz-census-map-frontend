@@ -11,6 +11,16 @@ const DETAILED_VARIABLE_GROUPS = {
         ["median_personal_income"],
         ["avg_hours_worked_per_week"]
     ],
+    "Health": [
+        // ["avg_children_born", "Total fertility rate"],
+        ["perc_difficulty_hearing", "Difficulty hearing"],
+        ["perc_difficulty_remembering_concentrating", "Difficulty remembering/concentrating"],
+        ["perc_difficulty_walking", "Difficulty walking"],
+        ["perc_difficulty_washing", "Difficulty washing"],
+        ["perc_difficulty_seeing", "Difficulty seeing"],
+        ["perc_difficulty_communicating", "Difficulty communicating"],
+        ["perc_regular_smoker", "Regular smoker"]
+    ],
     "Ethnicities": [
         ["perc_ethnicity_pacific", "Pacific"],
         ["perc_ethnicity_other", "Other"],
@@ -22,16 +32,6 @@ const DETAILED_VARIABLE_GROUPS = {
     "Birthplace": [
         ["perc_birthplace_nz"],
         ["perc_birthplace_overseas"]
-    ],
-    "Health": [
-        // ["avg_children_born", "Total fertility rate"],
-        ["perc_difficulty_hearing", "Difficulty hearing"],
-        ["perc_difficulty_remembering_concentrating", "Difficulty remembering/concentrating"],
-        ["perc_difficulty_walking", "Difficulty walking"],
-        ["perc_difficulty_washing", "Difficulty washing"],
-        ["perc_difficulty_seeing", "Difficulty seeing"],
-        ["perc_difficulty_communicating", "Difficulty communicating"],
-        ["perc_regular_smoker", "Regular smoker"]
     ]
 }
 
