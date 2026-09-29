@@ -62,7 +62,7 @@ body {
 }
 
 .info-panel {
-    width: 25%;
+    width: 30%;
     height: 100%;
     padding: 0.5em 0.5em 0.5em 1em;
     overflow-y: auto;
@@ -192,7 +192,7 @@ body {
 }
 
 #stats-map {
-    width: 75%;
+    width: 70%;
     position: relative;
 }
 

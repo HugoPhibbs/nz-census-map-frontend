@@ -24,7 +24,7 @@ const DETAILED_VARIABLE_GROUPS = {
         ["perc_birthplace_overseas"]
     ],
     "Health": [
-        ["avg_children_born", "Total fertility rate"],
+        // ["avg_children_born", "Total fertility rate"],
         ["perc_difficulty_hearing", "Difficulty hearing"],
         ["perc_difficulty_remembering_concentrating", "Difficulty remembering/concentrating"],
         ["perc_difficulty_walking", "Difficulty walking"],
