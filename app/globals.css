@@ -29,7 +29,7 @@ body {
 }
 
 #title-bar {
-    background: var(---mui-palette-background-default);
+    background: var(--mui-palette-background-default);
     color: var(--mui-palette-text-primary);
     height: 7dvh;
     width: 100%;
@@ -90,7 +90,7 @@ body {
 }
 
 .close-info-panel-button {
-    background-color: var(---mui-palette-background-default);
+    background-color: var(--mui-palette-background-default);
 }
 
 #info-panel-general-table-container {
@@ -184,7 +184,7 @@ body {
 }
 
 .grouped-variables-accordion-summary {
-    background-color: var(---mui-palette-background-default);
+    background-color: var(--mui-palette-background-default);
     min-height: 2em;
 }
 
@@ -248,7 +248,6 @@ body {
 
 #map-view-options-summary {
     padding: 0.5em 0.5em 0.5em 0.7em;
-    /* background-color: var(---mui-palette-background-default); */
     background-color: var(--mui-palette-background-paper);
     border: 1px solid var(--mui-palette-divider);
     border-radius: 6px;
