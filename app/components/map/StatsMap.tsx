@@ -63,7 +63,7 @@ function updateMapStatsEffect(chosenVariable: any, setMapStats: any, setMinVaria
         let newMaxVariableValue: number = -Infinity;
 
         for (let row of res.data) {
-          newMapStats[`${row.census_year}-${row.area_code}`] = row; // This matches area_id from the pimtiles file
+          newMapStats[`${CENSUS_YEAR}-${row.area_code}`] = row; // This matches area_id from the pimtiles file
           if (row.variable_value && row.variable_value < newMinVariableValue) {
             newMinVariableValue = row.variable_value;
           }
