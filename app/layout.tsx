@@ -1,5 +1,9 @@
 import "./globals.css";
-import { StyledEngineProvider } from '@mui/material/styles';
+
+import { StyledEngineProvider, ThemeProvider } from '@mui/material/styles';
+import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
+import CssBaseline from '@mui/material/CssBaseline';
+import { THEME } from './theme';
 
 export const metadata = {
   title: "NZ Census Map",
@@ -16,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="preload" as="fetch" crossOrigin="anonymous" href="https://protomaps.github.io/basemaps-assets/fonts/Noto%20Sans%20Italic/0-255.pbf" />
         <link rel="preload" as="fetch" crossOrigin="anonymous" href="https://protomaps.github.io/basemaps-assets/fonts/Noto%20Sans%20Medium/0-255.pbf" />
@@ -24,9 +28,13 @@ export default function RootLayout({
         <link rel="preload" as="fetch" crossOrigin="anonymous" href="https://protomaps.github.io/basemaps-assets/fonts/Noto%20Sans%20Medium/256-511.pbf" />
       </head>
       <body>
-        {/* Adding this below ensures that globals.css has precedence over MUI styles */}
+        {/* See https://mui.com/material-ui/customization/dark-mode/ */}
+        <InitColorSchemeScript attribute="class" defaultMode="light"/>
         <StyledEngineProvider injectFirst>
-          {children}
+          <ThemeProvider theme={THEME} defaultMode="light">
+            <CssBaseline />
+            {children}
+          </ThemeProvider>
         </StyledEngineProvider>
       </body>
     </html>

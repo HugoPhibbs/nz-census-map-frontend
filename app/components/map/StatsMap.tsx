@@ -1,22 +1,21 @@
 "use client";
 
-import { Box, useMediaQuery } from "@mui/material";
+import { Box, useMediaQuery, useColorScheme } from "@mui/material";
 import { Protocol } from "pmtiles";
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useCallback, useState, useMemo } from "react";
 
-import { scaleSequential, scaleSequentialQuantile } from "d3-scale";
+import { scaleSequential } from "d3-scale";
 import { interpolatePlasma } from "d3-scale-chromatic";
 import * as maplibregl from 'maplibre-gl';
 import { MapLayerMouseEvent, setWorkerUrl } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import Map, { Layer, MapRef, Source } from "react-map-gl/maplibre";
 import AreaLayer from "./AreaLayer";
-import MAP_COLOURS from "./MapColours";
 import MapViewOptions from "./MapViewOptions";
 import MapInfoBox from "./MapInfoBox";
 import { layers, namedFlavor } from "@protomaps/basemaps";
 import axios from 'axios';
-
+import { getMapColours } from "./MapColours";
 
 setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
@@ -27,27 +26,21 @@ const MAP_STYLE = {
   glyphs: "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf",
   sprite: "https://protomaps.github.io/basemaps-assets/sprites/v4/light",
   sources: {},
-  layers: [{ id: "background", type: "background" as const, paint: { "background-color": MAP_COLOURS["background"] } }],
+  layers: [],
 };
 
 const MAP_BOUNDS: [number, number, number, number] = [-205.400391, -60, -169.628906, -20];
 
-const IGNORED_LAYERS = [
+const IGNORED_BASEMAP_LAYERS = [
+  "ta",
+  "sa3",
+  "sa2",
   "landuse",
   "pois",
   "buildings",
   "boundaries",
   "background" // Only way I could figure out how to set the background to what I want for non-existent tiles
 ]
-
-const MAP_FLAVOUR = {
-  ...namedFlavor("light"),
-  "water": MAP_COLOURS["background"],
-};
-
-const BASEMAP_LAYERS = layers("stats-map", MAP_FLAVOUR, { lang: "en" }).filter(
-  (l) => !IGNORED_LAYERS.includes(l.id)
-)
 
 const INTERACTIVE_LAYERS = ["ta-areas-fill", "sa3-areas-fill", "sa2-areas-fill", "sa1-areas-fill"];
 
@@ -63,7 +56,7 @@ function updateMapStatsEffect(chosenVariable: any, setMapStats: any, setMinVaria
         let newMaxVariableValue: number = -Infinity;
 
         for (let [areaCode, variableValue] of res.data) {
-          newMapStats[`${CENSUS_YEAR}-${areaCode}`] = {"area_code": areaCode, "variable_value": variableValue}; // This matches area_id from the pimtiles file
+          newMapStats[`${CENSUS_YEAR}-${areaCode}`] = { "area_code": areaCode, "variable_value": variableValue }; // This matches area_id from the pimtiles file
           if (variableValue && variableValue < newMinVariableValue) {
             newMinVariableValue = variableValue;
           }
@@ -184,11 +177,23 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
 
   const [mapGranularity, setMapGranularity] = useState<string | null>("auto");
 
+  const { mode } = useColorScheme();
+  const resolvedMode = mode === "dark" ? "dark": "light";
+  const mapColours = getMapColours(resolvedMode);
+
+  const basemapLayers = useMemo(() => {
+    const flavour = { ...namedFlavor(resolvedMode), water: mapColours.background };
+    return layers("stats-map", flavour, { lang: "en" })
+      .filter((l) => !IGNORED_BASEMAP_LAYERS.includes(l.id));
+  }, [resolvedMode, mapColours.background]);
+
+  // const colourScale = mode === "dark" ? interPolatePlasma : interpolatePlasma; 
+
   const isPhone = useMediaQuery('(max-width:600px)');
   // const defaultView = { longitude: 172.58, latitude: -40.14,   zoom: isPhone ? 2.5 : 4.2};
   const defaultView = isPhone ?
-    { longitude: 172.58, latitude: -41.5, zoom: 4.2} :
-   { longitude: 172.58, latitude: -40.7, zoom: 4.3};
+    { longitude: 172.58, latitude: -41.5, zoom: 4.2 } :
+    { longitude: 172.58, latitude: -40.7, zoom: 4.3 };
 
   const clearHover = useCallback(() => {
     const map = mapRef.current?.getMap();
@@ -213,6 +218,7 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
       return;
     }
 
+    // setHoveredFeature(e, mapRef, hoveredFeature, clearHover, colourScale);
     setHoveredFeature(e, mapRef, hoveredFeature, clearHover);
 
     const areaId = (feature?.properties?.area_id as string) ?? null;
@@ -292,7 +298,11 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
           attributionControl={false}
           maxBounds={MAP_BOUNDS}
         >
-          {/* Inserting the API link directly here avoids forwarding range headers to Next's own API proxy, so easier to just embed directly */}
+          <Layer
+            id="background"
+            type="background"
+            paint={{ "background-color": mapColours["background"] }}
+          />
 
           <Source
             id="stats-map"
@@ -300,10 +310,20 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
             url={`pmtiles://${process.env.NEXT_PUBLIC_GCP_BUCKET_URL}/combined.pmtiles`}
             promoteId={{ ta: "area_id", sa3: "area_id", sa2: "area_id" }} // Keys for featureIds per layer
           >
-            {BASEMAP_LAYERS.map((l) => <Layer key={l.id} {...l} />)}
+            {basemapLayers.map((l) => {
+              return <Layer key={l.id} {...l} />;
+            })}
+
             {(["ta", "sa3", "sa2"] as const).map((id) => {
               const [minZoom, maxZoom] = getZoomRangeForLayer(id);
-              return <AreaLayer key={id} layerId={id} sourceId={"stats-map"} minZoom={minZoom} maxZoom={maxZoom} />;
+              return <AreaLayer
+                key={id}
+                layerId={id}
+                sourceId={"stats-map"}
+                minZoom={minZoom}
+                maxZoom={maxZoom}
+                colours={mapColours}
+              />;
             })}
           </Source>
 
@@ -322,6 +342,7 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
                   sourceId={"sa1-map"}
                   minZoom={minZoom}
                   maxZoom={maxZoom}
+                  colours={mapColours}
                 />
               );
             })()}
