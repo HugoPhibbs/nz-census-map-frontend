@@ -62,13 +62,13 @@ function updateMapStatsEffect(chosenVariable: any, setMapStats: any, setMinVaria
         let newMinVariableValue: number = Infinity;
         let newMaxVariableValue: number = -Infinity;
 
-        for (let row of res.data) {
-          newMapStats[`${CENSUS_YEAR}-${row.area_code}`] = row; // This matches area_id from the pimtiles file
-          if (row.variable_value && row.variable_value < newMinVariableValue) {
-            newMinVariableValue = row.variable_value;
+        for (let [areaCode, variableValue] of res.data) {
+          newMapStats[`${CENSUS_YEAR}-${areaCode}`] = {"area_code": areaCode, "variable_value": variableValue}; // This matches area_id from the pimtiles file
+          if (variableValue && variableValue < newMinVariableValue) {
+            newMinVariableValue = variableValue;
           }
-          if (row.variable_value && row.variable_value > newMaxVariableValue) {
-            newMaxVariableValue = row.variable_value;
+          if (variableValue && variableValue > newMaxVariableValue) {
+            newMaxVariableValue = variableValue;
           }
         }
         setMapStats(newMapStats);
@@ -133,12 +133,6 @@ function areaColouringEffect(mapRef: any, mapStats: Record<string, DBRow> | null
     }
     return;
   }
-
-  // const filteredValues = Object.values(mapStats)
-  //   .map((row) => row.variable_value as number | undefined)
-  //   .filter((v): v is number => v !== undefined && v !== null && Number.isFinite(v));
-
-  // const colorScale = scaleSequentialQuantile(filteredValues, interpolatePlasma)
 
   const colorScale = scaleSequential(interpolatePlasma)
     .domain([minVariableValue, maxVariableValue]);
