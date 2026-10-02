@@ -1,10 +1,8 @@
 @import "tailwindcss";
 
 :root {
-    --light-grey-border: #ccc;
-    --light-grey: #f9f9f9;
-    --translucent-white: rgba(255, 255, 255, 0.9);
-    --translucent-white-85: rgba(255, 255, 255, 0.85);
+    --translucent-panel: color-mix(in srgb, var(--mui-palette-background-paper) 90%, transparent);
+    --translucent-panel-85: color-mix(in srgb, var(--mui-palette-background-paper) 85%, transparent);
 }
 
 body {
@@ -31,23 +29,22 @@ body {
 }
 
 #title-bar {
-    background: var(--light-grey);
-    color: black;
+    background: var(--mui-palette-background-default);
+    color: var(--mui-palette-text-primary);
     height: 7dvh;
     width: 100%;
     padding: 0.5em 1em 0.5em 1em;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    border-bottom: 1px solid var(--light-grey-border);
+    border-bottom: 1px solid var(--mui-palette-divider);
     align-items: center;
 }
 
-/* @media (max-width: 600px) {
-    #title-bar {
-        height: 8dvh;
-    }
-} */
+.info-icon {
+    /* fill: var(--mui-palette-text-primary); */
+    transition: none;
+}
 
 #main-title {
     font-size: 1.3em;
@@ -67,7 +64,7 @@ body {
     padding: 0.5em 0.5em 0.5em 1em;
     overflow-y: auto;
     scrollbar-gutter: stable;
-    border-left: 1px solid var(--light-grey-border);
+    border-left: 1px solid var(--mui-palette-divider);
     display: flex;
     flex-direction: column;
     gap: 0.7em;
@@ -80,7 +77,7 @@ body {
         position: absolute;
         bottom: 0;
         z-index: 1;
-        background-color: white;
+        background-color: var(--mui-palette-background-paper);
         padding: 1em 1em 2em 1em;
         border-radius: 12px 12px 0 0;
         transition: height 0.3s ease;
@@ -93,7 +90,7 @@ body {
 }
 
 .close-info-panel-button {
-    background-color: var(--light-grey);
+    background-color: var(--mui-palette-background-default);
 }
 
 #info-panel-general-table-container {
@@ -142,7 +139,7 @@ body {
 #website-info-box {
     width: 15em;
     padding: 0.5em;
-    border: 1px solid var(--light-grey-border);
+    border: 1px solid var(--mui-palette-divider);
     border-radius: 6px;
 }
 
@@ -164,7 +161,7 @@ body {
 }
 
 .grouped-variables-accordion {
-    border: 1px solid var(--light-grey-border);
+    border: 1px solid var(--mui-palette-divider);
     overflow: hidden;
 }
 
@@ -187,7 +184,7 @@ body {
 }
 
 .grouped-variables-accordion-summary {
-    background-color: var(--light-grey);
+    background-color: var(--mui-palette-background-default);
     min-height: 2em;
 }
 
@@ -233,14 +230,14 @@ body {
     gap: 0.5em;
     padding: 1em 0.5em 0.5em 0.5em;
     width: 15em;
-    border: 1px solid var(--light-grey-border);
+    border: 1px solid var(--mui-palette-divider);
     border-radius: 0 6px 6px 6px;
-    background-color: var(--translucent-white-85);
+    background-color: var(--translucent-panel-85);
 }
 
 .map-filter-label {
     /* font-size: 0.9em; */
-    color: black;
+    color: var(--mui-palette-text-primary);
 }
 
 #map-filter-formcontrols-box {
@@ -251,9 +248,8 @@ body {
 
 #map-view-options-summary {
     padding: 0.5em 0.5em 0.5em 0.7em;
-    /* background-color: var(--light-grey); */
-    background-color: white;
-    border: 1px solid var(--light-grey-border);
+    background-color: var(--mui-palette-background-paper);
+    border: 1px solid var(--mui-palette-divider);
     border-radius: 6px;
     min-height: 2.5em;
     transition: border-radius 300ms ease;
@@ -274,8 +270,7 @@ body {
 }
 
 .map-filter-select {
-    /* background-color: var(--translucent-white); */
-    background-color: white;
+    background-color: var(--mui-palette-background-paper);
     font-size: 0.8em;
 }
 
@@ -299,9 +294,9 @@ body {
     max-width: 14em;
     min-width: 10em;
     padding: 0.5em;
-    border: 1px solid var(--light-grey-border);
+    border: 1px solid var(--mui-palette-divider);
     border-radius: 1em;
-    background-color: var(--translucent-white);
+    background-color: var(--translucent-panel);
     display: flex;
     flex-direction: column;
     gap: 0.4em;
@@ -327,16 +322,16 @@ body {
 }
 
 .rounded-button {
-    border: 1px solid var(--light-grey-border);
+    border: 1px solid var(--mui-palette-divider);
     text-transform: none;
-    color: black;
+    color: var(--mui-palette-text-primary);
 }
 
 #reset-map-view-button {
-    background-color: white;
+    background-color: var(--mui-palette-background-paper);
     z-index: 1;
     box-shadow: none;
-    color: black;
+    color: var(--mui-palette-text-primary);
     font-size: 0.8em;
 }
 
@@ -351,7 +346,7 @@ body {
         bottom: 0;
         left: 0;
         right: 0;
-        background: white;
+        background: var(--mui-palette-background-paper);
         height: 1em;
         z-index: 1;
     }

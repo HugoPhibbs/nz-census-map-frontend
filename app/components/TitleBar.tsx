@@ -1,18 +1,24 @@
 "use client";
 
-import { Icon, IconButton, Link, Popover, Typography } from "@mui/material";
-import Box from "@mui/material/Box";
+import { IconButton, Link, Popover, Typography, useColorScheme, Box, SvgIconProps } from "@mui/material";
+import DarkModeIcon from "@mui/icons-material/DarkMode";
+import LightModeIcon from "@mui/icons-material/LightMode";
+import GitHubIcon from "@mui/icons-material/GitHub";
 import { useState } from "react";
+import InfoIcon from "./InfoIcon";
 
 function InfoButton() {
     const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
+    const {mode, setMode} = useColorScheme();
     return (
         <Box>
+            <IconButton onClick={() => setMode(mode === "light" ? "dark" : "light")}>
+                {mode === "light" ? <DarkModeIcon /> : <LightModeIcon />}
+            </IconButton>
+
             <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
-                <Icon>
-                    <img src="./info-icon.svg" alt="info icon" />
-                </Icon>
+                <InfoIcon className="info-icon" />
             </IconButton>
 
             <Popover
@@ -53,9 +59,7 @@ export default function TitleBar() {
                 target="_blank"
                 aria-label="Open GitHub repository"
             >
-                <Icon>
-                    <img src={"./github-logo.svg"} alt="GitHub Logo" />
-                </Icon>
+                <GitHubIcon />
             </IconButton>
         </Box>
     </Box>

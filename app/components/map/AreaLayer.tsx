@@ -1,15 +1,16 @@
 "use client";
 
-import {Layer} from "react-map-gl/maplibre";
-import MAP_COLOURS from "./MapColours";
+import { Layer } from "react-map-gl/maplibre";
+import { MapColours } from "./MapColours";
 
 export default function AreaLayer({
-  layerId, maxZoom, minZoom, sourceId
+  layerId, maxZoom, minZoom, sourceId, colours
 }: {
   layerId: string;
   maxZoom?: number;
   minZoom?: number;
   sourceId: string;
+  colours: MapColours;
 }) {
   return <>
     <Layer
@@ -23,7 +24,7 @@ export default function AreaLayer({
         "fill-color": [
           "coalesce",
           ["feature-state", "fillColor"],
-          MAP_COLOURS["areaFill"],
+          colours.areaFill,
         ],
         "fill-opacity": 0.6,
       }}
@@ -36,7 +37,10 @@ export default function AreaLayer({
       source-layer={layerId}
       minzoom={minZoom}
       maxzoom={maxZoom}
-      paint={{ "line-color": MAP_COLOURS["areaBorder"], "line-width": layerId === "sa1" ? 0.5: 1 }}
+      paint={{
+        "line-color": colours.areaBorder,
+        "line-width": layerId === "sa1" ? 0.5 : 1
+      }}
     />
 
     <Layer
@@ -50,7 +54,7 @@ export default function AreaLayer({
         "line-color": [
           "case",
           ["boolean", ["feature-state", "hover"], false],
-          MAP_COLOURS["areaBorderHover"],
+          colours.areaBorderHover,
           "rgba(0,0,0,0)",
         ],
         "line-width": 2,
@@ -67,7 +71,8 @@ export default function AreaLayer({
       paint={{
         "line-color": [
           "case",
-          ["boolean", ["feature-state", "selected"], false], MAP_COLOURS["areaBorderSelected"],
+          ["boolean", ["feature-state", "selected"], false], 
+          colours.areaBorderSelected,
           "rgba(0,0,0,0)",
         ],
         "line-width": 2,
