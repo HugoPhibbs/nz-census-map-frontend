@@ -1,9 +1,8 @@
 import type { NextConfig } from "next";
 
-let apiHost = process.env.NEXT_PUBLIC_API_HOST;
+const apiHost = process.env.NEXT_PUBLIC_API_HOST;
 if (!apiHost) {
-  console.warn("NEXT_PUBLIC_API_HOST is not set. Defaulting to http://localhost:5000");
-  apiHost = "http://localhost:5000"; // Default to localhost if not set
+  throw new Error("NEXT_PUBLIC_API_HOST environment variable is not set");
 }
 
 const nextConfig: NextConfig = {
