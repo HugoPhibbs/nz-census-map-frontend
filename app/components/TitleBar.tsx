@@ -3,7 +3,7 @@
 import { IconButton, Link, Popover, Typography, useColorScheme, Box, SvgIconProps } from "@mui/material";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
-import GitHubIcon from "@mui/icons-material/Github";
+import GitHubIcon from "@mui/icons-material/GitHub";
 import { useState } from "react";
 import InfoIcon from "./InfoIcon";
 
