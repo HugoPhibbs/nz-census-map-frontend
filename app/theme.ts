@@ -9,7 +9,7 @@ export const COLOURS = {
 }
 
 export const THEME = createTheme({
-  cssVariables: { colorSchemeSelector: "class" }, // adds .light / .dark to <html>
+  cssVariables: { colorSchemeSelector: "class" }, // adds .light / .dark classes to <html>
   colorSchemes: {
     light: {
       palette: {
@@ -17,7 +17,7 @@ export const THEME = createTheme({
         text: { primary: "#000000" },
         divider: COLOURS["light-divider"],
         primary: { main: "#1976d2" },
-        // action:  { active: "#000000" } # I like the default dark grey
+        // # I like the default dark grey for action, so we don't set
       },
     },
     dark: {

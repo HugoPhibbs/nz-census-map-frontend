@@ -202,10 +202,7 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
       .filter((l) => !IGNORED_BASEMAP_LAYERS.includes(l.id));
   }, [resolvedMode, mapColours.background]);
 
-  // const colourScale = mode === "dark" ? interPolatePlasma : interpolatePlasma; 
-
   const isPhone = useMediaQuery('(max-width:600px)');
-  // const defaultView = { longitude: 172.58, latitude: -40.14,   zoom: isPhone ? 2.5 : 4.2};
   const defaultView = isPhone ?
     { longitude: 172.58, latitude: -41.5, zoom: 4.2 } :
     { longitude: 172.58, latitude: -40.7, zoom: 4.3 };
@@ -242,8 +239,7 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
     ) {
       return;
     }
-
-    // setHoveredFeature(e, mapRef, hoveredFeature, clearHover, colourScale);
+    
     setHoveredFeature(e, mapRef, hoveredFeature, clearHover);
 
     const areaId = (feature?.properties?.area_id as string) ?? null;

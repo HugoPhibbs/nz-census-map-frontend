@@ -12,7 +12,6 @@ const DETAILED_VARIABLE_GROUPS = {
         ["avg_hours_worked_per_week"]
     ],
     "Health": [
-        // ["avg_children_born", "Total fertility rate"],
         ["perc_difficulty_hearing", "Difficulty hearing"],
         ["perc_difficulty_remembering_concentrating", "Difficulty remembering/concentrating"],
         ["perc_difficulty_walking", "Difficulty walking"],
@@ -120,14 +119,6 @@ function GroupedVariables({ groupName, groupVariables, areaVariables, variableId
             <AccordionDetails>
                 <TableContainer>
                     <Table size="small">
-                        {/* <TableHead>
-                            <TableRow>
-                                <TableCell className="variable-table-cell">Variable</TableCell>
-                                <TableCell className="variable-table-cell">Value</TableCell>
-                                <TableCell className="variable-table-cell">Diff to avg</TableCell>
-                            </TableRow>
-                        </TableHead> */}
-
                         <TableBody>
                             {prepareGroupVariables(groupName, groupVariables, areaVariables, variableIdsToNameMap, variableIdsToUnitMap, variableAvgs).map((variableInfo) => (
                                 <TableRow key={variableInfo.id}>
@@ -276,8 +267,6 @@ export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, var
                                 </Table>
                             </TableContainer>
                         </Box>
-
-                        {/* <Divider/> */}
 
                         <Box id={"info-panel-detailed-box"}>
                             <Typography component="h3" id="info-panel-detailed-title">

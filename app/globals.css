@@ -42,7 +42,6 @@ body {
 }
 
 .info-icon {
-    /* fill: var(--mui-palette-text-primary); */
     transition: none;
 }
 
@@ -95,7 +94,6 @@ body {
 
 #info-panel-general-table-container {
     flex-shrink: 0;
-    /* padding: 0.5em; */
 }
 
 .variable-table-cell {
@@ -210,7 +208,6 @@ body {
     background: transparent;
     box-shadow: none;
     overflow: visible;
-    /* allow children to spill outside this box */
 }
 
 @media (max-width: 600px) {
@@ -236,7 +233,6 @@ body {
 }
 
 .map-filter-label {
-    /* font-size: 0.9em; */
     color: var(--mui-palette-text-primary);
 }
 
