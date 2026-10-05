@@ -19,6 +19,10 @@ import { getMapColours } from "./MapColours";
 
 setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
+if (typeof window !== 'undefined') {
+  maplibregl.prewarm();
+}
+
 type DBRow = Record<string, string | number>;
 
 const MAP_STYLE = {
