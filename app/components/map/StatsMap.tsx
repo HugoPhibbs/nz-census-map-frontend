@@ -20,7 +20,8 @@ import { getMapColours } from "./MapColours";
 setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
 if (typeof window !== 'undefined') {
-  maplibregl.prewarm(); // Pre-fetch the .mjs module for faster loads. See
+  // Pre-fetch the .mjs module for faster loads. See https://maplibre.org/maplibre-gl-js/docs/API/functions/prewarm/
+  maplibregl.prewarm(); 
 }
 
 type DBRow = Record<string, string | number>;
@@ -215,7 +216,7 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
     // Basically we need mapLoaded so sprites are set once the map is loaded.
     // Without this, no sprites are rendered bc resolvedMode doesn't change before the map (this hook) is loaded
     if (!mapLoaded) return;
-    const spriteUrl =  `https://protomaps.github.io/basemaps-assets/sprites/v4/${mode}`;
+    const spriteUrl =  `https://protomaps.github.io/basemaps-assets/sprites/v4/${resolvedMode}`;
     mapRef.current?.getMap().setSprite(spriteUrl);
   }, [mapLoaded, resolvedMode]);
 
