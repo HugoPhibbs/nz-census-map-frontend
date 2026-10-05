@@ -1,6 +1,6 @@
 # NZ Census Maps Frontend
 
-![Test & Build](https://github.com/HugoPhibbs/nz-census-map-frontend/actions/workflows/build.yml/badge.svg)
+![Test & Build](https://github.com/HugoPhibbs/nz-census-map-frontend/actions/workflows/test-build.yml/badge.svg)
 ![Deployment](https://img.shields.io/github/deployments/HugoPhibbs/nz-census-map-frontend/Production?label=Deployment)
 
 _Main repository: [nz-census-map](https://github.com/HugoPhibbs/nz-census-map)_
@@ -23,4 +23,8 @@ npm run build
 * To run the production build:
 ```
 npm run start
+```
+* To run tests with Jest
+```
+npm test
 ```
