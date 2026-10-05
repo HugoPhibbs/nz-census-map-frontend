@@ -10,11 +10,11 @@ const VARIABLE_UNIT_TO_DISPLAY_NAME: Record<string, string> = {
 };
 
 export function formatVariableStat(value: number | null, unit: string | null): string {
-    if (!value) {
+    if (value === null || value === undefined) {
         return "";
     }
 
-    if (typeof value === "string" || unit === "COUNT" || !unit) {
+    if (unit === "COUNT" || !unit) {
       return value.toLocaleString();
     }
 
@@ -32,7 +32,7 @@ export function formatVariableStat(value: number | null, unit: string | null): s
         return `$${valueStr}`;
     }
 
-    return `${value} ${VARIABLE_UNIT_TO_DISPLAY_NAME[unit]}`;
+    return `${valueStr} ${VARIABLE_UNIT_TO_DISPLAY_NAME[unit]}`;
 }
 
 export function formatSA1Code(areaCode: string): string {

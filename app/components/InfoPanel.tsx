@@ -41,46 +41,57 @@ const GENERAL_VARIABLE_IDS = [
     ["median_age"],
 ]
 
+type GroupedVariableInfo = {
+    id: string;
+    name: string;
+    formattedValue: string;
+    avgDiff: number | null;
+};
 
-function prepareGroupVariables(
+export function prepareGroupVariables(
     groupName: string,
     groupVariables: string[][],
     areaVariables: Record<string, any> | null,
     variableIdsToNameMap: Record<string, string>,
     variableIdsToUnitMap: Record<string, string>,
     variableAvgs: Record<string, any> | null
-) {
+): GroupedVariableInfo[] {
     let rows = [];
     for (const variableInfo of groupVariables) {
         const variableId = variableInfo[0];
         const variableName = variableInfo[1] ? variableInfo[1] : variableIdsToNameMap[variableId];
         const variableValue = areaVariables?.[variableId]?.variable_value ?? null;
-        let variableAvgDiff = variableAvgs?.[variableId] ? variableValue - variableAvgs[variableId] : null;
-        variableAvgDiff = variableAvgDiff ? roundToDP(variableAvgDiff, 1) : null;
-        rows.push([variableId, variableName, variableValue, variableAvgDiff]);
+        const variableAvg = variableAvgs?.[variableId] ?? null;
+        let variableAvgDiff = (variableAvg !== null && variableValue !== null) ? variableValue - variableAvg : null;
+        variableAvgDiff = (variableAvgDiff !== null) ? roundToDP(variableAvgDiff, 1) : null;
+        rows.push({
+            id: variableId,
+            name: variableName,
+            value: variableValue,
+            avgDiff: variableAvgDiff
+        });
     }
 
     if (groupName === "Ethnicities") {
-        rows.sort((a, b) => b[2] - a[2]);
+        rows.sort((a, b) => b.value - a.value);
     }
 
-    for (let idx = 0; idx < rows.length; idx++) {
-        const [variableId, _, variableValue] = rows[idx];
-        const variableUnit = variableIdsToUnitMap[variableId] ?? null;
-        const formattedVariableValue = formatVariableStat(variableValue, variableUnit);
-        rows[idx][2] = formattedVariableValue;
-    }
-
-    return rows;
+    return rows.map(({ value, ...rest }) => ({
+        ...rest,
+        formattedValue: formatVariableStat(value, variableIdsToUnitMap[rest.id] ?? null),
+    }));
 }
 
 function VariableDifferenceCell({ variableDiff }: { variableDiff: number | null }) {
     if (variableDiff === null) {
         return <TableCell className="variable-table-cell"></TableCell>;
     }
+
+    const diffIsNonNegative = variableDiff >= 0;
+
     return (
-        <TableCell className="variable-table-cell" sx={{ color: variableDiff > 0 ? "success.main" : "error.main" }}>
-            {`${variableDiff > 0 ? '+' : ''}${variableDiff}`}
+        <TableCell className="variable-table-cell" sx={{ color: diffIsNonNegative ? "success.main" : "error.main" }}>
+            {`${diffIsNonNegative ? '+' : ''}${variableDiff}`}
         </TableCell>
     )
 }
@@ -119,10 +130,10 @@ function GroupedVariables({ groupName, groupVariables, areaVariables, variableId
 
                         <TableBody>
                             {prepareGroupVariables(groupName, groupVariables, areaVariables, variableIdsToNameMap, variableIdsToUnitMap, variableAvgs).map((variableInfo) => (
-                                <TableRow key={variableInfo[0]}>
-                                    <TableCell className="variable-table-cell">{variableInfo[1]}</TableCell>
-                                    <TableCell className="variable-table-cell">{variableInfo[2]}</TableCell>
-                                    <VariableDifferenceCell variableDiff={variableInfo[3]} />
+                                <TableRow key={variableInfo.id}>
+                                    <TableCell className="variable-table-cell">{variableInfo.name}</TableCell>
+                                    <TableCell className="variable-table-cell">{variableInfo.formattedValue}</TableCell>
+                                    <VariableDifferenceCell variableDiff={variableInfo.avgDiff} />
                                 </TableRow>
                             ))}
                         </TableBody>
