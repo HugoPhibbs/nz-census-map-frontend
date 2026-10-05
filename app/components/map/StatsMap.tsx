@@ -14,7 +14,7 @@ import AreaLayer from "./AreaLayer";
 import MapViewOptions from "./MapViewOptions";
 import MapInfoBox from "./MapInfoBox";
 import { layers, namedFlavor } from "@protomaps/basemaps";
-import axios from 'axios';
+import api from "@/app/api";
 import { getMapColours } from "./MapColours";
 
 setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
@@ -55,7 +55,7 @@ function updateMapStatsEffect(chosenVariable: any, setMapStats: any, setMinVaria
   const CENSUS_YEAR = 2023; // Set as a constant for now.
 
   if (chosenVariable) {
-    axios.get(`/api/stats/variable/${chosenVariable}/${CENSUS_YEAR}`)
+    api.get(`/stats/variable/${chosenVariable}/${CENSUS_YEAR}`)
       .then((res) => {
         let newMapStats: Record<string, DBRow> = {};
         let newMinVariableValue: number = Infinity;

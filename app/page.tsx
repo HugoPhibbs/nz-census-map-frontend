@@ -6,7 +6,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import InfoPanel from './components/InfoPanel';
 import { useEffect, useState } from 'react';
 import TitleBar from './components/TitleBar';
-import axios from 'axios';
+import api from "@/app/api";
 
 setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
@@ -17,14 +17,14 @@ export default function Home() {
   const [variableIdsToUnitMap, setVariableIdToUnitMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    axios.get(`/api/stats/variable/ids/to-name`, { "params": { "drop_pop_vars": true } })
+    api.get(`/stats/variable/ids/to-name`, { "params": { "drop_pop_vars": true } })
       .then((res) => {
         setVariableIdsToNameMap(res.data);
       });
   }, [])
 
   useEffect(() => {
-    axios.get(`/api/stats/variable/ids/to-unit`)
+    api.get(`/stats/variable/ids/to-unit`)
       .then((res) => {
         setVariableIdToUnitMap(res.data);
       });
