@@ -31,8 +31,8 @@ describe("prepareGroupVariables", () => {
         );
 
         expect(rows).toEqual([
-            {id: "pct_employed", name: "Employed", value: "62.3%", avgDiff: null},
-            {id: "median_income", name: "Median income", value: "$499.9", avgDiff: null},
+            {id: "pct_employed", name: "Employed", formattedValue: "62.3%", avgDiff: null},
+            {id: "median_income", name: "Median income", formattedValue: "$499.9", avgDiff: null},
         ]);
     });
 
@@ -52,11 +52,11 @@ describe("prepareGroupVariables", () => {
     test("returns an empty value when the area has no data", () => {
         expect(
             prepareGroupVariables("Employment", [["pct_employed"]], null, NAMES, UNITS, null),
-        ).toEqual([{id: "pct_employed", name: "Employed", value: "", avgDiff: null}]);
+        ).toEqual([{id: "pct_employed", name: "Employed", formattedValue: "", avgDiff: null}]);
 
         expect(
             prepareGroupVariables("Employment", [["pct_employed"]], {}, NAMES, UNITS, null),
-        ).toEqual([{id: "pct_employed", name: "Employed", value: "", avgDiff: null}]);
+        ).toEqual([{id: "pct_employed", name: "Employed", formattedValue: "", avgDiff: null}]);
     });
 
     test("calculates the difference from the average, rounded to 1dp", () => {
@@ -109,7 +109,7 @@ describe("prepareGroupVariables", () => {
         );
 
         expect(rows.map((r) => r.id)).toEqual(["pct_maori", "pct_asian", "pct_european"]);
-        expect(rows.map((r) => r.value)).toEqual(["50%", "30%", "10%"]);
+        expect(rows.map((r) => r.formattedValue)).toEqual(["50%", "30%", "10%"]);
     });
 
     test("sorts Ethnicities numerically, not alphabetically", () => {
@@ -162,5 +162,19 @@ describe("prepareGroupVariables", () => {
         );
 
         expect(rows[0].avgDiff).toBe(5);
+    });
+
+    test("returns empty diff and value for null values", () => {
+        const rows = prepareGroupVariables(
+            "Employment",
+            [["pct_employed"]],
+            { pct_employed: row(null) },
+            NAMES,
+            UNITS,
+            { pct_employed: 0 },
+        );
+
+        expect(rows[0].formattedValue).toBe("");
+        expect(rows[0].avgDiff).toBeNull();
     });
 });

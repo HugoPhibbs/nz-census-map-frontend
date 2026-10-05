@@ -44,7 +44,7 @@ const GENERAL_VARIABLE_IDS = [
 type GroupedVariableInfo = {
     id: string;
     name: string;
-    value: number;
+    formattedValue: string;
     avgDiff: number | null;
 };
 
@@ -62,7 +62,7 @@ export function prepareGroupVariables(
         const variableName = variableInfo[1] ? variableInfo[1] : variableIdsToNameMap[variableId];
         const variableValue = areaVariables?.[variableId]?.variable_value ?? null;
         const variableAvg = variableAvgs?.[variableId] ?? null;
-        let variableAvgDiff = variableAvg !== null ? variableValue - variableAvg : null;
+        let variableAvgDiff = (variableAvg !== null && variableValue !== null) ? variableValue - variableAvg : null;
         variableAvgDiff = (variableAvgDiff !== null) ? roundToDP(variableAvgDiff, 1) : null;
         rows.push({
             id: variableId,
@@ -76,14 +76,10 @@ export function prepareGroupVariables(
         rows.sort((a, b) => b.value - a.value);
     }
 
-    for (let idx = 0; idx < rows.length; idx++) {
-        const { id, value } = rows[idx];
-        const variableUnit = variableIdsToUnitMap[id] ?? null;
-        const formattedVariableValue = formatVariableStat(value, variableUnit);
-        rows[idx].value = formattedVariableValue;
-    }
-
-    return rows;
+    return rows.map(({ value, ...rest }) => ({
+        ...rest,
+        formattedValue: formatVariableStat(value, variableIdsToUnitMap[rest.id] ?? null),
+    }));
 }
 
 function VariableDifferenceCell({ variableDiff }: { variableDiff: number | null }) {
@@ -136,7 +132,7 @@ function GroupedVariables({ groupName, groupVariables, areaVariables, variableId
                             {prepareGroupVariables(groupName, groupVariables, areaVariables, variableIdsToNameMap, variableIdsToUnitMap, variableAvgs).map((variableInfo) => (
                                 <TableRow key={variableInfo.id}>
                                     <TableCell className="variable-table-cell">{variableInfo.name}</TableCell>
-                                    <TableCell className="variable-table-cell">{variableInfo.value}</TableCell>
+                                    <TableCell className="variable-table-cell">{variableInfo.formattedValue}</TableCell>
                                     <VariableDifferenceCell variableDiff={variableInfo.avgDiff} />
                                 </TableRow>
                             ))}
