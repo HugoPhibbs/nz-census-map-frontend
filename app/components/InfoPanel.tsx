@@ -4,7 +4,7 @@ import { Accordion, AccordionDetails, AccordionSummary, Box, Table, TableBody, B
 import { useEffect, useState } from "react";
 import { formatVariableStat, formatSA1Code, roundToDP } from "../utils";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import axios from 'axios';
+import api from "@/app/api";
 
 const DETAILED_VARIABLE_GROUPS = {
     "Employment": [
@@ -182,7 +182,7 @@ export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, var
     const panelIsLoading = () => areaId && !areaName && !areaVariables;
 
     useEffect(() => {
-        axios.get("/api/stats/variable/avgs")
+        api.get("/api/stats/variable/avgs")
             .then(res => setVariableAvgs(res.data))
     }, []);
 
@@ -199,7 +199,7 @@ export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, var
             return;
         }
 
-        axios.get("/api/area", { "params": { "area_code": area_code, "census_year": area_id_split[0] } })
+        api.get("/api/area", { "params": { "area_code": area_code, "census_year": area_id_split[0] } })
             .then(res => {
                 setAreaName(res.data["area_name"]);
             })
@@ -215,7 +215,7 @@ export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, var
         const censusYear = parseInt(areaIdSplit[0]);
         const areaCode = areaIdSplit[1];
 
-        axios.get("/api/stats/area",
+        api.get("/api/stats/area",
             { "params": { "census_year": censusYear, "area_code": areaCode } })
             .then(res => {
                 const newAreaVariables: Record<string, any> = {};
