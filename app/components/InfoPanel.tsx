@@ -182,7 +182,7 @@ export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, var
     const panelIsLoading = () => areaId && !areaName && !areaVariables;
 
     useEffect(() => {
-        api.get("/api/stats/variable/avgs")
+        api.get("/stats/variable/avgs")
             .then(res => setVariableAvgs(res.data))
     }, []);
 
@@ -199,7 +199,7 @@ export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, var
             return;
         }
 
-        api.get("/api/area", { "params": { "area_code": area_code, "census_year": area_id_split[0] } })
+        api.get("/area", { "params": { "area_code": area_code, "census_year": area_id_split[0] } })
             .then(res => {
                 setAreaName(res.data["area_name"]);
             })
@@ -215,7 +215,7 @@ export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, var
         const censusYear = parseInt(areaIdSplit[0]);
         const areaCode = areaIdSplit[1];
 
-        api.get("/api/stats/area",
+        api.get("/stats/area",
             { "params": { "census_year": censusYear, "area_code": areaCode } })
             .then(res => {
                 const newAreaVariables: Record<string, any> = {};

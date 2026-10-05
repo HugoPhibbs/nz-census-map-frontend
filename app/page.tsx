@@ -17,14 +17,14 @@ export default function Home() {
   const [variableIdsToUnitMap, setVariableIdToUnitMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    api.get(`/api/stats/variable/ids/to-name`, { "params": { "drop_pop_vars": true } })
+    api.get(`/stats/variable/ids/to-name`, { "params": { "drop_pop_vars": true } })
       .then((res) => {
         setVariableIdsToNameMap(res.data);
       });
   }, [])
 
   useEffect(() => {
-    api.get(`/api/stats/variable/ids/to-unit`)
+    api.get(`/stats/variable/ids/to-unit`)
       .then((res) => {
         setVariableIdToUnitMap(res.data);
       });

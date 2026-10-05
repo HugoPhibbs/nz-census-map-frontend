@@ -55,7 +55,7 @@ function updateMapStatsEffect(chosenVariable: any, setMapStats: any, setMinVaria
   const CENSUS_YEAR = 2023; // Set as a constant for now.
 
   if (chosenVariable) {
-    api.get(`/api/stats/variable/${chosenVariable}/${CENSUS_YEAR}`)
+    api.get(`/stats/variable/${chosenVariable}/${CENSUS_YEAR}`)
       .then((res) => {
         let newMapStats: Record<string, DBRow> = {};
         let newMinVariableValue: number = Infinity;
