@@ -20,7 +20,7 @@ import { getMapColours } from "./MapColours";
 setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
 if (typeof window !== 'undefined') {
-  maplibregl.prewarm();
+  maplibregl.prewarm(); // Pre-fetch the .mjs module for faster loads. See
 }
 
 type DBRow = Record<string, string | number>;
@@ -28,7 +28,6 @@ type DBRow = Record<string, string | number>;
 const MAP_STYLE = {
   version: 8 as const,
   glyphs: "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf",
-  sprite: "https://protomaps.github.io/basemaps-assets/sprites/v4/light",
   sources: {},
   layers: [],
 };
@@ -210,6 +209,16 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
     { longitude: 172.58, latitude: -41.5, zoom: 4.2 } :
     { longitude: 172.58, latitude: -40.7, zoom: 4.3 };
 
+  const [mapLoaded, setMapLoaded] = useState(false);
+
+  useEffect(() => {
+    // Basically we need mapLoaded so sprites are set once the map is loaded.
+    // Without this, no sprites are rendered bc resolvedMode doesn't change before the map (this hook) is loaded
+    if (!mapLoaded) return;
+    const spriteUrl =  `https://protomaps.github.io/basemaps-assets/sprites/v4/${mode}`;
+    mapRef.current?.getMap().setSprite(spriteUrl);
+  }, [mapLoaded, resolvedMode]);
+
   const clearHover = useCallback(() => {
     const map = mapRef.current?.getMap();
     if (map && hoveredFeature.current) {
@@ -293,6 +302,7 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
           ref={mapRef}
           initialViewState={defaultView} // Centered on approx the tasman, zoom includes outlying islands
           mapStyle={MAP_STYLE}
+          onLoad={() => setMapLoaded(true)}
           interactiveLayerIds={INTERACTIVE_LAYERS}
           onMouseMove={(e: MapLayerMouseEvent) => handleMapHover(e)}
           onMouseLeave={clearHover}
