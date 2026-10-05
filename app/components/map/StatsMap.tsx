@@ -31,6 +31,13 @@ const MAP_STYLE = {
 
 const MAP_BOUNDS: [number, number, number, number] = [-205.400391, -60, -169.628906, -20];
 
+const ZOOM_RANGES = {
+  "ta": [0, 6],
+  "sa3": [6, 9],
+  "sa2": [9, 12],
+  "sa1": [12, 24],
+}
+
 const IGNORED_BASEMAP_LAYERS = [
   "ta",
   "sa3",
@@ -43,7 +50,6 @@ const IGNORED_BASEMAP_LAYERS = [
 ]
 
 const INTERACTIVE_LAYERS = ["ta-areas-fill", "sa3-areas-fill", "sa2-areas-fill", "sa1-areas-fill"];
-
 
 function updateMapStatsEffect(chosenVariable: any, setMapStats: any, setMinVariableValue: any, setMaxVariableValue: any) {
   const CENSUS_YEAR = 2023; // Set as a constant for now.
@@ -112,6 +118,11 @@ function setHoveredFeature(e: MapLayerMouseEvent, mapRef: any, hoveredFeature: a
   }
 }
 
+function getZoomRangeForLayer(layerId: "ta" | "sa3" | "sa2" | "sa1", mapGranularity: string | null) {
+  if (mapGranularity === "auto") return ZOOM_RANGES[layerId];
+  return (mapGranularity === layerId ? [0, 24] : [24, 24]);
+}
+
 function areaColouringEffect(mapRef: any, mapStats: Record<string, DBRow> | null, minVariableValue: any, maxVariableValue: any) {
   const map = mapRef.current?.getMap();
   if (!map) return;
@@ -178,7 +189,7 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
   const [mapGranularity, setMapGranularity] = useState<string | null>("auto");
 
   const { mode } = useColorScheme();
-  const resolvedMode = mode === "dark" ? "dark": "light";
+  const resolvedMode = mode === "dark" ? "dark" : "light";
   const mapColours = getMapColours(resolvedMode);
 
   const basemapLayers = useMemo(() => {
@@ -240,18 +251,6 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
   useEffect(() => {
     areaColouringEffect(mapRef, mapStats, minVariableValue, maxVariableValue);
   }, [mapStats, minVariableValue, maxVariableValue]);
-
-  const ZOOM_RANGES: Record<string, [number | undefined, number | undefined]> = {
-    "ta": [0, 6],
-    "sa3": [6, 9],
-    "sa2": [9, 12],
-    "sa1": [12, 24],
-  }
-
-  const getZoomRangeForLayer = (layerId: string) => {
-    if (mapGranularity === "auto") return ZOOM_RANGES[layerId];
-    return (mapGranularity === layerId ? [0, 24] : [24, 24]);
-  }
 
   const resetZoom = () => {
     const map = mapRef.current?.getMap();
@@ -315,7 +314,7 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
             })}
 
             {(["ta", "sa3", "sa2"] as const).map((id) => {
-              const [minZoom, maxZoom] = getZoomRangeForLayer(id);
+              const [minZoom, maxZoom] = getZoomRangeForLayer(id, mapGranularity);
               return <AreaLayer
                 key={id}
                 layerId={id}
@@ -334,7 +333,7 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
             promoteId={{ sa1: "area_id" }}
           >
             {(() => {
-              const [minZoom, maxZoom] = getZoomRangeForLayer("sa1");
+              const [minZoom, maxZoom] = getZoomRangeForLayer("sa1", mapGranularity);
               return (
                 <AreaLayer
                   key={"sa1"}
