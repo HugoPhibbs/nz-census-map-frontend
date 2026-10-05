@@ -1,6 +1,6 @@
 # NZ Census Maps Frontend
 
-![Build](https://github.com/HugoPhibbs/nz-census-map-frontend/actions/workflows/build.yml/badge.svg)
+![Test & Build](https://github.com/HugoPhibbs/nz-census-map-frontend/actions/workflows/build.yml/badge.svg)
 ![Deployment](https://img.shields.io/github/deployments/HugoPhibbs/nz-census-map-frontend/Production?label=Deployment)
 
 _Main repository: [nz-census-map](https://github.com/HugoPhibbs/nz-census-map)_
