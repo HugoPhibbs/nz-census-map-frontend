@@ -43,8 +43,8 @@ function MapColourIndicator({ min, max, variableUnit, highlightedValue }: { min:
     );
 }
 
-function HoverInfoBox({ hoveredAreaName, hoveredAreaId }: { hoveredAreaName: string | null; hoveredAreaId: string | null }) {
-    if (!hoveredAreaId) return null;
+function HoverInfoBox({ hoveredAreaName, hoveredAreaId, isPhone }: { hoveredAreaName: string | null; hoveredAreaId: string | null; isPhone: boolean, isPhone: boolean }) {
+    if (!hoveredAreaId || isPhone) return null;
 
     return (
         <Box id={"hover-info-box"}>
@@ -83,6 +83,7 @@ export default function MapInfoBox({
                     <HoverInfoBox
                         hoveredAreaName={hoveredAreaName}
                         hoveredAreaId={hoveredAreaId}
+                        isPhone={isPhone}
                     />
                     <MapColourIndicator min={min} max={max} variableUnit={variableUnit} highlightedValue={hoveredAreaStat} />
                 </Box>
