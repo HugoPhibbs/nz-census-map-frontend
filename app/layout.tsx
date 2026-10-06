@@ -7,6 +7,7 @@ import { THEME } from './theme';
 
 export const metadata = {
   title: "NZ Census Map",
+  description: "Visualise demographic data from the NZ census with an interactive map",
   icons: {
     icon: [
       { url: '/favicon.svg', type: 'image/svg+xml' },
