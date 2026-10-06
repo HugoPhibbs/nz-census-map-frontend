@@ -4,6 +4,7 @@ import { Box, FormControl, InputLabel, MenuItem, Select, Button, Typography, Acc
 import { useEffect, useState } from "react";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { DEFAULT_CHOSEN_MAP_VARIABLE, AREA_TYPE, ZOOM_RANGES} from "./MapConstants";
+import {AREA_TYPE_TO_NAME} from "@/app/utils";
 
 function MapViewOptionsFormControl({ children }: { children: React.ReactNode }) {
   return (
@@ -21,13 +22,6 @@ function getAreaTypeForZoom(zoomLevel: number): AREA_TYPE {
   }
   console.warn(`Zoom level ${zoomLevel} does not correspond to any area type`);
   return "ta"; // Default
-}
-
-const AREA_TYPE_TO_NAME = {
-  "ta": "District",
-  "sa3": "Sub-District",
-  "sa2": "Suburb",
-  "sa1": "Neighbourhood"
 }
 
 type MapViewOptionsProps = {

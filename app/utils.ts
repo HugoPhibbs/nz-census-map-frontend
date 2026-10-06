@@ -38,3 +38,10 @@ export function formatVariableStat(value: number | null, unit: string | null): s
 export function formatSA1Code(areaCode: string): string {
   return `${areaCode} (SA1)`;
 }
+
+export const AREA_TYPE_TO_NAME = {
+  "ta": "District",
+  "sa3": "Subdistrict",
+  "sa2": "Suburb",
+  "sa1": "Neighbourhood"
+}

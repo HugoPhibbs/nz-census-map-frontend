@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { formatVariableStat, formatSA1Code, roundToDP } from "../utils";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import api from "@/app/api";
+import {AREA_TYPE_TO_NAME} from "@/app/utils";
 
 const DETAILED_VARIABLE_GROUPS = {
     "Employment": [
@@ -139,13 +140,13 @@ function areaIdToAreaType(areaId: string | null): string | null {
     if (!areaId) return null;
     const areaCode = areaId.split("-")[1];
     if (areaCode.length === 7) {
-        return "Statistical area 1";
+        return AREA_TYPE_TO_NAME["sa1"];
     } else if (areaCode.length === 6) {
-        return "Statistical area 2";
+        return AREA_TYPE_TO_NAME["sa2"];
     } else if (areaCode.length === 5) {
-        return "Statistical area 3";
+        return AREA_TYPE_TO_NAME["sa3"];
     } else {
-        return "Territorial authority";
+        return AREA_TYPE_TO_NAME["ta"];
     }
 }
 
