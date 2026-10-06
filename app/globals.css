@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-    --translucent-panel: color-mix(in srgb, var(--mui-palette-background-paper) 90%, transparent);
+    --translucent-panel: color-mix(in srgb, var(--mui-palette-background-paper) 95%, transparent);
     --translucent-panel-85: color-mix(in srgb, var(--mui-palette-background-paper) 85%, transparent);
 }
 
@@ -231,7 +231,7 @@ body {
     width: 15em;
     border: 1px solid var(--mui-palette-divider);
     border-radius: 0 6px 6px 6px;
-    background-color: var(--translucent-panel-85);
+    background-color: var(--translucent-panel);
 }
 
 #map-filter .map-filter-label {
@@ -281,16 +281,36 @@ body {
 }
 
 #map-colour-indicator {
+    position: relative;
     height: 12px;
     border-radius: 1em;
+}
+
+#map-colour-indicator-marker {
+    position: absolute;
+    top: 50%; /* Center vertically, this is relative to the centre of the circle */
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.6);
+    transform: translate(-50%, -50%); /* Reposition the marker, so its centre is now where its top-left corner was */
+    transition: left 0.15s ease-out; 
+}
+
+#map-colour-indicator-value {
+    position: absolute;
+    top: -100%;
+    transform: translate(-50%, -50%);
+    font-size: 13px;
+    transition: left 0.15s ease-out; 
 }
 
 #map-info-box {
     position: absolute;
     bottom: 2em;
     right: 2em;
-    max-width: 14em;
-    min-width: 10em;
+    width: 10em;
     padding: 0.5em;
     border: 1px solid var(--mui-palette-divider);
     border-radius: 1em;
@@ -299,6 +319,10 @@ body {
     flex-direction: column;
     gap: 0.4em;
     z-index: 1;
+}
+
+#hover-info-box {
+    margin-bottom: 12px;
 }
 
 @media (max-width: 600px) {
