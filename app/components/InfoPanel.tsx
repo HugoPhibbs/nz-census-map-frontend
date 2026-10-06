@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { formatVariableStat, formatSA1Code, roundToDP } from "../utils";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import api from "@/app/api";
-import {AREA_TYPE_TO_NAME} from "@/app/utils";
+import { AREA_TYPE_TO_NAME } from "@/app/utils";
 
 const DETAILED_VARIABLE_GROUPS = {
     "Employment": [
@@ -91,7 +91,7 @@ function VariableDifferenceCell({ variableDiff }: { variableDiff: number | null 
 
     return (
         <TableCell className="variable-table-cell" sx={{ color: diffIsNonNegative ? "success.main" : "error.main" }}>
-            {`${diffIsNonNegative ? '+' : ''}${variableDiff}`}
+            {`${diffIsNonNegative ? '+' : ''}${variableDiff}%`}
         </TableCell>
     )
 }
@@ -120,6 +120,13 @@ function GroupedVariables({ groupName, groupVariables, areaVariables, variableId
             <AccordionDetails>
                 <TableContainer>
                     <Table size="small">
+                        {groupName !== "Employment" && (
+                            <TableHead>
+                            <TableCell className="variable-table-cell table-head-cell">Statistic</TableCell>
+                            <TableCell className="variable-table-cell table-head-cell">Value</TableCell>
+                            <TableCell className="variable-table-cell table-head-cell">vs NZ</TableCell>
+                        </TableHead>
+                        )}
                         <TableBody>
                             {prepareGroupVariables(groupName, groupVariables, areaVariables, variableIdsToNameMap, variableIdsToUnitMap, variableAvgs).map((variableInfo) => (
                                 <TableRow key={variableInfo.id}>

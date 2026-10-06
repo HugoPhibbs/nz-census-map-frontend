@@ -98,7 +98,15 @@ body {
 }
 
 .variable-table-cell {
-    padding: 0.2em;
+    padding: 0.4em;
+    font-size: 0.8em;
+}
+
+.table-head-cell {
+    /* background-color: var(--mui-palette-background-default); */
+    white-space: nowrap;
+    font-weight: bold;
+    border-bottom: 1px solid black;
 }
 
 .info-panel-header {
@@ -121,7 +129,7 @@ body {
 #info-panel-detailed-box {
     display: flex;
     flex-direction: column;
-    gap: 0.2em;
+    gap: 0.5em;
 }
 
 #info-panel-detailed-title {
