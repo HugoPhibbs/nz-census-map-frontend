@@ -28,3 +28,14 @@ const MAP_COLOURS_DARK : MapColours = {
 export function getMapColours(mode: "light" | "dark"): MapColours {
   return mode === "light" ? MAP_COLOURS_LIGHT : MAP_COLOURS_DARK;
 }
+
+export const DEFAULT_CHOSEN_MAP_VARIABLE = "median_age";
+
+export type AREA_TYPE = "ta" | "sa3" | "sa2" | "sa1";
+
+export const ZOOM_RANGES : Record<AREA_TYPE, [number, number]> = {
+  "ta": [0, 6],
+  "sa3": [6, 9],
+  "sa2": [9, 12],
+  "sa1": [12, 24],
+}

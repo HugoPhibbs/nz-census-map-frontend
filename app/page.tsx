@@ -13,8 +13,8 @@ setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 export default function Home() {
   const [chosenAreaId, setChosenAreaId] = useState<string | null>(null);
 
-  const [variableIdsToNameMap, setVariableIdsToNameMap] = useState<Record<string, string>>({});
-  const [variableIdsToUnitMap, setVariableIdToUnitMap] = useState<Record<string, string>>({});
+  const [variableIdsToNameMap, setVariableIdsToNameMap] = useState<Record<string, string> | null>({});
+  const [variableIdsToUnitMap, setVariableIdToUnitMap] = useState<Record<string, string> | null>({});
 
   useEffect(() => {
     api.get(`/stats/variable/ids/to-name`, { "params": { "drop_pop_vars": true } })
