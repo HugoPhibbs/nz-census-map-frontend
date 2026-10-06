@@ -3,13 +3,17 @@ import { Box, useMediaQuery } from "@mui/material";
 import { formatSA1Code, formatVariableStat } from "@/app/utils";
 import { interpolatePlasma } from "d3-scale-chromatic";
 
-function MapColourIndicator({ min, max, variableUnit }: { min: number | null; max: number | null; variableUnit: string | null }) {
+const withOpacity = (c: string) => `color-mix(in srgb, ${c} 80%, transparent)`;
+
+function MapColourIndicator({ min, max, variableUnit, highlightedValue }: { min: number | null; max: number | null; variableUnit: string | null; highlightedValue: number | null }) {
     if (min === null || max === null || !isFinite(min) || !isFinite(max)) return null;
 
     const stops = Array.from({ length: 10 }, (_, i) => {
         const t = i / 9;
-        return `${interpolatePlasma(t)} ${(t * 100).toFixed(0)}%`;
+        return `${withOpacity(interpolatePlasma(t))} ${(t * 100).toFixed(0)}%`;
     }).join(", ");
+
+    const t = highlightedValue != null ? (highlightedValue - min) / (max - min) : null;
 
     return (
         <Box id="map-colour-indicator-box">
@@ -18,7 +22,19 @@ function MapColourIndicator({ min, max, variableUnit }: { min: number | null; ma
                     background: `linear-gradient(to right, ${stops})`,
                 }}
                 id="map-colour-indicator"
-            />
+            >
+                {t !== null && (
+                    <>
+                        <Box id="map-colour-indicator-value" sx={{ left: `${t * 100}%` }}>
+                            {highlightedValue}
+                        </Box>
+                        <Box    
+                            id="map-colour-indicator-marker"
+                            sx={{ left: `${t * 100}%`}}
+                        />
+                    </>
+                )}
+            </Box>
             <Box id="map-info-box-number-indicators">
                 <span>{formatVariableStat(min, variableUnit)}</span>
                 <span>{formatVariableStat(max, variableUnit)}</span>
@@ -27,23 +43,15 @@ function MapColourIndicator({ min, max, variableUnit }: { min: number | null; ma
     );
 }
 
-function HoverInfoBox({ hoveredAreaName, hoveredAreaStat, variableUnit, hoveredAreaId, isPhone }: { hoveredAreaName: string | null; hoveredAreaId: string | null; hoveredAreaStat: number | null; variableUnit: string | null; isPhone: boolean }) {
-    if (!hoveredAreaId) return null; // Nothing being hovered
-
-    const label = hoveredAreaName || formatSA1Code(hoveredAreaId.split("-")[1]); // Fallback to ID (for SA1s, which don't have names)
-    const stat = hoveredAreaStat ? formatVariableStat(hoveredAreaStat, variableUnit) : null;
+function HoverInfoBox({ hoveredAreaName, hoveredAreaId }: { hoveredAreaName: string | null; hoveredAreaId: string | null }) {
+    if (!hoveredAreaId) return null;
 
     return (
         <Box id={"hover-info-box"}>
-            <p>{!isPhone ? (stat ? `${label}: ${stat}` : label) : stat}</p>
+            {hoveredAreaName || formatSA1Code(hoveredAreaId.split("-")[1])}
         </Box>
     );
 }
-
-function ChosenAreaTypeIndicator({ mapGranularity }: { mapGranularity: string | null }) {
-    if (!mapGranularity) return null;
-}
-
 
 type MapInfoBoxProps = {
     min: number | null;
@@ -69,18 +77,16 @@ export default function MapInfoBox({
     }
 
     return (
-        <Box id={"map-info-box"}>
-            {(hoveredAreaId || (min && max)) ? <>
-                <HoverInfoBox
-                    hoveredAreaName={hoveredAreaName}
-                    hoveredAreaStat={hoveredAreaStat}
-                    variableUnit={variableUnit}
-                    hoveredAreaId={hoveredAreaId}
-                    isPhone={isPhone}
-                />
-                <MapColourIndicator min={min} max={max} variableUnit={variableUnit} />
-            </> : null}
-
-        </Box>
+        <>
+            {(hoveredAreaId || (min && max)) && (
+                <Box id={"map-info-box"}>
+                    <HoverInfoBox
+                        hoveredAreaName={hoveredAreaName}
+                        hoveredAreaId={hoveredAreaId}
+                    />
+                    <MapColourIndicator min={min} max={max} variableUnit={variableUnit} highlightedValue={hoveredAreaStat} />
+                </Box>
+            )}
+        </>
     );
 }
