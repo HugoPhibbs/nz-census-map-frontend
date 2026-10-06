@@ -67,6 +67,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 0.7em;
+    background-color: var(--mui-palette-background-paper);
 }
 
 @media (max-width: 600px) {
@@ -189,6 +190,7 @@ body {
 #stats-map {
     width: 70%;
     position: relative;
+    background-color: var(--mui-palette-background-paper);
 }
 
 @media (max-width: 600px) {

@@ -22,7 +22,7 @@ export const THEME = createTheme({
     },
     dark: {
       palette: {
-        background: { default: COLOURS["off-black"], paper: "#101214" },
+        background: { default: "#101214", paper: COLOURS["off-black"]},
         text: { primary: "#F6F7F8" },
         divider: COLOURS["dark-divider"],
         primary: { main: "#7ab8ff" },
