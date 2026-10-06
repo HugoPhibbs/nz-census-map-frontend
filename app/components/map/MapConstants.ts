@@ -6,6 +6,7 @@ export type MapColours = {
   areaBorder: string;
   areaBorderHover: string;
   areaBorderSelected: string;
+  areaFillOpacity: number;
 };
 
 
@@ -15,6 +16,7 @@ const MAP_COLOURS_LIGHT : MapColours = {
   "areaBorder": "white",
   "areaBorderHover": COLOURS["off-black"],
   "areaBorderSelected": COLOURS["off-black"],
+  "areaFillOpacity": 0.7,
 }
 
 const MAP_COLOURS_DARK : MapColours = {
@@ -23,6 +25,7 @@ const MAP_COLOURS_DARK : MapColours = {
   "areaBorder": COLOURS["off-black"],
   "areaBorderHover": COLOURS["bone-white"],
   "areaBorderSelected": COLOURS["bone-white"],
+  "areaFillOpacity": 0.6,
 }
 
 export function getMapColours(mode: "light" | "dark"): MapColours {

@@ -26,7 +26,7 @@ export default function AreaLayer({
           ["feature-state", "fillColor"],
           colours.areaFill,
         ],
-        "fill-opacity": 0.6,
+        "fill-opacity": colours.areaFillOpacity,
       }}
     />
 
