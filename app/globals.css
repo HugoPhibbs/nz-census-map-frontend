@@ -329,10 +329,6 @@ body {
     z-index: 1;
 }
 
-#hover-info-box {
-    margin-bottom: 12px;
-}
-
 @media (max-width: 600px) {
     #map-info-box {
         bottom: calc(var(--info-panel-height) + 0.5em);

@@ -121,10 +121,12 @@ function GroupedVariables({ groupName, groupVariables, areaVariables, variableId
                 <TableContainer>
                     <Table size="small">
                         {groupName !== "Employment" && (
-                            <TableHead>
-                            <TableCell className="variable-table-cell table-head-cell">Statistic</TableCell>
-                            <TableCell className="variable-table-cell table-head-cell">Value</TableCell>
-                            <TableCell className="variable-table-cell table-head-cell">vs NZ</TableCell>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell className="variable-table-cell table-head-cell">Statistic</TableCell>
+                                <TableCell className="variable-table-cell table-head-cell">Value</TableCell>
+                                <TableCell className="variable-table-cell table-head-cell">vs NZ</TableCell>
+                            </TableRow>
                         </TableHead>
                         )}
                         <TableBody>

@@ -17,6 +17,7 @@ function MapColourIndicator({ min, max, variableUnit, highlightedValue }: { min:
 
     return (
         <Box id="map-colour-indicator-box">
+            {t !== null && <Box sx={{minHeight: "15px"}}/>}
             <Box
                 sx={{
                     background: `linear-gradient(to right, ${stops})`,
@@ -24,7 +25,7 @@ function MapColourIndicator({ min, max, variableUnit, highlightedValue }: { min:
                 id="map-colour-indicator"
             >
                 {t !== null && (
-                    <>
+                    <>  
                         <Box id="map-colour-indicator-value" sx={{ left: `${t * 100}%` }}>
                             {highlightedValue}
                         </Box>
