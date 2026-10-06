@@ -15,7 +15,8 @@ import MapViewOptions from "./MapViewOptions";
 import MapInfoBox from "./MapInfoBox";
 import { layers, namedFlavor } from "@protomaps/basemaps";
 import api from "@/app/api";
-import { getMapColours } from "./MapColours";
+import { getMapColours } from "./MapConstants";
+import { DEFAULT_CHOSEN_MAP_VARIABLE, AREA_TYPE, ZOOM_RANGES } from "./MapConstants";
 
 setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
@@ -34,13 +35,6 @@ const MAP_STYLE = {
 };
 
 const MAP_BOUNDS: [number, number, number, number] = [-205.400391, -60, -169.628906, -20];
-
-const ZOOM_RANGES = {
-  "ta": [0, 6],
-  "sa3": [6, 9],
-  "sa2": [9, 12],
-  "sa1": [12, 24],
-}
 
 const IGNORED_BASEMAP_LAYERS = [
   "ta",
@@ -122,7 +116,7 @@ function setHoveredFeature(e: MapLayerMouseEvent, mapRef: any, hoveredFeature: a
   }
 }
 
-function getZoomRangeForLayer(layerId: "ta" | "sa3" | "sa2" | "sa1", mapGranularity: string | null) {
+function getZoomRangeForLayer(layerId: AREA_TYPE, mapGranularity: string | null) {
   if (mapGranularity === "auto") return ZOOM_RANGES[layerId];
   return (mapGranularity === layerId ? [0, 24] : [24, 24]);
 }
@@ -180,7 +174,7 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
   const hoveredFeature = useRef<{ source: string; sourceLayer: string; id: string | number } | null>(null);
   const selectedFeature = useRef<{ source: string; sourceLayer: string; id: string | number } | null>(null);
 
-  const [chosenVariable, setChosenVariable] = useState<string | null>(null);
+  const [chosenVariable, setChosenVariable] = useState<string | null>(DEFAULT_CHOSEN_MAP_VARIABLE);
   const [mapStats, setMapStats] = useState<Record<string, DBRow> | null>({});
 
   const [minVariableValue, setMinVariableValue] = useState<number | null>(null);
@@ -284,6 +278,7 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
           variableIdsToNameMap={variableIdsToNameMap}
           mapGranularity={mapGranularity}
           setMapGranularity={setMapGranularity}
+          map={mapLoaded ? mapRef.current?.getMap() ?? null : null}
         />
 
         <MapInfoBox

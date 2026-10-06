@@ -234,7 +234,7 @@ body {
     background-color: var(--translucent-panel-85);
 }
 
-.map-filter-label {
+#map-filter .map-filter-label {
     color: var(--mui-palette-text-primary);
 }
 
@@ -267,7 +267,7 @@ body {
     font-size: 0.9em;
 }
 
-.map-filter-select {
+#map-filter .map-filter-select {
     background-color: var(--mui-palette-background-paper);
     font-size: 0.8em;
 }
@@ -319,7 +319,7 @@ body {
     margin-top: 0.5em;
 }
 
-.rounded-button {
+button.rounded-button {
     border: 1px solid var(--mui-palette-divider);
     text-transform: none;
     color: var(--mui-palette-text-primary);

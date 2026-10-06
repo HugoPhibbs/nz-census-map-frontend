@@ -1,15 +1,33 @@
 "use client";
 
-import { Box, FormControl, InputLabel, MenuItem, Select, Button, Typography, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
+import { Box, FormControl, InputLabel, MenuItem, Select, Button, Typography, Accordion, AccordionSummary, AccordionDetails, useMediaQuery } from "@mui/material";
 import { useEffect, useState } from "react";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { DEFAULT_CHOSEN_MAP_VARIABLE, AREA_TYPE, ZOOM_RANGES} from "./MapConstants";
 
-function MapViewOptionsFormControl({ children } : {children: React.ReactNode}) {
+function MapViewOptionsFormControl({ children }: { children: React.ReactNode }) {
   return (
     <FormControl className={"map-filter-dropdown"} size={"small"}>
       {children}
     </FormControl>
   )
+}
+
+function getAreaTypeForZoom(zoomLevel: number): AREA_TYPE {
+  for (const [areaType, [minZoom, maxZoom]] of Object.entries(ZOOM_RANGES)) {
+    if (zoomLevel >= minZoom && zoomLevel < maxZoom) {
+      return areaType as AREA_TYPE;
+    }
+  }
+  console.warn(`Zoom level ${zoomLevel} does not correspond to any area type`);
+  return "ta"; // Default
+}
+
+const AREA_TYPE_TO_NAME = {
+  "ta": "District",
+  "sa3": "Sub-District",
+  "sa2": "Suburb",
+  "sa1": "Neighbourhood"
 }
 
 type MapViewOptionsProps = {
@@ -18,6 +36,7 @@ type MapViewOptionsProps = {
   mapGranularity: string | null;
   setMapGranularity: (granularity: string | null) => void;
   resetZoom: () => void;
+  map: any
 };
 
 export default function MapViewOptions({
@@ -26,10 +45,15 @@ export default function MapViewOptions({
   mapGranularity,
   setMapGranularity,
   resetZoom,
+  map,
 }: MapViewOptionsProps) {
 
-  const [variableOptions, setVariableOptions] = useState<Record<string, string>>({ "none": "None" });
-  const [chosenVariableLocal, setChosenVariableLocal] = useState<string | null>("none");
+  const [variableOptions, setVariableOptions] = useState<Record<string, string>>({ "none": "None", [DEFAULT_CHOSEN_MAP_VARIABLE]: "Median age" }); // Hard code in so its here on first paint
+  const [chosenVariableLocal, setChosenVariableLocal] = useState<string | null>(DEFAULT_CHOSEN_MAP_VARIABLE);
+
+  const [autoAreaType, setAutoAreaType] = useState<AREA_TYPE>("ta");
+
+  const isPhone = useMediaQuery('(max-width:600px)');
 
   const ITEM_HEIGHT = 36;
   const ITEM_PADDING_TOP = 8;
@@ -37,6 +61,14 @@ export default function MapViewOptions({
   const menuMaxHeight = ITEM_HEIGHT * VISIBLE_ITEMS + ITEM_PADDING_TOP;
 
   useEffect(() => {
+    if (!map) return;
+    const onZoom = () => setAutoAreaType(getAreaTypeForZoom(map.getZoom()));
+    map.on("zoom", onZoom);
+    return () => { map.off("zoom", onZoom); }; // Clean up call back
+  }, [map]);
+
+  useEffect(() => {
+    if (Object.keys(variableIdsToNameMap).length == 0) return;
     const filtered = Object.fromEntries(
       Object.entries(variableIdsToNameMap).filter(([id, _]: [any, any]) => !id.startsWith("pop_"))
     );
@@ -61,13 +93,13 @@ export default function MapViewOptions({
   }
 
   return (
-    <Accordion id="map-filter" >
+    <Accordion id="map-filter" defaultExpanded={!isPhone}>
       <AccordionSummary id="map-view-options-summary" expandIcon={<ExpandMoreIcon />}>
-        <Typography component="h3" id = "map-view-options-title">Map options</Typography>
+        <Typography component="h3" id="map-view-options-title">Map options</Typography>
       </AccordionSummary>
 
       <AccordionDetails id="map-filter-details">
-        <Box id = "map-filter-formcontrols-box">
+        <Box id="map-filter-formcontrols-box">
           <MapViewOptionsFormControl>
             <InputLabel className="map-filter-label">Display by</InputLabel>
             <Select
@@ -116,12 +148,12 @@ export default function MapViewOptions({
                   },
                 },
               }}
-              >
-              <MenuItem value="auto">Auto</MenuItem>
-              <MenuItem value="sa1">Statistical area 1</MenuItem>
-              <MenuItem value="sa2">Statistical area 2</MenuItem>
-              <MenuItem value="sa3">Statistical area 3</MenuItem>
-              <MenuItem value="ta">Territorial authority</MenuItem>
+            >
+              <MenuItem value="auto">{`Auto (${AREA_TYPE_TO_NAME[autoAreaType]})`}</MenuItem>
+              <MenuItem value="ta">{AREA_TYPE_TO_NAME["ta"]}</MenuItem>
+              <MenuItem value="sa3">{AREA_TYPE_TO_NAME["sa3"]}</MenuItem>
+              <MenuItem value="sa2">{AREA_TYPE_TO_NAME["sa2"]}</MenuItem>
+              <MenuItem value="sa1">{AREA_TYPE_TO_NAME["sa1"]}</MenuItem>
             </Select>
           </MapViewOptionsFormControl>
         </Box>

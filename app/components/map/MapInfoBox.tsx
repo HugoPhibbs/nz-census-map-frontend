@@ -40,6 +40,11 @@ function HoverInfoBox({ hoveredAreaName, hoveredAreaStat, variableUnit, hoveredA
     );
 }
 
+function ChosenAreaTypeIndicator({ mapGranularity }: { mapGranularity: string | null }) {
+    if (!mapGranularity) return null;
+}
+
+
 type MapInfoBoxProps = {
     min: number | null;
     max: number | null;
@@ -64,18 +69,18 @@ export default function MapInfoBox({
     }
 
     return (
-        <>
-            {(hoveredAreaId || (min && max)) &&
-                <Box id={"map-info-box"}>
-                    <HoverInfoBox
-                        hoveredAreaName={hoveredAreaName}
-                        hoveredAreaStat={hoveredAreaStat}
-                        variableUnit={variableUnit}
-                        hoveredAreaId={hoveredAreaId}
-                        isPhone={isPhone}
-                        />
-                    <MapColourIndicator min={min} max={max} variableUnit={variableUnit} />
-                </Box>}
-        </>
+        <Box id={"map-info-box"}>
+            {(hoveredAreaId || (min && max)) ? <>
+                <HoverInfoBox
+                    hoveredAreaName={hoveredAreaName}
+                    hoveredAreaStat={hoveredAreaStat}
+                    variableUnit={variableUnit}
+                    hoveredAreaId={hoveredAreaId}
+                    isPhone={isPhone}
+                />
+                <MapColourIndicator min={min} max={max} variableUnit={variableUnit} />
+            </> : null}
+
+        </Box>
     );
 }
