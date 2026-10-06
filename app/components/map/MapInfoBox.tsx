@@ -43,7 +43,7 @@ function MapColourIndicator({ min, max, variableUnit, highlightedValue }: { min:
     );
 }
 
-function HoverInfoBox({ hoveredAreaName, hoveredAreaId, isPhone }: { hoveredAreaName: string | null; hoveredAreaId: string | null; isPhone: boolean, isPhone: boolean }) {
+function HoverInfoBox({ hoveredAreaName, hoveredAreaId, isPhone }: { hoveredAreaName: string | null; hoveredAreaId: string | null; isPhone: boolean }) {
     if (!hoveredAreaId || isPhone) return null;
 
     return (
