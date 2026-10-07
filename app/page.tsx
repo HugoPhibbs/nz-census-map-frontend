@@ -7,11 +7,13 @@ import InfoPanel from './components/InfoPanel';
 import { useEffect, useState } from 'react';
 import TitleBar from './components/TitleBar';
 import api from "@/app/api";
+import { DEFAULT_CENSUS_YEAR } from './utils';
 
 setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
 export default function Home() {
   const [chosenAreaId, setChosenAreaId] = useState<string | null>(null);
+  const [chosenCensusYear, setChosenCensusYear] = useState<number>(DEFAULT_CENSUS_YEAR);
 
   const [variableIdsToNameMap, setVariableIdsToNameMap] = useState<Record<string, string>>({});
   const [variableIdsToUnitMap, setVariableIdToUnitMap] = useState<Record<string, string>>({});
@@ -32,10 +34,22 @@ export default function Home() {
 
   return (
     <Box id="content">
-      <TitleBar/>
+      <TitleBar />
       <Box id="inner-content">
-        <StatsMap setChosenAreaId={setChosenAreaId} variableIdsToNameMap={variableIdsToNameMap} variableIdsToUnitMap={variableIdsToUnitMap} />
-        <InfoPanel areaId={chosenAreaId} setAreaId={setChosenAreaId} variableIdsToNameMap={variableIdsToNameMap} variableIdsToUnitMap={variableIdsToUnitMap} />
+        <StatsMap
+          setChosenAreaId={setChosenAreaId}
+          variableIdsToNameMap={variableIdsToNameMap}
+          variableIdsToUnitMap={variableIdsToUnitMap}
+          censusYear={chosenCensusYear}
+          setChosenCensusYear={setChosenCensusYear}
+        />
+        <InfoPanel
+          areaId={chosenAreaId}
+          setAreaId={setChosenAreaId}
+          variableIdsToNameMap={variableIdsToNameMap}
+          variableIdsToUnitMap={variableIdsToUnitMap}
+          chosenCensusYear={chosenCensusYear}
+        />
         <Box className="bottom-buffer-box"></Box>
       </Box>
     </Box>

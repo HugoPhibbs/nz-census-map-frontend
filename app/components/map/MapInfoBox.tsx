@@ -1,6 +1,6 @@
 "use client";
 import { Box, useMediaQuery } from "@mui/material";
-import { formatSA1Code, formatVariableStat } from "@/app/utils";
+import { formatSA1AreaId, formatVariableStat } from "@/app/utils";
 import { interpolatePlasma } from "d3-scale-chromatic";
 
 const withOpacity = (c: string) => `color-mix(in srgb, ${c} 80%, transparent)`;
@@ -49,7 +49,7 @@ function HoverInfoBox({ hoveredAreaName, hoveredAreaId, isPhone }: { hoveredArea
 
     return (
         <Box id={"hover-info-box"}>
-            {hoveredAreaName || formatSA1Code(hoveredAreaId.split("-")[1])}
+            {hoveredAreaName || formatSA1AreaId(hoveredAreaId)}
         </Box>
     );
 }

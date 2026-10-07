@@ -1,4 +1,5 @@
 import {COLOURS} from "@/app/theme"
+import { AREA_TYPE } from "@/app/utils";
 
 export type MapColours = {
   background: string;
@@ -33,8 +34,6 @@ export function getMapColours(mode: "light" | "dark"): MapColours {
 }
 
 export const DEFAULT_CHOSEN_MAP_VARIABLE = "median_age";
-
-export type AREA_TYPE = "ta" | "sa3" | "sa2" | "sa1";
 
 export const ZOOM_RANGES : Record<AREA_TYPE, [number, number]> = {
   "ta": [0, 6],

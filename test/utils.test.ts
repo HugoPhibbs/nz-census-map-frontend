@@ -1,4 +1,4 @@
-import { roundToDP, formatVariableStat, formatSA1Code } from "../app/utils";
+import { roundToDP, formatVariableStat, formatSA1AreaId } from "../app/utils";
 import { describe, test, expect } from "@jest/globals";
 
 describe("roundToDP", () => {
@@ -50,6 +50,6 @@ describe("formatVariableStat", () => {
 
 describe("formatSA1Code", () => {
   test("appends the SA1 label", () => {
-    expect(formatSA1Code("7000001")).toBe("7000001 (SA1)");
+    expect(formatSA1AreaId("7000001")).toBe("7000001 (SA1)");
   });
 });
