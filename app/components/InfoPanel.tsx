@@ -174,7 +174,7 @@ export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, var
             .then(res => setVariableAvgs(res.data))
             .catch((e) => {
                 console.log(`Error fetching variable averages for census year ${chosenCensusYear}:`, e);
-            }
+            })
     }, [chosenCensusYear]);
 
     useEffect(() => {
