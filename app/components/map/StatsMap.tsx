@@ -166,9 +166,10 @@ type StatsMapProps = {
   variableIdsToUnitMap: Record<string, string>;
   censusYear: number;
   setChosenCensusYear: (year: number) => void;
+  availableYearsForVariables: Record<string, number[]>;
 };
 
-export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variableIdsToUnitMap, censusYear, setChosenCensusYear }: StatsMapProps) {
+export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variableIdsToUnitMap, censusYear, setChosenCensusYear, availableYearsForVariables }: StatsMapProps) {
 
   const mapRef = useRef<MapRef>(null);
   const hoveredFeature = useRef<{ source: string; sourceLayer: string; id: string | number } | null>(null);
@@ -281,6 +282,7 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
           setChosenCensusYear={setChosenCensusYear}
           chosenCensusYear={censusYear}
           map={mapLoaded ? mapRef.current?.getMap() ?? null : null}
+          availableYearsForVariables={availableYearsForVariables}
         />
 
         <MapInfoBox

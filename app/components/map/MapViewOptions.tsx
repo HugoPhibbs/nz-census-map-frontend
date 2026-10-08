@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { DEFAULT_CHOSEN_MAP_VARIABLE, ZOOM_RANGES} from "./MapConstants";
 import {AREA_TYPE_TO_NAME, AREA_TYPE, DEFAULT_CENSUS_YEAR, CENSUS_YEARS} from "@/app/utils";
-import api from "@/app/api";
 
 const DISPLAY_BY_CATEGORIES: Record<string, string[]> = {
   "Age & Family": [
@@ -137,8 +136,8 @@ function DisplayBySelect({ chosenVariable, onVariableChange, variableIdsToNameMa
 
   const renderVariableItem = (variableId: string) => {
     let isAvailable: boolean;
-    if (Object.keys(availableYearsForVariables).length === 0) {
-      isAvailable = true; // If we don't have the available years yet, don't disable anything
+    if (variableId === "none" || Object.keys(availableYearsForVariables).length === 0) {
+      isAvailable = true;
     } else {
       isAvailable = availableYearsForVariables[variableId] && availableYearsForVariables[variableId].includes(chosenCensusYear);
     }
@@ -241,6 +240,7 @@ type MapViewOptionsProps = {
   map: any
   setChosenCensusYear: (year: number) => void;
   chosenCensusYear: number;
+  availableYearsForVariables: Record<string, number[]>;
 };
 
 export default function MapViewOptions({
@@ -251,11 +251,11 @@ export default function MapViewOptions({
   resetZoom,
   map,
   setChosenCensusYear,
-  chosenCensusYear
+  chosenCensusYear,
+  availableYearsForVariables
 }: MapViewOptionsProps) {
 
   const [chosenVariableLocal, setChosenVariableLocal] = useState<string | null>(DEFAULT_CHOSEN_MAP_VARIABLE);
-  const [availableYearsForVariables, setAvailableYearsForVariables] = useState<Record<string, number[]>>({});
 
   const isPhone = useMediaQuery('(max-width:600px)');
 
@@ -268,13 +268,6 @@ export default function MapViewOptions({
     }
     setChosenVariable(e.target.value);
   }
-
-  useEffect(() => {
-    api.get("/stats/variable/ids/to-available-years")
-      .then((res) => {
-        setAvailableYearsForVariables({ "none": CENSUS_YEARS, ...res.data });
-      })
-  }, [])
 
   const resetView = () => {
     resetZoom();
@@ -307,7 +300,8 @@ export default function MapViewOptions({
           <CensusYearSelect
             chosenCensusYear={chosenCensusYear}
             setChosenCensusYear={setChosenCensusYear}
-            availableYearsForVariable={availableYearsForVariables[chosenVariableLocal ?? "none"] || CENSUS_YEARS}
+            // All years are available when no variable is chosen, or before the available years have loaded
+            availableYearsForVariable={(chosenVariableLocal && chosenVariableLocal !== "none" && availableYearsForVariables[chosenVariableLocal]) || CENSUS_YEARS}
           />
         </Box>
 
