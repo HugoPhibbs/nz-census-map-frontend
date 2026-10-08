@@ -36,9 +36,9 @@ export default function RootLayout({
           <ThemeProvider theme={THEME} defaultMode="light">
             <CssBaseline />
             {children}
-            <Analytics />
           </ThemeProvider>
         </StyledEngineProvider>
+        <Analytics />
       </body>
     </html>
   )
