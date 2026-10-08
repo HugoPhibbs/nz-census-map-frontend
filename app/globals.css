@@ -270,7 +270,7 @@ body {
     border-radius: 6px;
     min-height: 2.5em;
     transition: border-radius 300ms ease;
-    min-width: 8em;
+    min-width: 8.5em;
 }
 
 #map-view-options-summary>* {
@@ -284,11 +284,24 @@ body {
 
 #map-view-options-title {
     font-size: 0.9em;
+    font-weight: bold;
 }
 
 #map-filter .map-filter-select {
     background-color: var(--mui-palette-background-paper);
     font-size: 0.8em;
+}
+
+.display-by-category {
+    background-color: var(--mui-palette-background-default);
+    color: var(--mui-palette-text-primary);
+    font-size: 0.9em;
+    line-height: 1.5;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    border-top: 1px solid var(--mui-palette-divider);
+    border-bottom: 1px solid var(--mui-palette-divider);
+    /* font-weight: bold; */
 }
 
 .map-filter-dropdown {
