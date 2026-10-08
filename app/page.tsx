@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import TitleBar from './components/TitleBar';
 import api from "@/app/api";
 import { DEFAULT_CENSUS_YEAR } from './utils';
+import { Analytics } from "@vercel/analytics/next"
 
 setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
@@ -63,6 +64,7 @@ export default function Home() {
         />
         <Box className="bottom-buffer-box"></Box>
       </Box>
+      <Analytics beforeSend={(e) => (localStorage.getItem('va-disable') ? null : e)} />
     </Box>
   );
 }

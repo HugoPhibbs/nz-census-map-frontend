@@ -4,7 +4,6 @@ import { StyledEngineProvider, ThemeProvider } from '@mui/material/styles';
 import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
 import CssBaseline from '@mui/material/CssBaseline';
 import { THEME } from './theme';
-import { Analytics } from "@vercel/analytics/next"
 
 export const metadata = {
   title: "NZ Census Map",
@@ -38,7 +37,6 @@ export default function RootLayout({
             {children}
           </ThemeProvider>
         </StyledEngineProvider>
-        <Analytics />
       </body>
     </html>
   )
