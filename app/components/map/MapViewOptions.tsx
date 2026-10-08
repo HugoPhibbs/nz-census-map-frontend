@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { DEFAULT_CHOSEN_MAP_VARIABLE, ZOOM_RANGES} from "./MapConstants";
 import {AREA_TYPE_TO_NAME, AREA_TYPE, DEFAULT_CENSUS_YEAR, CENSUS_YEARS} from "@/app/utils";
+import api from "@/app/api";
 
 function getAreaTypeForZoom(zoomLevel: number): AREA_TYPE {
   for (const [areaType, [minZoom, maxZoom]] of Object.entries(ZOOM_RANGES)) {
@@ -24,13 +25,13 @@ function MapViewOptionsFormControl({ children }: { children: React.ReactNode }) 
   )
 }
 
-type DisplayBySelectProps = {
-  chosenVariable: string | null;
-  onVariableChange: (e: any) => void;
-  variableIdsToNameMap: Record<string, string>;
+type CensusYearSelectProps = {
+  chosenCensusYear: number;
+  setChosenCensusYear: (year: number) => void;
+  availableYearsForVariable?: number[];
 };
 
-function CensusYearSelect({ chosenCensusYear, setChosenCensusYear }: { chosenCensusYear: number; setChosenCensusYear: (year: number) => void }) {
+function CensusYearSelect({ chosenCensusYear, setChosenCensusYear, availableYearsForVariable }: CensusYearSelectProps) {
   return (
     <MapViewOptionsFormControl>
       <InputLabel className="map-filter-label">Census year</InputLabel>
@@ -46,7 +47,7 @@ function CensusYearSelect({ chosenCensusYear, setChosenCensusYear }: { chosenCen
         }}
       >
         {CENSUS_YEARS.map((year) => (
-          <MenuItem key={year} value={year}>
+          <MenuItem key={year} value={year} disabled={availableYearsForVariable && !availableYearsForVariable.includes(year)}>
             {year}
           </MenuItem>
         ))}
@@ -55,7 +56,17 @@ function CensusYearSelect({ chosenCensusYear, setChosenCensusYear }: { chosenCen
   )
 }
 
-function DisplayBySelect({ chosenVariable, onVariableChange, variableIdsToNameMap }: DisplayBySelectProps) {
+type DisplayBySelectProps = {
+  chosenVariable: string | null;
+  onVariableChange: (e: any) => void;
+  variableIdsToNameMap: Record<string, string>;
+  chosenCensusYear: number;
+  availableYearsForVariables: Record<string, number[]>;
+};
+
+
+
+function DisplayBySelect({ chosenVariable, onVariableChange, variableIdsToNameMap, chosenCensusYear, availableYearsForVariables }: DisplayBySelectProps) {
   const [variableOptions, setVariableOptions] = useState<Record<string, string>>({ "none": "None", [DEFAULT_CHOSEN_MAP_VARIABLE]: "Median age" }); // Hard code in so its here on first paint
 
   const ITEM_HEIGHT = 36;
@@ -97,11 +108,19 @@ function DisplayBySelect({ chosenVariable, onVariableChange, variableIdsToNameMa
           },
         }}
       >
-        {Object.entries(variableOptions).map(([option_key, label]) => (
-          <MenuItem key={option_key} value={option_key}>
-            {label}
-          </MenuItem>
-        ))}
+        {Object.entries(variableOptions).map(([option_key, label]) => {
+          let isAvailable: boolean;
+          if (Object.keys(availableYearsForVariables).length === 0) {
+            isAvailable = true; // If we don't have the available years yet, don't disable anything
+          } else {
+            isAvailable = availableYearsForVariables[option_key] && availableYearsForVariables[option_key].includes(chosenCensusYear);
+          }
+          return (
+            <MenuItem key={option_key} value={option_key} disabled={!isAvailable}>
+              {`${label}${!isAvailable ? " (N/A)" : ""}`}
+            </MenuItem>
+          );
+        })}
       </Select>
     </MapViewOptionsFormControl>
   )
@@ -170,6 +189,7 @@ export default function MapViewOptions({
 }: MapViewOptionsProps) {
 
   const [chosenVariableLocal, setChosenVariableLocal] = useState<string | null>(DEFAULT_CHOSEN_MAP_VARIABLE);
+  const [availableYearsForVariables, setAvailableYearsForVariables] = useState<Record<string, number[]>>({});
 
   const isPhone = useMediaQuery('(max-width:600px)');
 
@@ -182,6 +202,13 @@ export default function MapViewOptions({
     }
     setChosenVariable(e.target.value);
   }
+
+  useEffect(() => {
+    api.get("/stats/variable/ids/to-available-years")
+      .then((res) => {
+        setAvailableYearsForVariables({ "none": CENSUS_YEARS, ...res.data });
+      })
+  }, [])
 
   const resetView = () => {
     resetZoom();
@@ -203,6 +230,8 @@ export default function MapViewOptions({
             chosenVariable={chosenVariableLocal}
             onVariableChange={onVariableChange}
             variableIdsToNameMap={variableIdsToNameMap}
+            chosenCensusYear={chosenCensusYear}
+            availableYearsForVariables={availableYearsForVariables}
           />
           <AreaTypeSelect
             mapGranularity={mapGranularity}
@@ -212,6 +241,7 @@ export default function MapViewOptions({
           <CensusYearSelect
             chosenCensusYear={chosenCensusYear}
             setChosenCensusYear={setChosenCensusYear}
+            availableYearsForVariable={availableYearsForVariables[chosenVariableLocal ?? "none"] || CENSUS_YEARS}
           />
         </Box>
 
