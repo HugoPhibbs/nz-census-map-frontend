@@ -37,7 +37,7 @@ function CensusYearSelect({ chosenCensusYear, setChosenCensusYear }: { chosenCen
       <Select
         value={chosenCensusYear}
         onChange={(e) => setChosenCensusYear(e.target.value)}
-        label="Census year"
+        label="Census year....."
         className="map-filter-select"
         MenuProps={{
           slotProps: {
@@ -129,7 +129,7 @@ function AreaTypeSelect({ mapGranularity, setMapGranularity, map }: AreaTypeSele
       <Select
         value={mapGranularity ?? ''}
         onChange={(e) => e.target.value && setMapGranularity(e.target.value)}
-        label="Area type...."
+        label="Area Type...."
         className="map-filter-select"
         MenuProps={{
           slotProps: {
