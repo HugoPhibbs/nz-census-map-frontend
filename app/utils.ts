@@ -49,7 +49,7 @@ export const AREA_TYPE_TO_NAME = {
 export type AREA_TYPE = "ta" | "sa3" | "sa2" | "sa1";
 
 export const DEFAULT_CENSUS_YEAR = 2023;
-export const CENSUS_YEARS = [2023, 2018, 2018];
+export const CENSUS_YEARS = [2023, 2018, 2013];
 
 export function areaIdToAreaType(areaId: string | null): AREA_TYPE | null {
     if (!areaId) return null;
