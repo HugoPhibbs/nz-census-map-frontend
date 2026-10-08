@@ -217,8 +217,8 @@ body {
 
 #map-filter {
     position: absolute;
-    top: 2em;
-    left: 2em;
+    top: 1em;
+    left: 1em;
     padding: 0;
     z-index: 1;
     width: 7em;
@@ -340,8 +340,8 @@ body {
 
 #map-info-box {
     position: absolute;
-    bottom: 2em;
-    right: 2em;
+    bottom: 0.8em;
+    right: 0.8em;
     width: 10em;
     padding: 0.5em;
     border: 1px solid var(--mui-palette-divider);
