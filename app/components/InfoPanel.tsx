@@ -275,11 +275,15 @@ export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, var
                                 </Typography>
 
                                 <Typography component="h3" id="info-panel-title-year">
-                                    {`(${chosenCensusYear})`}
+                                    {`${chosenCensusYear}`}
                                 </Typography>
 
                                 {(areaId && isPhone) && <Button className={"close-info-panel-button rounded-button"} onClick={() => resetPanelState()}>Close</Button>}
                             </Box>
+
+                            <Typography component="h3" id="info-panel-sub-title">
+                                Key Stats
+                            </Typography>
 
                             <TableContainer id="info-panel-general-table-container">
                                 <Table size="small">
@@ -296,7 +300,7 @@ export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, var
                         </Box>
 
                         <Box id={"info-panel-detailed-box"}>
-                            <Typography component="h3" id="info-panel-detailed-title">
+                            <Typography component="h3" id="info-panel-sub-title">
                                 Detailed Stats
                             </Typography>
                             <Box>
