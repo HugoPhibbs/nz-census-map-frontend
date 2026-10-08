@@ -54,11 +54,18 @@ export function prepareGroupVariables(
     areaVariables: Record<string, any> | null,
     variableIdsToNameMap: Record<string, string>,
     variableIdsToUnitMap: Record<string, string>,
-    variableAvgs: Record<string, any> | null
+    variableAvgs: Record<string, any> | null,
+    chosenCensusYear: number,
+    availableYearsForVariables: Record<string, number[]>
 ): GroupedVariableInfo[] {
     let rows = [];
     for (const variableInfo of groupVariables) {
         const variableId = variableInfo[0];
+        
+        if (!availableYearsForVariables[variableId].includes(chosenCensusYear)) {
+            continue; // Skip
+        }
+
         const variableName = variableInfo[1] ? variableInfo[1] : variableIdsToNameMap[variableId];
         const variableValue = areaVariables?.[variableId]?.variable_value ?? null;
         const variableAvg = variableAvgs?.[variableId] ?? null;
@@ -105,9 +112,22 @@ type GroupedVariablesProps = {
     expanded: boolean;
     handleGroupAccordionChange: any;
     variableAvgs: Record<string, any> | null;
+    chosenCensusYear: number;
+    availableYearsForVariables: Record<string, number[]>;
 };
 
-function GroupedVariables({ groupName, groupVariables, areaVariables, variableIdsToNameMap, variableIdsToUnitMap, expanded, handleGroupAccordionChange, variableAvgs }: GroupedVariablesProps) {
+function GroupedVariables({
+    groupName,
+    groupVariables,
+    areaVariables,
+    variableIdsToNameMap,
+    variableIdsToUnitMap,
+    expanded,
+    handleGroupAccordionChange,
+    variableAvgs,
+    chosenCensusYear,
+    availableYearsForVariables }
+    : GroupedVariablesProps) {
     return (
         <Accordion elevation={0} className="grouped-variables-accordion" disableGutters onChange={handleGroupAccordionChange(groupName)} expanded={expanded}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />} className="grouped-variables-accordion-summary">
@@ -121,22 +141,30 @@ function GroupedVariables({ groupName, groupVariables, areaVariables, variableId
                 <TableContainer>
                     <Table size="small">
                         {groupName !== "Employment" && (
-                        <TableHead>
-                            <TableRow>
-                                <TableCell className="variable-table-cell table-head-cell">Statistic</TableCell>
-                                <TableCell className="variable-table-cell table-head-cell">Value</TableCell>
-                                <TableCell className="variable-table-cell table-head-cell">vs NZ</TableCell>
-                            </TableRow>
-                        </TableHead>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell className="variable-table-cell table-head-cell">Statistic</TableCell>
+                                    <TableCell className="variable-table-cell table-head-cell">Value</TableCell>
+                                    <TableCell className="variable-table-cell table-head-cell">vs NZ</TableCell>
+                                </TableRow>
+                            </TableHead>
                         )}
                         <TableBody>
-                            {prepareGroupVariables(groupName, groupVariables, areaVariables, variableIdsToNameMap, variableIdsToUnitMap, variableAvgs).map((variableInfo) => (
-                                <TableRow key={variableInfo.id}>
-                                    <TableCell className="variable-table-cell">{variableInfo.name}</TableCell>
-                                    <TableCell className="variable-table-cell">{variableInfo.formattedValue}</TableCell>
-                                    <VariableDifferenceCell variableDiff={variableInfo.avgDiff} />
-                                </TableRow>
-                            ))}
+                            {prepareGroupVariables(
+                                groupName,
+                                groupVariables,
+                                areaVariables,
+                                variableIdsToNameMap,
+                                variableIdsToUnitMap,
+                                variableAvgs, 
+                                chosenCensusYear,
+                                availableYearsForVariables).map((variableInfo) => (
+                                    <TableRow key={variableInfo.id}>
+                                        <TableCell className="variable-table-cell">{variableInfo.name}</TableCell>
+                                        <TableCell className="variable-table-cell">{variableInfo.formattedValue}</TableCell>
+                                        <VariableDifferenceCell variableDiff={variableInfo.avgDiff} />
+                                    </TableRow>
+                                ))}
                         </TableBody>
                     </Table>
                 </TableContainer>
@@ -151,9 +179,10 @@ type InfoPanelProps = {
     variableIdsToUnitMap: Record<string, string>;
     setAreaId: (areaId: string | null) => void;
     chosenCensusYear: number;
+    availableYearsForVariables: Record<string, number[]>;
 };
 
-export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, variableIdsToUnitMap, chosenCensusYear }: InfoPanelProps) {
+export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, variableIdsToUnitMap, chosenCensusYear, availableYearsForVariables }: InfoPanelProps) {
     const [areaVariables, setAreaVariables] = useState<Record<string, any> | null>(null);
     const [areaName, setAreaName] = useState<string | null>(null);
     const [expandedGroupName, setExpandedGroupName] = useState<string | null>(null);
@@ -282,6 +311,8 @@ export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, var
                                         expanded={expandedGroupName === groupName}
                                         handleGroupAccordionChange={handleGroupAccordionChange}
                                         variableAvgs={variableAvgs}
+                                        chosenCensusYear={chosenCensusYear}
+                                        availableYearsForVariables={availableYearsForVariables}
                                     />
                                 ))}
                             </Box>

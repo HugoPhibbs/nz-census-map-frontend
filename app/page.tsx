@@ -17,6 +17,7 @@ export default function Home() {
 
   const [variableIdsToNameMap, setVariableIdsToNameMap] = useState<Record<string, string>>({});
   const [variableIdsToUnitMap, setVariableIdToUnitMap] = useState<Record<string, string>>({});
+  const [availableYearsForVariables, setAvailableYearsForVariables] = useState<Record<string, number[]>>({});
 
   useEffect(() => {
     api.get(`/stats/variable/ids/to-name`, { "params": { "drop_pop_vars": true } })
@@ -32,6 +33,14 @@ export default function Home() {
       });
   }, []);
 
+
+  useEffect(() => {
+    api.get("/stats/variable/ids/to-available-years")
+      .then((res) => {
+        setAvailableYearsForVariables(res.data);
+      })
+  }, [])
+
   return (
     <Box id="content">
       <TitleBar />
@@ -42,6 +51,7 @@ export default function Home() {
           variableIdsToUnitMap={variableIdsToUnitMap}
           censusYear={chosenCensusYear}
           setChosenCensusYear={setChosenCensusYear}
+          availableYearsForVariables={availableYearsForVariables}
         />
         <InfoPanel
           areaId={chosenAreaId}
@@ -49,6 +59,7 @@ export default function Home() {
           variableIdsToNameMap={variableIdsToNameMap}
           variableIdsToUnitMap={variableIdsToUnitMap}
           chosenCensusYear={chosenCensusYear}
+          availableYearsForVariables={availableYearsForVariables}
         />
         <Box className="bottom-buffer-box"></Box>
       </Box>
