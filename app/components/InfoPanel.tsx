@@ -280,7 +280,11 @@ export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, var
 
                                 {(areaId && isPhone) && <Button className={"close-info-panel-button rounded-button"} onClick={() => resetPanelState()}>Close</Button>}
                             </Box>
+                        </Box>
 
+                        <Divider className="info-panel-divider" />
+
+                        <Box>
                             <Typography component="h3" id="info-panel-sub-title">
                                 Key Stats
                             </Typography>
@@ -298,6 +302,8 @@ export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, var
                                 </Table>
                             </TableContainer>
                         </Box>
+
+                        <Divider className="info-panel-divider" />
 
                         <Box id={"info-panel-detailed-box"}>
                             <Typography component="h3" id="info-panel-sub-title">

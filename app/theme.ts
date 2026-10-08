@@ -3,7 +3,7 @@ import { createTheme } from "@mui/material/styles";
 
 export const COLOURS = {
   "light-divider": "#cccccc",
-  "dark-divider": "#3a3d44",
+  "dark-divider": "#3a3d44",  
   "bone-white": "#f9f9f9",
   "off-black": "#16181B",
 }
