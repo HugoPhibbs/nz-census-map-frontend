@@ -37,7 +37,7 @@ function CensusYearSelect({ chosenCensusYear, setChosenCensusYear }: { chosenCen
       <Select
         value={chosenCensusYear}
         onChange={(e) => setChosenCensusYear(e.target.value)}
-        label="Census year"
+        label="Census year..."
         className="map-filter-select"
         MenuProps={{
           slotProps: {
