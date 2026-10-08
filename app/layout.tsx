@@ -38,7 +38,7 @@ export default function RootLayout({
             {children}
           </ThemeProvider>
         </StyledEngineProvider>
-        <Analytics />
+        <Analytics beforeSend={(e) => (localStorage.getItem('va-disable') ? null : e)} />
       </body>
     </html>
   )
