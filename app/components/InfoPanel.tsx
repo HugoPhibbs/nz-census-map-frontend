@@ -172,6 +172,9 @@ export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, var
     useEffect(() => {
         api.get(`/stats/variable/avgs/${chosenCensusYear}`)
             .then(res => setVariableAvgs(res.data))
+            .catch((e) => {
+                console.log(`Error fetching variable averages for census year ${chosenCensusYear}:`, e);
+            }
     }, [chosenCensusYear]);
 
     useEffect(() => {
@@ -203,6 +206,8 @@ export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, var
                     newAreaVariables[row.variable_id] = row;
                 }
                 setAreaVariables(newAreaVariables);
+            }).catch((e) => {
+                console.log(`Error fetching area variables for areaId ${areaId} and census year ${chosenCensusYear}:`, e);
             })
     }, [areaId, chosenCensusYear]);
 
