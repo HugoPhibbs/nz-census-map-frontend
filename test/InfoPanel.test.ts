@@ -17,6 +17,16 @@ const UNITS: Record<string, string> = {
     pct_asian: "PERCENTAGE",
 };
 
+const DEFAULT_YEAR = 2023;
+
+const AVAILABLE_YEARS: Record<string, number[]> = {
+    pct_employed: [2013, 2018, 2023],
+    median_income: [2013, 2018, 2023],
+    pct_european: [2013, 2018, 2023],
+    pct_maori: [2013, 2018, 2023],
+    pct_asian: [2013, 2018, 2023],
+};
+
 const row = (value: number | null) => ({ variable_value: value });
 
 describe("prepareGroupVariables", () => {
@@ -28,6 +38,8 @@ describe("prepareGroupVariables", () => {
             NAMES,
             UNITS,
             null,
+            DEFAULT_YEAR,
+            AVAILABLE_YEARS,
         );
 
         expect(rows).toEqual([
@@ -44,6 +56,8 @@ describe("prepareGroupVariables", () => {
             NAMES,
             UNITS,
             null,
+            DEFAULT_YEAR,
+            AVAILABLE_YEARS,
         );
 
         expect(rows[0].name).toBe("Employment rate");
@@ -51,11 +65,11 @@ describe("prepareGroupVariables", () => {
 
     test("returns an empty value when the area has no data", () => {
         expect(
-            prepareGroupVariables("Employment", [["pct_employed"]], null, NAMES, UNITS, null),
+            prepareGroupVariables("Employment", [["pct_employed"]], null, NAMES, UNITS, null, DEFAULT_YEAR, AVAILABLE_YEARS),
         ).toEqual([{id: "pct_employed", name: "Employed", formattedValue: "", avgDiff: null}]);
 
         expect(
-            prepareGroupVariables("Employment", [["pct_employed"]], {}, NAMES, UNITS, null),
+            prepareGroupVariables("Employment", [["pct_employed"]], {}, NAMES, UNITS, null, DEFAULT_YEAR, AVAILABLE_YEARS),
         ).toEqual([{id: "pct_employed", name: "Employed", formattedValue: "", avgDiff: null}]);
     });
 
@@ -67,6 +81,8 @@ describe("prepareGroupVariables", () => {
             NAMES,
             UNITS,
             { pct_employed: 10 },
+            DEFAULT_YEAR,
+            AVAILABLE_YEARS,
         );
 
         expect(rows[0].avgDiff).toBe(2.3);
@@ -80,6 +96,8 @@ describe("prepareGroupVariables", () => {
             NAMES,
             UNITS,
             { pct_employed: 55.5 },
+            DEFAULT_YEAR,
+            AVAILABLE_YEARS,
         );
 
         expect(rows[0].avgDiff).toBe(-15.5);
@@ -93,6 +111,8 @@ describe("prepareGroupVariables", () => {
             NAMES,
             UNITS,
             { median_income: 50000 },
+            DEFAULT_YEAR,
+            AVAILABLE_YEARS,
         );
 
         expect(rows[0].avgDiff).toBeNull();
@@ -106,6 +126,8 @@ describe("prepareGroupVariables", () => {
             NAMES,
             UNITS,
             null,
+            DEFAULT_YEAR,
+            AVAILABLE_YEARS,
         );
 
         expect(rows.map((r) => r.id)).toEqual(["pct_maori", "pct_asian", "pct_european"]);
@@ -120,6 +142,8 @@ describe("prepareGroupVariables", () => {
             NAMES,
             UNITS,
             null,
+            DEFAULT_YEAR,
+            AVAILABLE_YEARS,
         );
 
         expect(rows.map((r) => r.id)).toEqual(["pct_maori", "pct_european"]);
@@ -133,6 +157,8 @@ describe("prepareGroupVariables", () => {
             NAMES,
             UNITS,
             null,
+            DEFAULT_YEAR,
+            AVAILABLE_YEARS,
         );
 
         expect(rows.map((r) => r.id)).toEqual(["pct_european", "pct_maori", "pct_asian"]);
@@ -146,6 +172,8 @@ describe("prepareGroupVariables", () => {
             NAMES,
             UNITS,
             { pct_employed: 50 },
+            DEFAULT_YEAR,
+            AVAILABLE_YEARS,
         );
 
         expect(rows[0].avgDiff).toBe(0);
@@ -159,6 +187,8 @@ describe("prepareGroupVariables", () => {
             NAMES,
             UNITS,
             { pct_employed: 0 },
+            DEFAULT_YEAR,
+            AVAILABLE_YEARS,
         );
 
         expect(rows[0].avgDiff).toBe(5);
@@ -172,9 +202,53 @@ describe("prepareGroupVariables", () => {
             NAMES,
             UNITS,
             { pct_employed: 0 },
+            DEFAULT_YEAR,
+            AVAILABLE_YEARS,
         );
 
         expect(rows[0].formattedValue).toBe("");
         expect(rows[0].avgDiff).toBeNull();
+    });
+
+    test("skips variables not available for the chosen census year", () => {
+        const rows = prepareGroupVariables(
+            "Employment",
+            [["pct_employed"], ["median_income"]],
+            { pct_employed: row(62.34), median_income: row(499.94) },
+            NAMES,
+            UNITS,
+            null,
+            2013,
+            { pct_employed: [2013, 2018, 2023], median_income: [2018, 2023] },
+        );
+
+        expect(rows.map((r) => r.id)).toEqual(["pct_employed"]);
+    });
+
+    test("returns an empty list when no variables are available for the chosen census year", () => {
+        const rows = prepareGroupVariables(
+            "Employment",
+            [["pct_employed"], ["median_income"]],
+            { pct_employed: row(62.34), median_income: row(499.94) },
+            NAMES,
+            UNITS,
+            null,
+            2013,
+            { pct_employed: [2023], median_income: [2018] },
+        );
+
+        expect(rows).toEqual([]);
+    });
+
+    test("filters by the chosen census year", () => {
+        const availableYears = { pct_employed: [2018], median_income: [2023] };
+        const groupVariables = [["pct_employed"], ["median_income"]];
+        const areaVariables = { pct_employed: row(62.34), median_income: row(499.94) };
+
+        const rows2018 = prepareGroupVariables("Employment", groupVariables, areaVariables, NAMES, UNITS, null, 2018, availableYears);
+        const rows2023 = prepareGroupVariables("Employment", groupVariables, areaVariables, NAMES, UNITS, null, 2023, availableYears);
+
+        expect(rows2018.map((r) => r.id)).toEqual(["pct_employed"]);
+        expect(rows2023.map((r) => r.id)).toEqual(["median_income"]);
     });
 });
