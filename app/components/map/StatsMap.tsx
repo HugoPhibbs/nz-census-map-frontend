@@ -16,7 +16,8 @@ import MapInfoBox from "./MapInfoBox";
 import { layers, namedFlavor } from "@protomaps/basemaps";
 import api from "@/app/api";
 import { getMapColours } from "./MapConstants";
-import { DEFAULT_CHOSEN_MAP_VARIABLE, AREA_TYPE, ZOOM_RANGES } from "./MapConstants";
+import { DEFAULT_CHOSEN_MAP_VARIABLE, ZOOM_RANGES } from "./MapConstants";
+import {areaIdToAreaType, AREA_TYPE} from "@/app/utils";
 
 setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
@@ -49,18 +50,16 @@ const IGNORED_BASEMAP_LAYERS = [
 
 const INTERACTIVE_LAYERS = ["ta-areas-fill", "sa3-areas-fill", "sa2-areas-fill", "sa1-areas-fill"];
 
-function updateMapStatsEffect(chosenVariable: any, setMapStats: any, setMinVariableValue: any, setMaxVariableValue: any) {
-  const CENSUS_YEAR = 2023; // Set as a constant for now.
-
+function updateMapStatsEffect(chosenVariable: any, setMapStats: any, setMinVariableValue: any, setMaxVariableValue: any, censusYear: number) {
   if (chosenVariable) {
-    api.get(`/stats/variable/${chosenVariable}/${CENSUS_YEAR}`)
+    api.get(`/stats/variable/${chosenVariable}/${censusYear}`)
       .then((res) => {
         let newMapStats: Record<string, DBRow> = {};
         let newMinVariableValue: number = Infinity;
         let newMaxVariableValue: number = -Infinity;
 
-        for (let [areaCode, variableValue] of res.data) {
-          newMapStats[`${CENSUS_YEAR}-${areaCode}`] = { "area_code": areaCode, "variable_value": variableValue }; // This matches area_id from the pimtiles file
+        for (let [areaId, variableValue] of res.data) {
+          newMapStats[areaId] = variableValue;
           if (variableValue && variableValue < newMinVariableValue) {
             newMinVariableValue = variableValue;
           }
@@ -71,6 +70,11 @@ function updateMapStatsEffect(chosenVariable: any, setMapStats: any, setMinVaria
         setMapStats(newMapStats);
         setMinVariableValue(newMinVariableValue);
         setMaxVariableValue(newMaxVariableValue);
+      }).catch((err) => {
+        console.error("Error fetching map stats:", err);
+        setMapStats(null);
+        setMinVariableValue(null);
+        setMaxVariableValue(null);
       });
   } else {
     setMapStats(null);
@@ -79,7 +83,7 @@ function updateMapStatsEffect(chosenVariable: any, setMapStats: any, setMinVaria
   }
 }
 
-function layerIdToSourceId(sourceId: string): string {
+function layerIdToSourceId(sourceId: AREA_TYPE): string {
   return sourceId === "sa1" ? "sa1-map" : "stats-map";
 }
 
@@ -95,7 +99,7 @@ function handleMapClick(e: MapLayerMouseEvent, mapRef: any, selectedFeature: any
   }
 
   if (feature?.id !== undefined && feature.sourceLayer) {
-    const next = { source: layerIdToSourceId(feature.sourceLayer), sourceLayer: feature.sourceLayer, id: feature.id };
+    const next = { source: layerIdToSourceId(feature.sourceLayer as AREA_TYPE), sourceLayer: feature.sourceLayer, id: feature.id };
     map.setFeatureState(next, { selected: true });
     selectedFeature.current = next;
   }
@@ -110,7 +114,7 @@ function setHoveredFeature(e: MapLayerMouseEvent, mapRef: any, hoveredFeature: a
   clearHover();
 
   if (feature?.id !== undefined && feature.sourceLayer) {
-    const next = { source: layerIdToSourceId(feature.sourceLayer), sourceLayer: feature.sourceLayer, id: feature.id };
+    const next = { source: layerIdToSourceId(feature.sourceLayer as AREA_TYPE), sourceLayer: feature.sourceLayer, id: feature.id };
     map.setFeatureState(next, { hover: true });
     hoveredFeature.current = next;
   }
@@ -121,7 +125,7 @@ function getZoomRangeForLayer(layerId: AREA_TYPE, mapGranularity: string | null)
   return (mapGranularity === layerId ? [0, 24] : [24, 24]);
 }
 
-function areaColouringEffect(mapRef: any, mapStats: Record<string, DBRow> | null, minVariableValue: any, maxVariableValue: any) {
+function areaColouringEffect(mapRef: any, mapStats: Record<string, number> | null, minVariableValue: any, maxVariableValue: any) {
   const map = mapRef.current?.getMap();
   if (!map) return;
 
@@ -129,7 +133,7 @@ function areaColouringEffect(mapRef: any, mapStats: Record<string, DBRow> | null
     // Fallback to default grey colouring if no stats are available
     for (const sourceLayer of ["ta", "sa3", "sa2", "sa1"]) {
       map.removeFeatureState({
-        source: layerIdToSourceId(sourceLayer),
+        source: layerIdToSourceId(sourceLayer as AREA_TYPE),
         sourceLayer,
       });
     }
@@ -139,25 +143,19 @@ function areaColouringEffect(mapRef: any, mapStats: Record<string, DBRow> | null
   const colorScale = scaleSequential(interpolatePlasma)
     .domain([minVariableValue, maxVariableValue]);
 
-  for (const [areaId, row] of Object.entries(mapStats)) {
-    const value = row.variable_value as number | undefined;
-    if (value === undefined) continue;
+  for (const [areaId, variable_value] of Object.entries(mapStats)) {
+    if (variable_value === undefined) continue;
 
     const featureId = areaId;
-    const areaCode = row.area_code as string;
-
-    let sourceLayer = "sa1";
-    if (areaCode.length == 6) {
-      sourceLayer = "sa2";
-    } else if (areaCode.length == 5) {
-      sourceLayer = "sa3";
-    } else if (areaCode.length == 3) {
-      sourceLayer = "ta";
+    const sourceLayer = areaIdToAreaType(areaId);
+    if (!sourceLayer) {
+      console.warn(`Unknown area type for areaId: ${areaId}`);
+      continue;
     }
 
     map.setFeatureState(
-      { source: layerIdToSourceId(sourceLayer), sourceLayer, id: featureId },
-      { fillColor: colorScale(value) }
+      { source: layerIdToSourceId(sourceLayer as AREA_TYPE), sourceLayer, id: featureId },
+      { fillColor: colorScale(variable_value) }
     );
   }
 }
@@ -166,16 +164,18 @@ type StatsMapProps = {
   setChosenAreaId: (id: string | null) => void;
   variableIdsToNameMap: Record<string, string>;
   variableIdsToUnitMap: Record<string, string>;
+  censusYear: number;
+  setChosenCensusYear: (year: number) => void;
 };
 
-export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variableIdsToUnitMap }: StatsMapProps) {
+export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variableIdsToUnitMap, censusYear, setChosenCensusYear }: StatsMapProps) {
 
   const mapRef = useRef<MapRef>(null);
   const hoveredFeature = useRef<{ source: string; sourceLayer: string; id: string | number } | null>(null);
   const selectedFeature = useRef<{ source: string; sourceLayer: string; id: string | number } | null>(null);
 
   const [chosenVariable, setChosenVariable] = useState<string | null>(DEFAULT_CHOSEN_MAP_VARIABLE);
-  const [mapStats, setMapStats] = useState<Record<string, DBRow> | null>({});
+  const [mapStats, setMapStats] = useState<Record<string, number> | null>({});
 
   const [minVariableValue, setMinVariableValue] = useState<number | null>(null);
   const [maxVariableValue, setMaxVariableValue] = useState<number | null>(null);
@@ -239,7 +239,7 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
     const areaId = (feature?.properties?.area_id as string) ?? null;
     setHoveredAreaId(areaId);
     setHoveredAreaName((feature?.properties?.area_name as string) ?? null);
-    setHoveredAreaStat(areaId ? mapStats?.[areaId]?.variable_value as number ?? null : null);
+    setHoveredAreaStat(areaId ? mapStats?.[areaId] as number ?? null : null);
   }, [mapStats]);
 
   useEffect(() => {
@@ -249,8 +249,8 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
   }, []);
 
   useEffect(() => {
-    updateMapStatsEffect(chosenVariable, setMapStats, setMinVariableValue, setMaxVariableValue);
-  }, [chosenVariable]);
+    updateMapStatsEffect(chosenVariable, setMapStats, setMinVariableValue, setMaxVariableValue, censusYear);
+  }, [chosenVariable, censusYear]);
 
   useEffect(() => {
     areaColouringEffect(mapRef, mapStats, minVariableValue, maxVariableValue);
@@ -278,6 +278,8 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
           variableIdsToNameMap={variableIdsToNameMap}
           mapGranularity={mapGranularity}
           setMapGranularity={setMapGranularity}
+          setChosenCensusYear={setChosenCensusYear}
+          chosenCensusYear={censusYear}
           map={mapLoaded ? mapRef.current?.getMap() ?? null : null}
         />
 

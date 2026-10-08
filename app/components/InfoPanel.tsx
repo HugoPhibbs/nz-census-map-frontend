@@ -2,10 +2,10 @@
 
 import { Accordion, AccordionDetails, AccordionSummary, Box, Table, TableBody, Button, TableHead, TableCell, TableContainer, TableRow, Typography, Divider, useMediaQuery } from "@mui/material";
 import { useEffect, useState } from "react";
-import { formatVariableStat, formatSA1Code, roundToDP } from "../utils";
+import { formatVariableStat, formatSA1AreaId, roundToDP } from "../utils";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import api from "@/app/api";
-import { AREA_TYPE_TO_NAME } from "@/app/utils";
+import { areaIdToAreaTypeName } from "@/app/utils";
 
 const DETAILED_VARIABLE_GROUPS = {
     "Employment": [
@@ -145,28 +145,15 @@ function GroupedVariables({ groupName, groupVariables, areaVariables, variableId
     )
 }
 
-function areaIdToAreaType(areaId: string | null): string | null {
-    if (!areaId) return null;
-    const areaCode = areaId.split("-")[1];
-    if (areaCode.length === 7) {
-        return AREA_TYPE_TO_NAME["sa1"];
-    } else if (areaCode.length === 6) {
-        return AREA_TYPE_TO_NAME["sa2"];
-    } else if (areaCode.length === 5) {
-        return AREA_TYPE_TO_NAME["sa3"];
-    } else {
-        return AREA_TYPE_TO_NAME["ta"];
-    }
-}
-
 type InfoPanelProps = {
     areaId: string | null;
     variableIdsToNameMap: Record<string, string>;
     variableIdsToUnitMap: Record<string, string>;
     setAreaId: (areaId: string | null) => void;
+    chosenCensusYear: number;
 };
 
-export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, variableIdsToUnitMap }: InfoPanelProps) {
+export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, variableIdsToUnitMap, chosenCensusYear }: InfoPanelProps) {
     const [areaVariables, setAreaVariables] = useState<Record<string, any> | null>(null);
     const [areaName, setAreaName] = useState<string | null>(null);
     const [expandedGroupName, setExpandedGroupName] = useState<string | null>(null);
@@ -183,49 +170,46 @@ export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, var
     const panelIsLoading = () => areaId && !areaName && !areaVariables;
 
     useEffect(() => {
-        api.get("/stats/variable/avgs")
+        api.get(`/stats/variable/avgs/${chosenCensusYear}`)
             .then(res => setVariableAvgs(res.data))
-    }, []);
+            .catch((e) => {
+                console.log(`Error fetching variable averages for census year ${chosenCensusYear}:`, e);
+            })
+    }, [chosenCensusYear]);
 
     useEffect(() => {
         if (!areaId) {
             resetPanelState();
             return;
         }
-        const area_id_split = areaId?.split("-") ?? null;
-        const area_code = area_id_split[1];
 
-        if (area_code.length == 7) { // SA1 (no names)
-            setAreaName(formatSA1Code(area_code));
+        if (areaId.length == 7) { // SA1 (no names)
+            setAreaName(formatSA1AreaId(areaId));
             return;
         }
 
-        api.get("/area", { "params": { "area_code": area_code, "census_year": area_id_split[0] } })
+        api.get(`/area/${areaId}`)
             .then(res => {
                 setAreaName(res.data["area_name"]);
             })
     }, [areaId]);
 
     useEffect(() => {
-        const areaIdSplit = areaId?.split("-") ?? null;
-        if (!areaIdSplit) {
+        if (!areaId) {
             setAreaVariables(null);
             return;
         }
-        console.assert(areaIdSplit.length === 2, "Area ID should be in the format 'census_year-area_code'");
-        const censusYear = parseInt(areaIdSplit[0]);
-        const areaCode = areaIdSplit[1];
-
-        api.get("/stats/area",
-            { "params": { "census_year": censusYear, "area_code": areaCode } })
+        api.get(`/stats/area/${areaId}/${chosenCensusYear}`)
             .then(res => {
                 const newAreaVariables: Record<string, any> = {};
                 for (const row of res.data) {
                     newAreaVariables[row.variable_id] = row;
                 }
                 setAreaVariables(newAreaVariables);
+            }).catch((e) => {
+                console.log(`Error fetching area variables for areaId ${areaId} and census year ${chosenCensusYear}:`, e);
             })
-    }, [areaId]);
+    }, [areaId, chosenCensusYear]);
 
     const handleGroupAccordionChange = (groupName: string) => (_: any, newExpanded: boolean) => {
         setExpandedGroupName(newExpanded ? groupName : null);
@@ -240,7 +224,7 @@ export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, var
     generalVariables.push({
         variableId: "area_type",
         variableName: "Area type",
-        variableValue: areaIdToAreaType(areaId),
+        variableValue: areaIdToAreaTypeName(areaId),
     })
 
     const isPhone = useMediaQuery('(max-width:600px)');

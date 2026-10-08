@@ -231,6 +231,10 @@ body {
     width: 15em;
 }
 
+.map-filter-menu .MuiMenuItem-root {
+    font-size: 0.8em;
+}
+
 #map-filter-details {
     display: flex;
     flex-direction: column;
