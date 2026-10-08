@@ -1,11 +1,53 @@
 "use client";
 
-import { Box, FormControl, InputLabel, MenuItem, Select, Button, Typography, Accordion, AccordionSummary, AccordionDetails, useMediaQuery } from "@mui/material";
+import { Box, FormControl, InputLabel, ListSubheader, MenuItem, Select, Button, Typography, Accordion, AccordionSummary, AccordionDetails, useMediaQuery } from "@mui/material";
 import { useEffect, useState } from "react";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { DEFAULT_CHOSEN_MAP_VARIABLE, ZOOM_RANGES} from "./MapConstants";
 import {AREA_TYPE_TO_NAME, AREA_TYPE, DEFAULT_CENSUS_YEAR, CENSUS_YEARS} from "@/app/utils";
 import api from "@/app/api";
+
+const DISPLAY_BY_CATEGORIES: Record<string, string[]> = {
+  "Age & Family": [
+    "median_age",
+    "avg_children_born",
+  ],
+  "Employment": [
+    "median_personal_income",
+    "avg_hours_worked_per_week",
+  ],
+  "Ethnicity & descent": [
+    "perc_ethnicity_european",
+    "perc_ethnicity_maori",
+    "perc_ethnicity_pacific",
+    "perc_ethnicity_asian",
+    "perc_ethnicity_mela",
+    "perc_ethnicity_other",
+    "perc_maori_descent",
+  ],
+  "Sex & Gender": [
+    "perc_sex_female",
+    "perc_sex_male",
+    "perc_gender_female",
+    "perc_gender_male",
+    "perc_another_gender",
+  ],
+  "Birthplace & Residence": [
+    "perc_birthplace_nz",
+    "perc_birthplace_overseas",
+    "avg_years_since_arrival_nz",
+    "avg_years_at_usual_residence",
+  ],
+  "Health": [
+    "perc_difficulty_seeing",
+    "perc_difficulty_hearing",
+    "perc_difficulty_walking",
+    "perc_difficulty_remembering_concentrating",
+    "perc_difficulty_washing",
+    "perc_difficulty_communicating",
+    "perc_regular_smoker",
+  ],
+}
 
 function getAreaTypeForZoom(zoomLevel: number): AREA_TYPE {
   for (const [areaType, [minZoom, maxZoom]] of Object.entries(ZOOM_RANGES)) {
@@ -80,7 +122,33 @@ function DisplayBySelect({ chosenVariable, onVariableChange, variableIdsToNameMa
       Object.entries(variableIdsToNameMap).filter(([id, _]: [any, any]) => !id.startsWith("pop_"))
     );
     setVariableOptions({ "none": "None", ...filtered });
+
+    // Check that DISPLAY_BY_CATEGORIES and the variables from the API agree
+    const categorisedIds = Object.values(DISPLAY_BY_CATEGORIES).flat();
+    const missingFromApi = categorisedIds.filter((id) => !(id in filtered));
+    const missingFromCategories = Object.keys(filtered).filter((id) => !categorisedIds.includes(id));
+    if (missingFromApi.length > 0) {
+      console.warn("Variables in DISPLAY_BY_CATEGORIES that the API didn't return:", missingFromApi);
+    }
+    if (missingFromCategories.length > 0) {
+      console.warn("Variables from the API that aren't in DISPLAY_BY_CATEGORIES (not shown):", missingFromCategories);
+    }
   }, [variableIdsToNameMap])
+
+  const renderVariableItem = (variableId: string) => {
+    let isAvailable: boolean;
+    if (Object.keys(availableYearsForVariables).length === 0) {
+      isAvailable = true; // If we don't have the available years yet, don't disable anything
+    } else {
+      isAvailable = availableYearsForVariables[variableId] && availableYearsForVariables[variableId].includes(chosenCensusYear);
+    }
+
+    return (
+      <MenuItem key={variableId} value={variableId} disabled={!isAvailable}>
+        {`${variableOptions[variableId]}${!isAvailable ? " (N/A)" : ""}`}
+      </MenuItem>
+    );
+  };
 
   return (
     <MapViewOptionsFormControl>
@@ -108,18 +176,16 @@ function DisplayBySelect({ chosenVariable, onVariableChange, variableIdsToNameMa
           },
         }}
       >
-        {Object.entries(variableOptions).map(([option_key, label]) => {
-          let isAvailable: boolean;
-          if (Object.keys(availableYearsForVariables).length === 0) {
-            isAvailable = true; // If we don't have the available years yet, don't disable anything
-          } else {
-            isAvailable = availableYearsForVariables[option_key] && availableYearsForVariables[option_key].includes(chosenCensusYear);
-          }
-          return (
-            <MenuItem key={option_key} value={option_key} disabled={!isAvailable}>
-              {`${label}${!isAvailable ? " (N/A)" : ""}`}
-            </MenuItem>
-          );
+        {renderVariableItem("none")}
+        {/* Select doesn't accept Fragments as children, so flatten each group into a list */}
+        {Object.entries(DISPLAY_BY_CATEGORIES).flatMap(([category, variableIds]) => {
+          // Skip variables we don't have (yet) from the API, and any category left empty
+          const shownIds = variableIds.filter((id) => id in variableOptions);
+          if (shownIds.length === 0) return [];
+          return [
+            <ListSubheader className="display-by-category" key={`category-${category}`}>{category}</ListSubheader>,
+            ...shownIds.map(renderVariableItem),
+          ];
         })}
       </Select>
     </MapViewOptionsFormControl>

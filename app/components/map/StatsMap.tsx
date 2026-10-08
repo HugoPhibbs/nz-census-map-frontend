@@ -53,7 +53,7 @@ const INTERACTIVE_LAYERS = ["ta-areas-fill", "sa3-areas-fill", "sa2-areas-fill",
 function updateMapStatsEffect(chosenVariable: any, setMapStats: any, setMinVariableValue: any, setMaxVariableValue: any, censusYear: number) {
   if (chosenVariable) {
     api.get(`/stats/variable/${chosenVariable}/${censusYear}`)
-      .then((res) => {
+    .then((res) => {
         let newMapStats: Record<string, DBRow> = {};
         let newMinVariableValue: number = Infinity;
         let newMaxVariableValue: number = -Infinity;

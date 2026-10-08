@@ -291,6 +291,18 @@ body {
     font-size: 0.8em;
 }
 
+.display-by-category {
+    background-color: var(--mui-palette-background-default);
+    color: var(--mui-palette-text-primary);
+    font-size: 0.9em;
+    line-height: 1.5;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    border-top: 1px solid var(--mui-palette-divider);
+    border-bottom: 1px solid var(--mui-palette-divider);
+    /* font-weight: bold; */
+}
+
 .map-filter-dropdown {
     z-index: 1;
 }
