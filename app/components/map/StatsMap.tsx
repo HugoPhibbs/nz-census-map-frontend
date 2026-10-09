@@ -83,7 +83,7 @@ function getAreaTypeToMinMaxValues(mapStats: Record<string, number> | null): Are
 
   const result: Partial<Record<AREA_TYPE, { min: number; max: number }>> = {};
   for (const [areaId, value] of Object.entries(mapStats)) {
-    if (value == null || value === 0) continue;
+    if (value == null) continue;
     const areaType = areaIdToAreaType(areaId) as AREA_TYPE;
     const current = result[areaType];
     result[areaType] = current

@@ -1,19 +1,34 @@
 "use client";
-import { Box, useMediaQuery } from "@mui/material";
+import { Box, useColorScheme, useMediaQuery } from "@mui/material";
 import { formatSA1AreaId, formatVariableStat } from "@/app/utils";
 import { interpolatePlasma } from "d3-scale-chromatic";
+import { namedFlavor } from "@protomaps/basemaps";
+import { getMapColours } from "./MapConstants";
 
-const withOpacity = (c: string) => `color-mix(in srgb, ${c} 80%, transparent)`;
+const MARKER_RADIUS = 8; // Half of #map-colour-indicator-marker's width (border-box, so includes the border)
 
 function MapColourIndicator({ min, max, variableUnit, highlightedValue }: { min: number | null; max: number | null; variableUnit: string | null; highlightedValue: number | null }) {
     if (min === null || max === null || !isFinite(min) || !isFinite(max)) return null;
 
+    const { mode } = useColorScheme();
+    const resolvedMode = mode === "dark" ? "dark" : "light";
+    const { areaFillOpacity } = getMapColours(resolvedMode);
+    const landColour = namedFlavor(resolvedMode).earth;
+
+    const mapLikeColour = (t: number) =>
+        `color-mix(in srgb, ${interpolatePlasma(t)} ${areaFillOpacity * 100}%, ${landColour})`;
+
     const stops = Array.from({ length: 10 }, (_, i) => {
         const t = i / 9;
-        return `${withOpacity(interpolatePlasma(t))} ${(t * 100).toFixed(0)}%`;
+        return `${mapLikeColour(t)} ${(t * 100).toFixed(0)}%`;
     }).join(", ");
 
-    const t = highlightedValue != null ? (highlightedValue - min) / (max - min) : null;
+    const t = highlightedValue != null && max !== min
+        ? (highlightedValue - min) / (max - min)
+        : null;
+
+    // Pushes the marker in at the ends, so no part of the circle overhangs the bar
+    const markerLeftPosition = t !== null ? `clamp(${MARKER_RADIUS}px, ${t * 100}%, calc(100% - ${MARKER_RADIUS}px))` : undefined;
 
     return (
         <Box id="map-colour-indicator-box">
@@ -25,15 +40,15 @@ function MapColourIndicator({ min, max, variableUnit, highlightedValue }: { min:
                 id="map-colour-indicator"
             >
                 {t !== null && (
-                    <>  
-                        <Box id="map-colour-indicator-value" sx={{ left: `${t * 100}%` }}>
-                            {highlightedValue}
+                    <Box id="map-colour-indicator-marker-container" sx={{ left: markerLeftPosition }}>
+                        <Box id="map-colour-indicator-value">
+                            {highlightedValue?.toLocaleString()}
                         </Box>
-                        <Box    
+                        <Box
                             id="map-colour-indicator-marker"
-                            sx={{ left: `${t * 100}%`}}
+                            sx={{ backgroundColor: mapLikeColour(t) }}
                         />
-                    </>
+                    </Box>
                 )}
             </Box>
             <Box id="map-info-box-number-indicators">
@@ -72,14 +87,15 @@ export default function MapInfoBox({
     hoveredAreaId,
 }: MapInfoBoxProps) {
     const isPhone = useMediaQuery("(max-width: 600px)");
+    const minMaxDefined = min !== null && max !== null;
 
-    if (isPhone && !(min && max)) {
+    if (isPhone && !minMaxDefined) {
         return null;
     }
 
     return (
         <>
-            {(hoveredAreaId || (min && max)) && (
+            {(hoveredAreaId || (minMaxDefined)) && (
                 <Box id={"map-info-box"}>
                     <HoverInfoBox
                         hoveredAreaName={hoveredAreaName}

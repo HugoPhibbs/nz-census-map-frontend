@@ -304,7 +304,7 @@ export default function MapViewOptions({
             autoAreaType={autoAreaType}
           />
 
-          <Box sx={{ display: "flex", flexDirection: "row", gap: "1rem", justifyContent: "space-between", alignItems: "center" }}>
+          <Box id="census-year-selects-box">
             <CensusYearSelect
               censusYear={chosenCensusYear}
               setCensusYear={(year: number | null) => {
@@ -314,14 +314,12 @@ export default function MapViewOptions({
                 }
                 setChosenCensusYear(year);
               }}
-              // All years are available when no variable is chosen, or before the available years have loaded
               availableYearsForVariable={getAvailableYearsForYearSelect(chosenVariableLocal, availableYearsForVariables, null)}
             />
             <EastRoundedIcon />
             <CensusYearSelect
               censusYear={censusYearCompareTo}
               setCensusYear={setChosenCensusYearCompareTo}
-              // All years are available when no variable is chosen, or before the available years have loaded
               availableYearsForVariable={getAvailableYearsForYearSelect(chosenVariableLocal, availableYearsForVariables, chosenCensusYear)}
               addNoneOption={true}
             />
