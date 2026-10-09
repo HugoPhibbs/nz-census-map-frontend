@@ -4,8 +4,8 @@ import { Box, useMediaQuery, useColorScheme } from "@mui/material";
 import { Protocol } from "pmtiles";
 import { useEffect, useRef, useCallback, useState, useMemo } from "react";
 
-import { scaleSequential } from "d3-scale";
-import { interpolatePlasma } from "d3-scale-chromatic";
+import { scaleDiverging, scaleSequential } from "d3-scale";
+import { interpolatePlasma, interpolatePRGn } from "d3-scale-chromatic";
 import * as maplibregl from 'maplibre-gl';
 import { MapLayerMouseEvent, setWorkerUrl } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -15,9 +15,10 @@ import MapViewOptions from "./MapViewOptions";
 import MapInfoBox from "./MapInfoBox";
 import { layers, namedFlavor } from "@protomaps/basemaps";
 import api from "@/app/api";
-import { getMapColours } from "./MapConstants";
+import { getMapColours, ColourScale } from "./MapConstants";
 import { DEFAULT_CHOSEN_MAP_VARIABLE, DEFAULT_ZOOM_RANGES } from "./MapConstants";
 import { areaIdToAreaType, AREA_TYPE, AREA_TYPES } from "@/app/utils";
+import { extent, quantile } from "d3-array";
 
 setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
@@ -50,7 +51,7 @@ const IGNORED_BASEMAP_LAYERS = [
 
 const INTERACTIVE_LAYERS = ["ta-areas-fill", "sa3-areas-fill", "sa2-areas-fill", "sa1-areas-fill"];
 
-type AreaTypeToMinMaxValues = Partial<Record<AREA_TYPE, { min: number; max: number }>> | null;
+type AreaTypeToValues = Partial<Record<AREA_TYPE, number[]>> | null;
 
 function updateMapStatsEffect(chosenVariable: string | null,
   setMapStats: any,
@@ -78,20 +79,17 @@ function updateMapStatsEffect(chosenVariable: string | null,
   }
 }
 
-function getAreaTypeToMinMaxValues(mapStats: Record<string, number> | null): AreaTypeToMinMaxValues {
+function getAreaTypeToValues(mapStats: Record<string, number> | null): AreaTypeToValues {
   if (!mapStats) return null;
 
-  const result: Partial<Record<AREA_TYPE, { min: number; max: number }>> = {};
+  const result: Partial<Record<AREA_TYPE, number[]>> = {};
   for (const [areaId, value] of Object.entries(mapStats)) {
     if (value == null) continue;
     const areaType = areaIdToAreaType(areaId) as AREA_TYPE;
-    const current = result[areaType];
-    result[areaType] = current
-      ? { min: Math.min(current.min, value), max: Math.max(current.max, value) }
-      : { min: value, max: value };
+    (result[areaType] ??= []).push(value);
   }
   return result;
-  }
+}
 
 function layerIdToSourceId(sourceId: AREA_TYPE): string {
   return sourceId === "sa1" ? "sa1-map" : "stats-map";
@@ -130,16 +128,86 @@ function setHoveredFeature(e: MapLayerMouseEvent, mapRef: any, hoveredFeature: a
   }
 }
 
+function clearHoveredArea(
+  mapRef: any,
+  hoveredFeature: any,
+  setHoveredAreaId: (areaId: string | null) => void,
+  setHoveredAreaName: (areaName: string | null) => void,
+  setHoveredAreaStat: (areaStat: number | null) => void
+) {
+  const map = mapRef.current?.getMap();
+  if (map && hoveredFeature.current) {
+    map.setFeatureState(hoveredFeature.current, { hover: false });
+  }
+  hoveredFeature.current = null;
+  setHoveredAreaId(null);
+  setHoveredAreaName(null);
+  setHoveredAreaStat(null);
+}
+
+function updateHoveredArea(
+  e: MapLayerMouseEvent,
+  mapRef: any,
+  hoveredFeature: any,
+  clearHover: () => void,
+  mapStats: Record<string, number> | null,
+  setHoveredAreaId: (areaId: string | null) => void,
+  setHoveredAreaName: (areaName: string | null) => void,
+  setHoveredAreaStat: (areaStat: number | null) => void
+) {
+  const feature = e.features?.[0];
+  const featureId = feature?.id;
+  const sourceLayer = feature?.sourceLayer;
+
+  if (
+    hoveredFeature.current?.id === featureId &&
+    hoveredFeature.current?.sourceLayer === sourceLayer
+  ) {
+    return;
+  }
+
+  setHoveredFeature(e, mapRef, hoveredFeature, clearHover);
+
+  const areaId = (feature?.properties?.area_id as string) ?? null;
+  setHoveredAreaId(areaId);
+  setHoveredAreaName((feature?.properties?.area_name as string) ?? null);
+  setHoveredAreaStat(areaId ? mapStats?.[areaId] as number ?? null : null);
+}
+
 function getZoomRangeForLayer(layerId: AREA_TYPE, chosenMapGranularity: string | null) {
   if (chosenMapGranularity === "auto") return DEFAULT_ZOOM_RANGES[layerId];
   return (chosenMapGranularity === layerId ? [0, 24] : [24, 24]);
 }
 
-function areaColouringEffect(mapRef: any, mapStats: Record<string, number> | null, areaTypeToMinMaxValues: AreaTypeToMinMaxValues) {
+function variableIsAboutSexRatio(variableId: string): boolean {
+  return variableId.startsWith("perc_sex_");
+}
+
+function getColourScaleFunction(
+  values: number[],
+  chosenVariable: string,
+  isComparingCensusYears: boolean
+): ColourScale {
+  const isAboutSexRatio = variableIsAboutSexRatio(chosenVariable);
+  if (isComparingCensusYears || isAboutSexRatio) {
+    const centreOn = (isAboutSexRatio && !isComparingCensusYears) ? 50 : 0;
+    const limit = quantile(values, 0.95, (v) => Math.abs(v - centreOn)) || 1;
+    return scaleDiverging(interpolatePRGn).domain([centreOn - limit, centreOn, centreOn + limit]).clamp(true);
+  } else {
+    const [min, max] = extent(values) as [number, number];
+    return scaleSequential(interpolatePlasma).domain([min, max]);
+  }
+}
+
+function areaColouringEffect(
+  mapRef: any,
+  mapStats: Record<string, number> | null,
+  colourScalesForAreaType : Record<AREA_TYPE, ColourScale> | null
+) {
   const map = mapRef.current?.getMap();
   if (!map) return;
 
-  if (!mapStats) {
+  if (!mapStats || !colourScalesForAreaType) {
     // Fallback to default grey colouring if no stats are available
     for (const sourceLayer of ["ta", "sa3", "sa2", "sa1"]) {
       map.removeFeatureState({
@@ -150,27 +218,19 @@ function areaColouringEffect(mapRef: any, mapStats: Record<string, number> | nul
     return;
   }
 
-  const colorScales = Object.fromEntries(
-    AREA_TYPES.flatMap((areaType) => {
-      const minMax = areaTypeToMinMaxValues?.[areaType];
-      if (!minMax) return [];
-      return [[areaType, scaleSequential(interpolatePlasma).domain([minMax.min, minMax.max])]];
-    })
-  )
-
   for (const [areaId, variable_value] of Object.entries(mapStats)) {
     if (variable_value === undefined) continue;
 
     const featureId = areaId;
-    const sourceLayer = areaIdToAreaType(areaId);
-    if (!sourceLayer) {
+    const areaType = areaIdToAreaType(areaId);
+    if (!areaType) {
       console.warn(`Unknown area type for areaId: ${areaId}`);
       continue;
     }
 
     map.setFeatureState(
-      { source: layerIdToSourceId(sourceLayer as AREA_TYPE), sourceLayer, id: featureId },
-      { fillColor: colorScales[sourceLayer](variable_value) }
+      { source: layerIdToSourceId(areaType as AREA_TYPE), sourceLayer: areaType, id: featureId },
+      { fillColor: colourScalesForAreaType[areaType](variable_value) }
     );
   }
 }
@@ -183,6 +243,19 @@ function getAreaTypeByUsingZoomDefaults(zoomLevel: number): AREA_TYPE {
   }
   console.warn(`Zoom level ${zoomLevel} does not correspond to any area type`);
   return "ta"; // Default
+}
+
+function resetMapZoom(mapRef: any, defaultView: { longitude: number; latitude: number; zoom: number }) {
+  const map = mapRef.current?.getMap();
+  if (!map) return;
+
+  map.flyTo({
+    center: [defaultView.longitude, defaultView.latitude],
+    zoom: defaultView.zoom,
+    duration: 1000,
+    bearing: 0,
+    pitch: 0
+  });
 }
 
 type StatsMapProps = {
@@ -210,30 +283,29 @@ export default function StatsMap({
   const [chosenVariable, setChosenVariable] = useState<string | null>(DEFAULT_CHOSEN_MAP_VARIABLE);
   const [mapStats, setMapStats] = useState<Record<string, number> | null>({});
 
-  const areaTypeToMinMaxValues = useMemo(() => getAreaTypeToMinMaxValues(mapStats), [mapStats]);
+  const areaTypeToValues = useMemo(() => getAreaTypeToValues(mapStats), [mapStats]);
 
   const [hoveredAreaName, setHoveredAreaName] = useState<string | null>(null);
   const [hoveredAreaId, setHoveredAreaId] = useState<string | null>(null);
   const [hoveredAreaStat, setHoveredAreaStat] = useState<number | null>(null);
 
   const [censusYearCompareTo, setCensusYearCompareTo] = useState<number | null>(null);
-  
+
   const [mapLoaded, setMapLoaded] = useState(false);
-  
+
   const [chosenMapGranularity, setChosenMapGranularity] = useState<string | null>("auto"); // What user has chosen
   const [autoAreaType, setAutoAreaType] = useState<AREA_TYPE>("ta"); // What auto would be
   // What is actually viewed
   const activeAreaType = chosenMapGranularity === "auto" ? autoAreaType : (chosenMapGranularity as AREA_TYPE);
 
+  // Adding pmtiles protocol
   useEffect(() => {
-    const map = mapLoaded ? mapRef.current?.getMap() ?? null : null;
-    if (!map) return;
-    const onZoom = () => setAutoAreaType(getAreaTypeByUsingZoomDefaults(map.getZoom()));
-    onZoom(); // Set the initial value, before any zooming happens
-    map.on("zoom", onZoom);
-    return () => { map.off("zoom", onZoom); }; // Clean up call back
-  }, [mapLoaded]);
+    let protocol = new Protocol();
+    maplibregl.addProtocol("pmtiles", protocol.tile);
+    return () => maplibregl.removeProtocol("pmtiles");
+  }, []);
 
+  // Handling dark mode
   const { mode } = useColorScheme();
   const resolvedMode = mode === "dark" ? "dark" : "light";
   const mapColours = getMapColours(resolvedMode);
@@ -244,11 +316,6 @@ export default function StatsMap({
       .filter((l) => !IGNORED_BASEMAP_LAYERS.includes(l.id));
   }, [resolvedMode, mapColours.background]);
 
-  const isPhone = useMediaQuery('(max-width:600px)');
-  const defaultView = isPhone ?
-    { longitude: 172.58, latitude: -41.5, zoom: 4.2 } :
-    { longitude: 172.58, latitude: -40.7, zoom: 4.3 };
-
   useEffect(() => {
     // Basically we need mapLoaded so sprites are set once the map is loaded.
     // Without this, no sprites are rendered bc resolvedMode doesn't change before the map (this hook) is loaded
@@ -257,43 +324,26 @@ export default function StatsMap({
     mapRef.current?.getMap().setSprite(spriteUrl);
   }, [mapLoaded, resolvedMode]);
 
+  // Handling hovers
   const clearHover = useCallback(() => {
-    const map = mapRef.current?.getMap();
-    if (map && hoveredFeature.current) {
-      map.setFeatureState(hoveredFeature.current, { hover: false });
-    }
-    hoveredFeature.current = null;
-    setHoveredAreaId(null);
-    setHoveredAreaName(null);
-    setHoveredAreaStat(null);
+    clearHoveredArea(mapRef, hoveredFeature, setHoveredAreaId, setHoveredAreaName, setHoveredAreaStat);
   }, []);
 
   const handleMapHover = useCallback((e: MapLayerMouseEvent) => {
-    const feature = e.features?.[0];
-    const featureId = feature?.id;
-    const sourceLayer = feature?.sourceLayer;
-
-    if (
-      hoveredFeature.current?.id === featureId &&
-      hoveredFeature.current?.sourceLayer === sourceLayer
-    ) {
-      return;
-    }
-
-    setHoveredFeature(e, mapRef, hoveredFeature, clearHover);
-
-    const areaId = (feature?.properties?.area_id as string) ?? null;
-    setHoveredAreaId(areaId);
-    setHoveredAreaName((feature?.properties?.area_name as string) ?? null);
-    setHoveredAreaStat(areaId ? mapStats?.[areaId] as number ?? null : null);
+    updateHoveredArea(e, mapRef, hoveredFeature, clearHover, mapStats, setHoveredAreaId, setHoveredAreaName, setHoveredAreaStat);
   }, [mapStats]);
-
+  
+  // Update autoAreaType whenever the zoom level changes
   useEffect(() => {
-    let protocol = new Protocol();
-    maplibregl.addProtocol("pmtiles", protocol.tile);
-    return () => maplibregl.removeProtocol("pmtiles");
-  }, []);
+    const map = mapLoaded ? mapRef.current?.getMap() ?? null : null;
+    if (!map) return;
+    const onZoom = () => setAutoAreaType(getAreaTypeByUsingZoomDefaults(map.getZoom()));
+    onZoom(); // Set the initial value, before any zooming happens
+    map.on("zoom", onZoom);
+    return () => { map.off("zoom", onZoom); }; // Clean up call back
+  }, [mapLoaded]);
 
+  // Updating mapstats
   useEffect(() => {
     updateMapStatsEffect(
       chosenVariable,
@@ -303,28 +353,36 @@ export default function StatsMap({
     );
   }, [chosenVariable, censusYear, censusYearCompareTo]);
 
+  // Updating colour scales for each area type, given the current mapStats and chosenVariable
+  const colourScalesForAreaType = useMemo(() => {
+    if (!areaTypeToValues || !chosenVariable) return null;
+    return Object.fromEntries(
+      AREA_TYPES.flatMap((areaType) => {
+        const values = areaTypeToValues[areaType];
+        if (!values?.length) return [];
+        return [[areaType, getColourScaleFunction(values, chosenVariable, !!censusYearCompareTo)]];
+      })
+    ) as Record<AREA_TYPE, ColourScale>;
+  }, [areaTypeToValues, chosenVariable, censusYearCompareTo]);
+
+  // Updating the map colouring whenever mapStats or the colour scales change
   useEffect(() => {
-    areaColouringEffect(mapRef, mapStats, areaTypeToMinMaxValues);
-  }, [mapStats, areaTypeToMinMaxValues]);
+    areaColouringEffect(mapRef, mapStats, colourScalesForAreaType);
+  }, [mapStats, colourScalesForAreaType]);
 
-  const resetZoom = () => {
-    const map = mapRef.current?.getMap();
-    if (!map) return;
+  const [activeMin, activeMax] = extent(areaTypeToValues?.[activeAreaType] ?? []);
 
-    map.flyTo({
-      center: [defaultView.longitude, defaultView.latitude],
-      zoom: defaultView.zoom,
-      duration: 1000,
-      bearing: 0,
-      pitch: 0
-    });
-  }
+  // Getting the default view
+  const isPhone = useMediaQuery('(max-width:600px)');
+  const defaultView = isPhone ?
+    { longitude: 172.58, latitude: -41.5, zoom: 4.2 } :
+    { longitude: 172.58, latitude: -40.7, zoom: 4.3 };
 
   return (
     <>
       <Box id={"stats-map"}>
         <MapViewOptions
-          resetZoom={resetZoom}
+          resetZoom={() => resetMapZoom(mapRef, defaultView)}
           setChosenVariable={setChosenVariable}
           variableIdsToNameMap={variableIdsToNameMap}
           chosenMapGranularity={chosenMapGranularity}
@@ -338,12 +396,14 @@ export default function StatsMap({
         />
 
         <MapInfoBox
-          min={areaTypeToMinMaxValues?.[activeAreaType]?.min ?? null}
-          max={areaTypeToMinMaxValues?.[activeAreaType]?.max ?? null}
+          min={activeMin ?? null}
+          max={activeMax ?? null}
+          colourScale={colourScalesForAreaType?.[activeAreaType] ?? null}
           hoveredAreaName={hoveredAreaName}
           hoveredAreaId={hoveredAreaId}
           hoveredAreaStat={hoveredAreaStat}
           variableUnit={chosenVariable && variableIdsToUnitMap[chosenVariable]}
+          showPlusSignForChange={!!censusYearCompareTo}
         />
 
         <Map
