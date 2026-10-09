@@ -16,8 +16,8 @@ import MapInfoBox from "./MapInfoBox";
 import { layers, namedFlavor } from "@protomaps/basemaps";
 import api from "@/app/api";
 import { getMapColours } from "./MapConstants";
-import { DEFAULT_CHOSEN_MAP_VARIABLE, ZOOM_RANGES } from "./MapConstants";
-import { areaIdToAreaType, AREA_TYPE } from "@/app/utils";
+import { DEFAULT_CHOSEN_MAP_VARIABLE, DEFAULT_ZOOM_RANGES } from "./MapConstants";
+import { areaIdToAreaType, AREA_TYPE, AREA_TYPES } from "@/app/utils";
 
 setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
@@ -50,10 +50,10 @@ const IGNORED_BASEMAP_LAYERS = [
 
 const INTERACTIVE_LAYERS = ["ta-areas-fill", "sa3-areas-fill", "sa2-areas-fill", "sa1-areas-fill"];
 
+type AreaTypeToMinMaxValues = Partial<Record<AREA_TYPE, { min: number; max: number }>> | null;
+
 function updateMapStatsEffect(chosenVariable: string | null,
   setMapStats: any,
-  setMinVariableValue: any,
-  setMaxVariableValue: any,
   censusYear: number,
   censusYearCompareTo: number | null
 ) {
@@ -61,40 +61,37 @@ function updateMapStatsEffect(chosenVariable: string | null,
     `/stats/variable/${chosenVariable}/${censusYear}` :
     `/stats/variable/${chosenVariable}/compare?from=${censusYear}&to=${censusYearCompareTo}`;
 
-  console.log(apiUrl);
-  console.log("censusYearCompareTo", censusYearCompareTo);
-
   if (chosenVariable) {
     api.get(apiUrl)
       .then((res) => {
         const newMapStats: Record<string, DBRow> = {};
-        let newMinVariableValue: number = Infinity;
-        let newMaxVariableValue: number = -Infinity;
-
         for (let [areaId, variableValue] of res.data) {
           newMapStats[areaId] = variableValue;
-          if (variableValue && variableValue < newMinVariableValue) {
-            newMinVariableValue = variableValue;
-          }
-          if (variableValue && variableValue > newMaxVariableValue) {
-            newMaxVariableValue = variableValue;
-          }
         }
         setMapStats(newMapStats);
-        setMinVariableValue(newMinVariableValue);
-        setMaxVariableValue(newMaxVariableValue);
       }).catch((err) => {
         console.error("Error fetching map stats:", err);
         setMapStats(null);
-        setMinVariableValue(null);
-        setMaxVariableValue(null);
       });
   } else {
     setMapStats(null);
-    setMinVariableValue(null);
-    setMaxVariableValue(null);
   }
 }
+
+function getAreaTypeToMinMaxValues(mapStats: Record<string, number> | null): AreaTypeToMinMaxValues {
+  if (!mapStats) return null;
+
+  const result: Partial<Record<AREA_TYPE, { min: number; max: number }>> = {};
+  for (const [areaId, value] of Object.entries(mapStats)) {
+    if (value == null || value === 0) continue;
+    const areaType = areaIdToAreaType(areaId) as AREA_TYPE;
+    const current = result[areaType];
+    result[areaType] = current
+      ? { min: Math.min(current.min, value), max: Math.max(current.max, value) }
+      : { min: value, max: value };
+  }
+  return result;
+  }
 
 function layerIdToSourceId(sourceId: AREA_TYPE): string {
   return sourceId === "sa1" ? "sa1-map" : "stats-map";
@@ -133,12 +130,12 @@ function setHoveredFeature(e: MapLayerMouseEvent, mapRef: any, hoveredFeature: a
   }
 }
 
-function getZoomRangeForLayer(layerId: AREA_TYPE, mapGranularity: string | null) {
-  if (mapGranularity === "auto") return ZOOM_RANGES[layerId];
-  return (mapGranularity === layerId ? [0, 24] : [24, 24]);
+function getZoomRangeForLayer(layerId: AREA_TYPE, chosenMapGranularity: string | null) {
+  if (chosenMapGranularity === "auto") return DEFAULT_ZOOM_RANGES[layerId];
+  return (chosenMapGranularity === layerId ? [0, 24] : [24, 24]);
 }
 
-function areaColouringEffect(mapRef: any, mapStats: Record<string, number> | null, minVariableValue: any, maxVariableValue: any) {
+function areaColouringEffect(mapRef: any, mapStats: Record<string, number> | null, areaTypeToMinMaxValues: AreaTypeToMinMaxValues) {
   const map = mapRef.current?.getMap();
   if (!map) return;
 
@@ -153,8 +150,13 @@ function areaColouringEffect(mapRef: any, mapStats: Record<string, number> | nul
     return;
   }
 
-  const colorScale = scaleSequential(interpolatePlasma)
-    .domain([minVariableValue, maxVariableValue]);
+  const colorScales = Object.fromEntries(
+    AREA_TYPES.flatMap((areaType) => {
+      const minMax = areaTypeToMinMaxValues?.[areaType];
+      if (!minMax) return [];
+      return [[areaType, scaleSequential(interpolatePlasma).domain([minMax.min, minMax.max])]];
+    })
+  )
 
   for (const [areaId, variable_value] of Object.entries(mapStats)) {
     if (variable_value === undefined) continue;
@@ -168,9 +170,19 @@ function areaColouringEffect(mapRef: any, mapStats: Record<string, number> | nul
 
     map.setFeatureState(
       { source: layerIdToSourceId(sourceLayer as AREA_TYPE), sourceLayer, id: featureId },
-      { fillColor: colorScale(variable_value) }
+      { fillColor: colorScales[sourceLayer](variable_value) }
     );
   }
+}
+
+function getAreaTypeByUsingZoomDefaults(zoomLevel: number): AREA_TYPE {
+  for (const [areaType, [minZoom, maxZoom]] of Object.entries(DEFAULT_ZOOM_RANGES)) {
+    if (zoomLevel >= minZoom && zoomLevel < maxZoom) {
+      return areaType as AREA_TYPE;
+    }
+  }
+  console.warn(`Zoom level ${zoomLevel} does not correspond to any area type`);
+  return "ta"; // Default
 }
 
 type StatsMapProps = {
@@ -198,16 +210,29 @@ export default function StatsMap({
   const [chosenVariable, setChosenVariable] = useState<string | null>(DEFAULT_CHOSEN_MAP_VARIABLE);
   const [mapStats, setMapStats] = useState<Record<string, number> | null>({});
 
-  const [minVariableValue, setMinVariableValue] = useState<number | null>(null);
-  const [maxVariableValue, setMaxVariableValue] = useState<number | null>(null);
+  const areaTypeToMinMaxValues = useMemo(() => getAreaTypeToMinMaxValues(mapStats), [mapStats]);
 
   const [hoveredAreaName, setHoveredAreaName] = useState<string | null>(null);
   const [hoveredAreaId, setHoveredAreaId] = useState<string | null>(null);
   const [hoveredAreaStat, setHoveredAreaStat] = useState<number | null>(null);
 
-  const [mapGranularity, setMapGranularity] = useState<string | null>("auto");
-
   const [censusYearCompareTo, setCensusYearCompareTo] = useState<number | null>(null);
+  
+  const [mapLoaded, setMapLoaded] = useState(false);
+  
+  const [chosenMapGranularity, setChosenMapGranularity] = useState<string | null>("auto"); // What user has chosen
+  const [autoAreaType, setAutoAreaType] = useState<AREA_TYPE>("ta"); // What auto would be
+  // What is actually viewed
+  const activeAreaType = chosenMapGranularity === "auto" ? autoAreaType : (chosenMapGranularity as AREA_TYPE);
+
+  useEffect(() => {
+    const map = mapLoaded ? mapRef.current?.getMap() ?? null : null;
+    if (!map) return;
+    const onZoom = () => setAutoAreaType(getAreaTypeByUsingZoomDefaults(map.getZoom()));
+    onZoom(); // Set the initial value, before any zooming happens
+    map.on("zoom", onZoom);
+    return () => { map.off("zoom", onZoom); }; // Clean up call back
+  }, [mapLoaded]);
 
   const { mode } = useColorScheme();
   const resolvedMode = mode === "dark" ? "dark" : "light";
@@ -223,8 +248,6 @@ export default function StatsMap({
   const defaultView = isPhone ?
     { longitude: 172.58, latitude: -41.5, zoom: 4.2 } :
     { longitude: 172.58, latitude: -40.7, zoom: 4.3 };
-
-  const [mapLoaded, setMapLoaded] = useState(false);
 
   useEffect(() => {
     // Basically we need mapLoaded so sprites are set once the map is loaded.
@@ -275,16 +298,14 @@ export default function StatsMap({
     updateMapStatsEffect(
       chosenVariable,
       setMapStats,
-      setMinVariableValue,
-      setMaxVariableValue,
       censusYear,
       censusYearCompareTo
     );
   }, [chosenVariable, censusYear, censusYearCompareTo]);
 
   useEffect(() => {
-    areaColouringEffect(mapRef, mapStats, minVariableValue, maxVariableValue);
-  }, [mapStats, minVariableValue, maxVariableValue]);
+    areaColouringEffect(mapRef, mapStats, areaTypeToMinMaxValues);
+  }, [mapStats, areaTypeToMinMaxValues]);
 
   const resetZoom = () => {
     const map = mapRef.current?.getMap();
@@ -306,19 +327,19 @@ export default function StatsMap({
           resetZoom={resetZoom}
           setChosenVariable={setChosenVariable}
           variableIdsToNameMap={variableIdsToNameMap}
-          mapGranularity={mapGranularity}
-          setMapGranularity={setMapGranularity}
+          chosenMapGranularity={chosenMapGranularity}
+          setChosenMapGranularity={setChosenMapGranularity}
           setChosenCensusYear={setChosenCensusYear}
           chosenCensusYear={censusYear}
           setChosenCensusYearCompareTo={setCensusYearCompareTo}
           censusYearCompareTo={censusYearCompareTo}
-          map={mapLoaded ? mapRef.current?.getMap() ?? null : null}
           availableYearsForVariables={availableYearsForVariables}
+          autoAreaType={autoAreaType}
         />
 
         <MapInfoBox
-          min={minVariableValue}
-          max={maxVariableValue}
+          min={areaTypeToMinMaxValues?.[activeAreaType]?.min ?? null}
+          max={areaTypeToMinMaxValues?.[activeAreaType]?.max ?? null}
           hoveredAreaName={hoveredAreaName}
           hoveredAreaId={hoveredAreaId}
           hoveredAreaStat={hoveredAreaStat}
@@ -355,7 +376,7 @@ export default function StatsMap({
             })}
 
             {(["ta", "sa3", "sa2"] as const).map((id) => {
-              const [minZoom, maxZoom] = getZoomRangeForLayer(id, mapGranularity);
+              const [minZoom, maxZoom] = getZoomRangeForLayer(id, chosenMapGranularity);
               return <AreaLayer
                 key={id}
                 layerId={id}
@@ -374,7 +395,7 @@ export default function StatsMap({
             promoteId={{ sa1: "area_id" }}
           >
             {(() => {
-              const [minZoom, maxZoom] = getZoomRangeForLayer("sa1", mapGranularity);
+              const [minZoom, maxZoom] = getZoomRangeForLayer("sa1", chosenMapGranularity);
               return (
                 <AreaLayer
                   key={"sa1"}

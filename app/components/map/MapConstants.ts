@@ -35,7 +35,7 @@ export function getMapColours(mode: "light" | "dark"): MapColours {
 
 export const DEFAULT_CHOSEN_MAP_VARIABLE = "median_age";
 
-export const ZOOM_RANGES : Record<AREA_TYPE, [number, number]> = {
+export const DEFAULT_ZOOM_RANGES : Record<AREA_TYPE, [number, number]> = {
   "ta": [0, 6],
   "sa3": [6, 9],
   "sa2": [9, 12],
