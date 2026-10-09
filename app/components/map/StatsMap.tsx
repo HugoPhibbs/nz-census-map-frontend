@@ -17,13 +17,13 @@ import { layers, namedFlavor } from "@protomaps/basemaps";
 import api from "@/app/api";
 import { getMapColours } from "./MapConstants";
 import { DEFAULT_CHOSEN_MAP_VARIABLE, ZOOM_RANGES } from "./MapConstants";
-import {areaIdToAreaType, AREA_TYPE} from "@/app/utils";
+import { areaIdToAreaType, AREA_TYPE } from "@/app/utils";
 
 setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
 if (typeof window !== 'undefined') {
   // Pre-fetch the .mjs module for faster loads. See https://maplibre.org/maplibre-gl-js/docs/API/functions/prewarm/
-  maplibregl.prewarm(); 
+  maplibregl.prewarm();
 }
 
 type DBRow = Record<string, string | number>;
@@ -50,11 +50,24 @@ const IGNORED_BASEMAP_LAYERS = [
 
 const INTERACTIVE_LAYERS = ["ta-areas-fill", "sa3-areas-fill", "sa2-areas-fill", "sa1-areas-fill"];
 
-function updateMapStatsEffect(chosenVariable: any, setMapStats: any, setMinVariableValue: any, setMaxVariableValue: any, censusYear: number) {
+function updateMapStatsEffect(chosenVariable: string | null,
+  setMapStats: any,
+  setMinVariableValue: any,
+  setMaxVariableValue: any,
+  censusYear: number,
+  censusYearCompareTo: number | null
+) {
+  const apiUrl = !censusYearCompareTo ?
+    `/stats/variable/${chosenVariable}/${censusYear}` :
+    `/stats/variable/${chosenVariable}/compare?from=${censusYear}&to=${censusYearCompareTo}`;
+
+  console.log(apiUrl);
+  console.log("censusYearCompareTo", censusYearCompareTo);
+
   if (chosenVariable) {
-    api.get(`/stats/variable/${chosenVariable}/${censusYear}`)
-    .then((res) => {
-        let newMapStats: Record<string, DBRow> = {};
+    api.get(apiUrl)
+      .then((res) => {
+        const newMapStats: Record<string, DBRow> = {};
         let newMinVariableValue: number = Infinity;
         let newMaxVariableValue: number = -Infinity;
 
@@ -169,7 +182,14 @@ type StatsMapProps = {
   availableYearsForVariables: Record<string, number[]>;
 };
 
-export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variableIdsToUnitMap, censusYear, setChosenCensusYear, availableYearsForVariables }: StatsMapProps) {
+export default function StatsMap({
+  setChosenAreaId,
+  variableIdsToNameMap,
+  variableIdsToUnitMap,
+  censusYear,
+  setChosenCensusYear,
+  availableYearsForVariables
+}: StatsMapProps) {
 
   const mapRef = useRef<MapRef>(null);
   const hoveredFeature = useRef<{ source: string; sourceLayer: string; id: string | number } | null>(null);
@@ -186,6 +206,8 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
   const [hoveredAreaStat, setHoveredAreaStat] = useState<number | null>(null);
 
   const [mapGranularity, setMapGranularity] = useState<string | null>("auto");
+
+  const [censusYearCompareTo, setCensusYearCompareTo] = useState<number | null>(null);
 
   const { mode } = useColorScheme();
   const resolvedMode = mode === "dark" ? "dark" : "light";
@@ -208,7 +230,7 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
     // Basically we need mapLoaded so sprites are set once the map is loaded.
     // Without this, no sprites are rendered bc resolvedMode doesn't change before the map (this hook) is loaded
     if (!mapLoaded) return;
-    const spriteUrl =  `https://protomaps.github.io/basemaps-assets/sprites/v4/${resolvedMode}`;
+    const spriteUrl = `https://protomaps.github.io/basemaps-assets/sprites/v4/${resolvedMode}`;
     mapRef.current?.getMap().setSprite(spriteUrl);
   }, [mapLoaded, resolvedMode]);
 
@@ -234,7 +256,7 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
     ) {
       return;
     }
-    
+
     setHoveredFeature(e, mapRef, hoveredFeature, clearHover);
 
     const areaId = (feature?.properties?.area_id as string) ?? null;
@@ -250,8 +272,15 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
   }, []);
 
   useEffect(() => {
-    updateMapStatsEffect(chosenVariable, setMapStats, setMinVariableValue, setMaxVariableValue, censusYear);
-  }, [chosenVariable, censusYear]);
+    updateMapStatsEffect(
+      chosenVariable,
+      setMapStats,
+      setMinVariableValue,
+      setMaxVariableValue,
+      censusYear,
+      censusYearCompareTo
+    );
+  }, [chosenVariable, censusYear, censusYearCompareTo]);
 
   useEffect(() => {
     areaColouringEffect(mapRef, mapStats, minVariableValue, maxVariableValue);
@@ -281,6 +310,8 @@ export default function StatsMap({ setChosenAreaId, variableIdsToNameMap, variab
           setMapGranularity={setMapGranularity}
           setChosenCensusYear={setChosenCensusYear}
           chosenCensusYear={censusYear}
+          setChosenCensusYearCompareTo={setCensusYearCompareTo}
+          censusYearCompareTo={censusYearCompareTo}
           map={mapLoaded ? mapRef.current?.getMap() ?? null : null}
           availableYearsForVariables={availableYearsForVariables}
         />

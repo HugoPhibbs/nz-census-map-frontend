@@ -3,8 +3,9 @@
 import { Box, FormControl, InputLabel, ListSubheader, MenuItem, Select, Button, Typography, Accordion, AccordionSummary, AccordionDetails, useMediaQuery } from "@mui/material";
 import { useEffect, useState } from "react";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { DEFAULT_CHOSEN_MAP_VARIABLE, ZOOM_RANGES} from "./MapConstants";
-import {AREA_TYPE_TO_NAME, AREA_TYPE, DEFAULT_CENSUS_YEAR, CENSUS_YEARS} from "@/app/utils";
+import { DEFAULT_CHOSEN_MAP_VARIABLE, ZOOM_RANGES } from "./MapConstants";
+import { AREA_TYPE_TO_NAME, AREA_TYPE, DEFAULT_CENSUS_YEAR, CENSUS_YEARS } from "@/app/utils";
+import EastRoundedIcon from '@mui/icons-material/EastRounded';
 
 const DISPLAY_BY_CATEGORIES: Record<string, string[]> = {
   "Age & Family": [
@@ -58,35 +59,43 @@ function getAreaTypeForZoom(zoomLevel: number): AREA_TYPE {
   return "ta"; // Default
 }
 
-function MapViewOptionsFormControl({ children }: { children: React.ReactNode }) {
+function MapViewOptionsFormControl({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <FormControl className={"map-filter-dropdown"} size={"small"}>
+    <FormControl className={`map-filter-dropdown ${className}`} size={"small"}>
       {children}
     </FormControl>
   )
 }
 
 type CensusYearSelectProps = {
-  chosenCensusYear: number;
-  setChosenCensusYear: (year: number) => void;
+  censusYear: number | null;
+  setCensusYear: (year: number | null) => void;
   availableYearsForVariable?: number[];
+  addNoneOption?: boolean;
 };
 
-function CensusYearSelect({ chosenCensusYear, setChosenCensusYear, availableYearsForVariable }: CensusYearSelectProps) {
+function CensusYearSelect({ censusYear, setCensusYear, availableYearsForVariable, addNoneOption = false }: CensusYearSelectProps) {
   return (
-    <MapViewOptionsFormControl>
-      <InputLabel className="map-filter-label">Census year</InputLabel>
+    <MapViewOptionsFormControl className="census-year-select">
+      <InputLabel className="map-filter-label">Year</InputLabel>
       <Select
-        value={chosenCensusYear}
-        onChange={(e) => setChosenCensusYear(e.target.value)}
-        label="Census year....."
+        value={censusYear ?? "none"}
+        onChange={(e) => {
+          if (e.target.value === "none") {
+            setCensusYear(null);
+            return;
+          }
+          setCensusYear(e.target.value)
+        }}
+        label="Year....."
         className="map-filter-select"
         MenuProps={{
           slotProps: {
-            paper: {className: "map-filter-menu"},
+            paper: { className: "map-filter-menu" },
           },
         }}
       >
+        {addNoneOption && <MenuItem key="none" value="none">None</MenuItem>}
         {CENSUS_YEARS.map((year) => (
           <MenuItem key={year} value={year} disabled={availableYearsForVariable && !availableYearsForVariable.includes(year)}>
             {year}
@@ -231,6 +240,17 @@ function AreaTypeSelect({ mapGranularity, setMapGranularity, map }: AreaTypeSele
   )
 }
 
+function getAvailableYearsForYearSelect(
+  chosenVariable: string | null,
+  availableYearsForVariables: Record<string, number[]>,
+  excludeYear: number | null = null
+): number[] {
+  const hasVariable = chosenVariable !== null && chosenVariable !== "none";
+  const years = (hasVariable && availableYearsForVariables[chosenVariable]) || CENSUS_YEARS;
+
+  return years.filter((year) => year !== excludeYear);
+}
+
 type MapViewOptionsProps = {
   setChosenVariable: (variable: string | null) => void;
   variableIdsToNameMap: Record<string, string>;
@@ -238,8 +258,10 @@ type MapViewOptionsProps = {
   setMapGranularity: (granularity: string | null) => void;
   resetZoom: () => void;
   map: any
-  setChosenCensusYear: (year: number) => void;
   chosenCensusYear: number;
+  setChosenCensusYear: (year: number) => void;
+  censusYearCompareTo: number | null;
+  setChosenCensusYearCompareTo: (year: number | null) => void;
   availableYearsForVariables: Record<string, number[]>;
 };
 
@@ -250,8 +272,10 @@ export default function MapViewOptions({
   setMapGranularity,
   resetZoom,
   map,
-  setChosenCensusYear,
   chosenCensusYear,
+  setChosenCensusYear,
+  censusYearCompareTo,
+  setChosenCensusYearCompareTo,
   availableYearsForVariables
 }: MapViewOptionsProps) {
 
@@ -297,12 +321,30 @@ export default function MapViewOptions({
             setMapGranularity={setMapGranularity}
             map={map}
           />
-          <CensusYearSelect
-            chosenCensusYear={chosenCensusYear}
-            setChosenCensusYear={setChosenCensusYear}
-            // All years are available when no variable is chosen, or before the available years have loaded
-            availableYearsForVariable={(chosenVariableLocal && chosenVariableLocal !== "none" && availableYearsForVariables[chosenVariableLocal]) || CENSUS_YEARS}
-          />
+
+          <Box sx={{ display: "flex", flexDirection: "row", gap: "1rem", justifyContent: "space-between", alignItems: "center" }}>
+            <CensusYearSelect
+              censusYear={chosenCensusYear}
+              setCensusYear={(year: number | null) => {
+                if (year === null) return; // We add null type here just to satisfy TS compiling
+                if (year === censusYearCompareTo) {
+                  setChosenCensusYearCompareTo(null);
+                }
+                setChosenCensusYear(year);
+              }}
+              // All years are available when no variable is chosen, or before the available years have loaded
+              availableYearsForVariable={getAvailableYearsForYearSelect(chosenVariableLocal, availableYearsForVariables, null)}
+            />
+            <EastRoundedIcon />
+            <CensusYearSelect
+              censusYear={censusYearCompareTo}
+              setCensusYear={setChosenCensusYearCompareTo}
+              // All years are available when no variable is chosen, or before the available years have loaded
+              availableYearsForVariable={getAvailableYearsForYearSelect(chosenVariableLocal, availableYearsForVariables, chosenCensusYear)}
+              addNoneOption={true}
+            />
+          </Box>
+
         </Box>
 
         <Box>

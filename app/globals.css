@@ -296,6 +296,10 @@ body {
     font-size: 0.8em;
 }
 
+.census-year-select {
+    width: 45%
+}
+
 .display-by-category {
     background-color: var(--mui-palette-background-default);
     color: var(--mui-palette-text-primary);
