@@ -1,5 +1,6 @@
 import {COLOURS} from "@/app/theme"
 import { AREA_TYPE } from "@/app/utils";
+import { ScaleDiverging, ScaleSequential } from "d3-scale";
 
 export type MapColours = {
   background: string;
@@ -9,6 +10,8 @@ export type MapColours = {
   areaBorderSelected: string;
   areaFillOpacity: number;
 };
+
+export type ColourScale = ScaleDiverging<string> | ScaleSequential<string>;
 
 
 const MAP_COLOURS_LIGHT : MapColours = {
@@ -41,3 +44,4 @@ export const DEFAULT_ZOOM_RANGES : Record<AREA_TYPE, [number, number]> = {
   "sa2": [9, 12],
   "sa1": [12, 24],
 }
+
