@@ -3,7 +3,7 @@
 import { Box, FormControl, InputLabel, ListSubheader, MenuItem, Select, Button, Typography, Accordion, AccordionSummary, AccordionDetails, useMediaQuery } from "@mui/material";
 import { useEffect, useState } from "react";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { DEFAULT_CHOSEN_MAP_VARIABLE, ZOOM_RANGES } from "./MapConstants";
+import { DEFAULT_CHOSEN_MAP_VARIABLE, DEFAULT_ZOOM_RANGES } from "./MapConstants";
 import { AREA_TYPE_TO_NAME, AREA_TYPE, DEFAULT_CENSUS_YEAR, CENSUS_YEARS } from "@/app/utils";
 import EastRoundedIcon from '@mui/icons-material/EastRounded';
 
@@ -47,16 +47,6 @@ const DISPLAY_BY_CATEGORIES: Record<string, string[]> = {
     "perc_difficulty_communicating",
     "perc_regular_smoker",
   ],
-}
-
-function getAreaTypeForZoom(zoomLevel: number): AREA_TYPE {
-  for (const [areaType, [minZoom, maxZoom]] of Object.entries(ZOOM_RANGES)) {
-    if (zoomLevel >= minZoom && zoomLevel < maxZoom) {
-      return areaType as AREA_TYPE;
-    }
-  }
-  console.warn(`Zoom level ${zoomLevel} does not correspond to any area type`);
-  return "ta"; // Default
 }
 
 function MapViewOptionsFormControl({ children, className }: { children: React.ReactNode; className?: string }) {
@@ -201,27 +191,18 @@ function DisplayBySelect({ chosenVariable, onVariableChange, variableIdsToNameMa
 }
 
 type AreaTypeSelectProps = {
-  mapGranularity: string | null;
-  setMapGranularity: (granularity: string | null) => void;
-  map: any
+  chosenMapGranularity: string | null;
+  setChosenMapGranularity: (granularity: string | null) => void;
+  autoAreaType: AREA_TYPE
 };
 
-function AreaTypeSelect({ mapGranularity, setMapGranularity, map }: AreaTypeSelectProps) {
-  const [autoAreaType, setAutoAreaType] = useState<AREA_TYPE>("ta");
-
-  useEffect(() => {
-    if (!map) return;
-    const onZoom = () => setAutoAreaType(getAreaTypeForZoom(map.getZoom()));
-    map.on("zoom", onZoom);
-    return () => { map.off("zoom", onZoom); }; // Clean up call back
-  }, [map]);
-
+function AreaTypeSelect({ chosenMapGranularity, setChosenMapGranularity, autoAreaType }: AreaTypeSelectProps) {
   return (
     <MapViewOptionsFormControl>
       <InputLabel className="map-filter-label" >Area type</InputLabel>
       <Select
-        value={mapGranularity ?? ''}
-        onChange={(e) => e.target.value && setMapGranularity(e.target.value)}
+        value={chosenMapGranularity ?? ''}
+        onChange={(e) => e.target.value && setChosenMapGranularity(e.target.value)}
         label="Area Type...."
         className="map-filter-select"
         MenuProps={{
@@ -254,10 +235,10 @@ function getAvailableYearsForYearSelect(
 type MapViewOptionsProps = {
   setChosenVariable: (variable: string | null) => void;
   variableIdsToNameMap: Record<string, string>;
-  mapGranularity: string | null;
-  setMapGranularity: (granularity: string | null) => void;
+  chosenMapGranularity: string | null;
+  setChosenMapGranularity: (granularity: string | null) => void;
   resetZoom: () => void;
-  map: any
+  autoAreaType: AREA_TYPE;
   chosenCensusYear: number;
   setChosenCensusYear: (year: number) => void;
   censusYearCompareTo: number | null;
@@ -268,10 +249,10 @@ type MapViewOptionsProps = {
 export default function MapViewOptions({
   setChosenVariable,
   variableIdsToNameMap,
-  mapGranularity,
-  setMapGranularity,
+  chosenMapGranularity,
+  setChosenMapGranularity,
   resetZoom,
-  map,
+  autoAreaType,
   chosenCensusYear,
   setChosenCensusYear,
   censusYearCompareTo,
@@ -297,8 +278,9 @@ export default function MapViewOptions({
     resetZoom();
     setChosenVariable(null);
     setChosenVariableLocal("none");
-    setMapGranularity("auto");
+    setChosenMapGranularity("auto");
     setChosenCensusYear(DEFAULT_CENSUS_YEAR);
+    setChosenCensusYearCompareTo(null);
   }
 
   return (
@@ -317,12 +299,12 @@ export default function MapViewOptions({
             availableYearsForVariables={availableYearsForVariables}
           />
           <AreaTypeSelect
-            mapGranularity={mapGranularity}
-            setMapGranularity={setMapGranularity}
-            map={map}
+            chosenMapGranularity={chosenMapGranularity}
+            setChosenMapGranularity={setChosenMapGranularity}
+            autoAreaType={autoAreaType}
           />
 
-          <Box sx={{ display: "flex", flexDirection: "row", gap: "1rem", justifyContent: "space-between", alignItems: "center" }}>
+          <Box id="census-year-selects-box">
             <CensusYearSelect
               censusYear={chosenCensusYear}
               setCensusYear={(year: number | null) => {
@@ -332,14 +314,12 @@ export default function MapViewOptions({
                 }
                 setChosenCensusYear(year);
               }}
-              // All years are available when no variable is chosen, or before the available years have loaded
               availableYearsForVariable={getAvailableYearsForYearSelect(chosenVariableLocal, availableYearsForVariables, null)}
             />
             <EastRoundedIcon />
             <CensusYearSelect
               censusYear={censusYearCompareTo}
               setCensusYear={setChosenCensusYearCompareTo}
-              // All years are available when no variable is chosen, or before the available years have loaded
               availableYearsForVariable={getAvailableYearsForYearSelect(chosenVariableLocal, availableYearsForVariables, chosenCensusYear)}
               addNoneOption={true}
             />

@@ -39,7 +39,7 @@ export function formatSA1AreaId(areaId: string): string {
   return `${areaId} (SA1)`;
 }
 
-export const AREA_TYPE_TO_NAME = {
+export const AREA_TYPE_TO_NAME: Record<AREA_TYPE, string> = {
   "ta": "District",
   "sa3": "Subdistrict",
   "sa2": "Suburb",
@@ -47,6 +47,7 @@ export const AREA_TYPE_TO_NAME = {
 }
 
 export type AREA_TYPE = "ta" | "sa3" | "sa2" | "sa1";
+export const AREA_TYPES : AREA_TYPE[] = ["ta", "sa3", "sa2", "sa1"];
 
 export const DEFAULT_CENSUS_YEAR = 2023;
 export const CENSUS_YEARS = [2023, 2018, 2013];

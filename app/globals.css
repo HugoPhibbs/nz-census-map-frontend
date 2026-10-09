@@ -296,6 +296,14 @@ body {
     font-size: 0.8em;
 }
 
+#census-year-selects-box {
+    display: flex;
+    flex-direction: row;
+    gap: 1em;
+    justify-content: space-between;
+    align-items: center;
+}
+
 .census-year-select {
     width: 45%
 }
@@ -326,24 +334,29 @@ body {
     border-radius: 1em;
 }
 
-#map-colour-indicator-marker {
+#map-colour-indicator-marker-container {
     position: absolute;
-    top: 50%; /* Center vertically, this is relative to the centre of the circle */
+    bottom: calc(50% - 8px); /* Puts the circle's centre on the bar's centre (8px = marker radius) */
+    transform: translateX(-50%); /* Push it to the left so centre is centred on the previous left edge*/
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: left 0.15s ease-out;
+}
+
+#map-colour-indicator-marker {
     width: 16px;
     height: 16px;
     border-radius: 50%;
     border: 2px solid white;
     box-shadow: 0 0 3px rgba(0, 0, 0, 0.6);
-    transform: translate(-50%, -50%); /* Reposition the marker, so its centre is now where its top-left corner was */
-    transition: left 0.15s ease-out; 
 }
 
 #map-colour-indicator-value {
-    position: absolute;
-    top: -100%;
-    transform: translate(-50%, -50%);
     font-size: 13px;
-    transition: left 0.15s ease-out; 
+    background-color: var(--mui-palette-background-paper);
+    border-radius: 4px;
+    padding: 0 2px 0 2px;
 }
 
 #map-info-box {
@@ -354,7 +367,8 @@ body {
     padding: 0.5em;
     border: 1px solid var(--mui-palette-divider);
     border-radius: 1em;
-    background-color: var(--translucent-panel);
+    /* background-color: var(--translucent-panel); */
+    background-color: var(--mui-palette-background-paper);
     display: flex;
     flex-direction: column;
     gap: 0.4em;
