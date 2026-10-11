@@ -299,13 +299,21 @@ body {
 #census-year-selects-box {
     display: flex;
     flex-direction: row;
-    gap: 1em;
+    gap: 0.5em;
     justify-content: space-between;
     align-items: center;
 }
 
 .census-year-select {
     width: 45%
+}
+
+#census-year-compare-clue {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6em;
 }
 
 .display-by-category {
