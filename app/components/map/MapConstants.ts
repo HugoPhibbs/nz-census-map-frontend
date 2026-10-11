@@ -1,5 +1,6 @@
 import {COLOURS} from "@/app/theme"
 import { AREA_TYPE } from "@/app/utils";
+import { useColorScheme } from "@mui/material/styles";
 import { ScaleDiverging, ScaleSequential } from "d3-scale";
 
 export type MapColours = {
@@ -14,7 +15,7 @@ export type MapColours = {
 export type ColourScale = ScaleDiverging<string> | ScaleSequential<string>;
 
 
-const MAP_COLOURS_LIGHT : MapColours = {
+export const MAP_COLOURS_LIGHT : MapColours = {
   "background": "#86D7EB",
   "areaFill": "grey",
   "areaBorder": "white",
@@ -23,17 +24,13 @@ const MAP_COLOURS_LIGHT : MapColours = {
   "areaFillOpacity": 0.7,
 }
 
-const MAP_COLOURS_DARK : MapColours = {
+export const MAP_COLOURS_DARK : MapColours = {
   "background": "#003852",
   "areaFill": "#363840",
   "areaBorder": COLOURS["off-black"],
   "areaBorderHover": COLOURS["bone-white"],
   "areaBorderSelected": COLOURS["bone-white"],
   "areaFillOpacity": 0.6,
-}
-
-export function getMapColours(mode: "light" | "dark"): MapColours {
-  return mode === "light" ? MAP_COLOURS_LIGHT : MAP_COLOURS_DARK;
 }
 
 export const DEFAULT_CHOSEN_MAP_VARIABLE = "median_age";

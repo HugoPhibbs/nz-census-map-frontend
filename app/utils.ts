@@ -1,3 +1,6 @@
+import { useColorScheme } from "@mui/material";
+import { MAP_COLOURS_DARK, MAP_COLOURS_LIGHT, MapColours } from "./components/map/MapConstants";
+
 export function roundToDP(value: number, dp: number) {
   const multiplier = Math.pow(10, dp);
   return Math.round(value * multiplier) / multiplier;
@@ -68,4 +71,18 @@ export function areaIdToAreaType(areaId: string): AREA_TYPE {
 export function areaIdToAreaTypeName(areaId: string): string {
   const areaType = areaIdToAreaType(areaId);
   return AREA_TYPE_TO_NAME[areaType];
+}
+
+/**
+ * Get the current colour mode (light or dark) based on the user's website preferences.
+ * 
+ * Special handling, since we don't account for system colours (yet)
+ */
+export function useColourMode(): "light" | "dark" {
+  const { mode } = useColorScheme();
+  return mode === "dark" ? "dark" : "light";
+}
+
+export function getMapColours(mode: "light" | "dark"): MapColours {
+  return mode === "light" ? MAP_COLOURS_LIGHT : MAP_COLOURS_DARK;
 }
