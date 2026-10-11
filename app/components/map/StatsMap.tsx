@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, useMediaQuery, useColorScheme } from "@mui/material";
+import { Box, useMediaQuery } from "@mui/material";
 import { Protocol } from "pmtiles";
 import { useEffect, useRef, useCallback, useState, useMemo } from "react";
 
@@ -15,9 +15,9 @@ import MapViewOptions from "./MapViewOptions";
 import MapInfoBox from "./MapInfoBox";
 import { layers, namedFlavor } from "@protomaps/basemaps";
 import api from "@/app/api";
-import { ColourScale } from "./MapConstants";
-import { DEFAULT_CHOSEN_MAP_VARIABLE, DEFAULT_ZOOM_RANGES } from "./MapConstants";
-import { areaIdToAreaType, AREA_TYPE, AREA_TYPES, useColourMode, getMapColours,  } from "@/app/utils";
+import { AREA_TYPE, ColourScale } from "@/app/types";
+import { DEFAULT_CHOSEN_MAP_VARIABLE, DEFAULT_ZOOM_RANGES } from "@/app/components/map/MapConstants";
+import { areaIdToAreaType, AREA_TYPES, useColourMode, getMapColours,  } from "@/app/utils";
 import { extent, quantile } from "d3-array";
 
 setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');

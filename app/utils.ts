@@ -1,5 +1,6 @@
 import { useColorScheme } from "@mui/material";
-import { MAP_COLOURS_DARK, MAP_COLOURS_LIGHT, MapColours } from "./components/map/MapConstants";
+import { AREA_TYPE, MapColours } from "./types";
+import { MAP_COLOURS_DARK, MAP_COLOURS_LIGHT } from "./components/map/MapConstants";
 
 export function roundToDP(value: number, dp: number) {
   const multiplier = Math.pow(10, dp);
@@ -49,7 +50,6 @@ export const AREA_TYPE_TO_NAME: Record<AREA_TYPE, string> = {
   "sa1": "Neighbourhood"
 }
 
-export type AREA_TYPE = "ta" | "sa3" | "sa2" | "sa1";
 export const AREA_TYPES : AREA_TYPE[] = ["ta", "sa3", "sa2", "sa1"];
 
 export const DEFAULT_CENSUS_YEAR = 2023;
@@ -86,3 +86,4 @@ export function useColourMode(): "light" | "dark" {
 export function getMapColours(mode: "light" | "dark"): MapColours {
   return mode === "light" ? MAP_COLOURS_LIGHT : MAP_COLOURS_DARK;
 }
+

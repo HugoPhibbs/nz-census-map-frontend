@@ -1,8 +1,8 @@
 "use client";
-import { Box, Divider, useColorScheme, useMediaQuery } from "@mui/material";
-import { formatSA1AreaId, formatVariableStat } from "@/app/utils";
+import { Box, Divider, useMediaQuery } from "@mui/material";
+import { formatSA1AreaId } from "@/app/utils";
 import { namedFlavor } from "@protomaps/basemaps";
-import { ColourScale } from "./MapConstants";
+import { ColourScale } from "@/app/types";
 import { getMapColours, useColourMode } from "@/app/utils";
 
 const MARKER_RADIUS = 8; // Half of #map-colour-indicator-marker's width (border-box, so includes the border)
@@ -21,10 +21,10 @@ type MapColourIndicatorProps = {
  * Gets how a colour would typically look like on the map accounting for the earth colour and the fill opacity
  * 
  * @param colour colour string (e.g. "#8f0da4") or RGB ("rgb(162, 215, 158)")
+ * @param colourMode "light" or "dark"
  * @returns 
  */
-function mapLikeColour(colour: string) {
-    const colourMode = useColourMode();
+function mapLikeColour(colour: string, colourMode : "light" | "dark") {
     const { areaFillOpacity } = getMapColours(colourMode);
     const landColour = namedFlavor(colourMode).earth;
     return `color-mix(in srgb, ${colour} ${areaFillOpacity * 100}%, ${landColour})`;
@@ -40,6 +40,8 @@ function MapColourIndicator({
     showPlusSignForChange
 }:
     MapColourIndicatorProps) {
+
+    const colourMode = useColourMode();
 
     if (min === null || max === null || !isFinite(min) || !isFinite(max) || !colourScale) return null;
 
@@ -58,7 +60,7 @@ function MapColourIndicator({
 
     const stops = Array.from({ length: 10 }, (_, i) => {
         const t = i / 9;
-        return `${mapLikeColour(colourScale(valueAt(t)))} ${(t * 100).toFixed(0)}%`;
+        return `${mapLikeColour(colourScale(valueAt(t)), colourMode)} ${(t * 100).toFixed(0)}%`;
     }).join(", ");
 
     const t = highlightedValue != null && barMax !== barMin
@@ -70,7 +72,7 @@ function MapColourIndicator({
 
     const highlightedValuePrefix = (highlightedValue !== null && showPlusSignForChange && highlightedValue > 0) ? "+" : ""
 
-    const emptyDataColour = mapLikeColour(getMapColours(useColourMode()).areaFill);
+    const emptyDataColour = mapLikeColour(getMapColours(colourMode).areaFill, colourMode);
 
     return (
         // Add margin to the top to clear space for the hover text
@@ -89,7 +91,7 @@ function MapColourIndicator({
                             </Box>
                             <Box
                                 id="map-colour-indicator-marker"
-                                sx={{ backgroundColor: mapLikeColour(colourScale(highlightedValue)) }}
+                                sx={{ backgroundColor: mapLikeColour(colourScale(highlightedValue), colourMode) }}
                             />
                         </Box>
                     )}

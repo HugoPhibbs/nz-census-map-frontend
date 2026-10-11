@@ -1,7 +1,7 @@
 "use client";
 
 import { Layer } from "react-map-gl/maplibre";
-import { MapColours } from "./MapConstants";
+import { MapColours } from "@/app/types";
 
 export default function AreaLayer({
   layerId, maxZoom, minZoom, sourceId, colours
