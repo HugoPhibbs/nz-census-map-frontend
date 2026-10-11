@@ -5,10 +5,13 @@ import { useEffect, useState } from "react";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { DEFAULT_CHOSEN_MAP_VARIABLE } from "./MapConstants";
 import { AREA_TYPE_TO_NAME, DEFAULT_CENSUS_YEAR, CENSUS_YEARS } from "@/app/utils";
-import {AREA_TYPE} from "@/app/types";
+import { AREA_TYPE } from "@/app/types";
 import EastRoundedIcon from '@mui/icons-material/EastRounded';
 
 const DISPLAY_BY_CATEGORIES: Record<string, string[]> = {
+  "Population": [
+    "pop_density"
+  ],
   "Age & Family": [
     "median_age",
     "avg_children_born",
@@ -105,49 +108,43 @@ type DisplayBySelectProps = {
   availableYearsForVariables: Record<string, number[]>;
 };
 
+function SelectVariableItem(
+  variableId: string,
+  variableOptions: Record<string, string>,
+  availableYearsForVariables: Record<string, number[]>,
+  chosenCensusYear: number
+) {
+  let isAvailable: boolean;
+  if (variableId === "none" || Object.keys(availableYearsForVariables).length === 0) {
+    isAvailable = true;
+  } else {
+    isAvailable = availableYearsForVariables[variableId] && availableYearsForVariables[variableId].includes(chosenCensusYear);
+  }
 
+  return (
+    <MenuItem key={variableId} value={variableId} disabled={!isAvailable}>
+      {`${variableOptions[variableId]}${!isAvailable ? " (N/A)" : ""}`}
+    </MenuItem>
+  );
+}
 
 function DisplayBySelect({ chosenVariable, onVariableChange, variableIdsToNameMap, chosenCensusYear, availableYearsForVariables }: DisplayBySelectProps) {
-  const [variableOptions, setVariableOptions] = useState<Record<string, string>>({ "none": "None", [DEFAULT_CHOSEN_MAP_VARIABLE]: "Median age" }); // Hard code in so its here on first paint
+  const [variableOptions, setVariableOptions] = useState<Record<string, string>>({ "none": "None", [DEFAULT_CHOSEN_MAP_VARIABLE]: "Population density" }); // Hard code in so its here on first paint
 
   const ITEM_HEIGHT = 36;
   const ITEM_PADDING_TOP = 8;
   const VISIBLE_ITEMS = 8;
   const menuMaxHeight = ITEM_HEIGHT * VISIBLE_ITEMS + ITEM_PADDING_TOP;
 
-  useEffect(() => {
-    if (Object.keys(variableIdsToNameMap).length == 0) return;
-    const filtered = Object.fromEntries(
-      Object.entries(variableIdsToNameMap).filter(([id, _]: [any, any]) => !id.startsWith("pop_"))
-    );
-    setVariableOptions({ "none": "None", ...filtered });
+    useEffect(() => {
+      if (Object.keys(variableIdsToNameMap).length == 0) return;
 
-    // Check that DISPLAY_BY_CATEGORIES and the variables from the API agree
-    const categorisedIds = Object.values(DISPLAY_BY_CATEGORIES).flat();
-    const missingFromApi = categorisedIds.filter((id) => !(id in filtered));
-    const missingFromCategories = Object.keys(filtered).filter((id) => !categorisedIds.includes(id));
-    if (missingFromApi.length > 0) {
-      console.warn("Variables in DISPLAY_BY_CATEGORIES that the API didn't return:", missingFromApi);
-    }
-    if (missingFromCategories.length > 0) {
-      console.warn("Variables from the API that aren't in DISPLAY_BY_CATEGORIES (not shown):", missingFromCategories);
-    }
-  }, [variableIdsToNameMap])
-
-  const renderVariableItem = (variableId: string) => {
-    let isAvailable: boolean;
-    if (variableId === "none" || Object.keys(availableYearsForVariables).length === 0) {
-      isAvailable = true;
-    } else {
-      isAvailable = availableYearsForVariables[variableId] && availableYearsForVariables[variableId].includes(chosenCensusYear);
-    }
-
-    return (
-      <MenuItem key={variableId} value={variableId} disabled={!isAvailable}>
-        {`${variableOptions[variableId]}${!isAvailable ? " (N/A)" : ""}`}
-      </MenuItem>
-    );
-  };
+      const variableIdsToKeep = Object.values(DISPLAY_BY_CATEGORIES).flat();
+      const idsToNames = Object.fromEntries(
+        variableIdsToKeep.map((id) => [id, variableIdsToNameMap[id]])
+      );
+      setVariableOptions({ "none": "None", ...idsToNames });
+    }, [variableIdsToNameMap])
 
   return (
     <MapViewOptionsFormControl>
@@ -175,7 +172,7 @@ function DisplayBySelect({ chosenVariable, onVariableChange, variableIdsToNameMa
           },
         }}
       >
-        {renderVariableItem("none")}
+        {SelectVariableItem("none", variableOptions, availableYearsForVariables, chosenCensusYear)}
         {/* Select doesn't accept Fragments as children, so flatten each group into a list */}
         {Object.entries(DISPLAY_BY_CATEGORIES).flatMap(([category, variableIds]) => {
           // Skip variables we don't have (yet) from the API, and any category left empty
@@ -183,7 +180,7 @@ function DisplayBySelect({ chosenVariable, onVariableChange, variableIdsToNameMa
           if (shownIds.length === 0) return [];
           return [
             <ListSubheader className="display-by-category" key={`category-${category}`}>{category}</ListSubheader>,
-            ...shownIds.map(renderVariableItem),
+            ...shownIds.map((id) => SelectVariableItem(id, variableOptions, availableYearsForVariables, chosenCensusYear)),
           ];
         })}
       </Select>

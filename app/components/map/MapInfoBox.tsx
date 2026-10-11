@@ -87,7 +87,7 @@ function MapColourIndicator({
                     {highlightedValue !== null && (
                         <Box id="map-colour-indicator-marker-container" sx={{ left: markerLeftPosition }}>
                             <Box id="map-colour-indicator-value">
-                                {highlightedValuePrefix}{roundToDP(highlightedValue, 2).toLocaleString()}
+                                {highlightedValuePrefix}{roundToDP(highlightedValue, 1).toLocaleString()}
                             </Box>
                             <Box
                                 id="map-colour-indicator-marker"
@@ -98,8 +98,8 @@ function MapColourIndicator({
                 </Box>
 
                 <Box id="map-info-box-number-indicators">
-                    <Box>{minIsClipped && "≤ "}{roundToDP(barMin, 2).toLocaleString()}</Box>
-                    <Box>{maxIsClipped && "≥ "}{roundToDP(barMax, 2).toLocaleString()}</Box>
+                    <Box>{minIsClipped && "≤ "}{roundToDP(barMin, 1).toLocaleString()}</Box>
+                    <Box>{maxIsClipped && "≥ "}{roundToDP(barMax, 1).toLocaleString()}</Box>
                 </Box>
             </Box>
 

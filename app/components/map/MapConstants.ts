@@ -19,7 +19,7 @@ export const MAP_COLOURS_DARK : MapColours = {
   "areaFillOpacity": 0.6,
 }
 
-export const DEFAULT_CHOSEN_MAP_VARIABLE = "median_age";
+export const DEFAULT_CHOSEN_MAP_VARIABLE = "pop_density";
 
 export const DEFAULT_ZOOM_RANGES : Record<AREA_TYPE, [number, number]> = {
   "ta": [0, 6],

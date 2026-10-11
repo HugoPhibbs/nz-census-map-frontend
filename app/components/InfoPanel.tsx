@@ -37,6 +37,7 @@ const DETAILED_VARIABLE_GROUPS = {
 
 const GENERAL_VARIABLE_IDS = [
     ["pop_resident_usual", "Population"],
+    ["pop_density", "Population density"],
     ["median_personal_income"],
     ["median_age"],
 ]

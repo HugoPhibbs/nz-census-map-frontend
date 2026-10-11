@@ -113,13 +113,15 @@ function getColourScaleFunction(
   chosenVariable: string,
   isComparingCensusYears: boolean
 ): ColourScale {
+  console.assert(values.length > 0, "getColourScaleFunction called with empty values array");
   const isAboutSexRatio = variableIsAboutSexRatio(chosenVariable);
   if (isComparingCensusYears || isAboutSexRatio) {
     const centreOn = (isAboutSexRatio && !isComparingCensusYears) ? 50 : 0;
-    const limit = quantile(values, 0.95, (v) => Math.abs(v - centreOn)) || 1;
+    const limit = quantile(values, 0.95, (v) => Math.abs(v - centreOn)) || 1; // || 1 for when 95% of of values equal centreOn, just so its not undefined
     return scaleDiverging(interpolatePRGn).domain([centreOn - limit, centreOn, centreOn + limit]).clamp(true);
   } else {
-    const [min, max] = extent(values) as [number, number];
+    const min = Math.min(...values);
+    const max = quantile(values, 0.95) as number;
     return scaleSequential(interpolatePlasma).domain([min, max]);
   }
 }

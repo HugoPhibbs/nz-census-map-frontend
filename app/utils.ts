@@ -26,6 +26,9 @@ export function formatVariableStat(value: number | null, unit: string | null): s
 
     const valueStr = roundToDP(value, 1).toLocaleString();
     
+    if (unit ==     "COUNT_PER_SQ_KM") {
+      return `${valueStr}/km²`;
+    }
     if (unit === "PERCENTAGE") {
         return `${valueStr}%`;
     }
