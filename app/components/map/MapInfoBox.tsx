@@ -1,6 +1,6 @@
 "use client";
 import { Box, Divider, useMediaQuery } from "@mui/material";
-import { formatSA1AreaId } from "@/app/utils";
+import { formatSA1AreaId, roundToDP } from "@/app/utils";
 import { namedFlavor } from "@protomaps/basemaps";
 import { ColourScale } from "@/app/types";
 import { getMapColours, useColourMode } from "@/app/utils";
@@ -87,7 +87,7 @@ function MapColourIndicator({
                     {highlightedValue !== null && (
                         <Box id="map-colour-indicator-marker-container" sx={{ left: markerLeftPosition }}>
                             <Box id="map-colour-indicator-value">
-                                {highlightedValuePrefix}{highlightedValue.toLocaleString()}
+                                {highlightedValuePrefix}{roundToDP(highlightedValue, 2).toLocaleString()}
                             </Box>
                             <Box
                                 id="map-colour-indicator-marker"
@@ -98,8 +98,8 @@ function MapColourIndicator({
                 </Box>
 
                 <Box id="map-info-box-number-indicators">
-                    <Box>{minIsClipped && "≤ "}{barMin.toLocaleString()}</Box>
-                    <Box>{maxIsClipped && "≥ "}{barMax.toLocaleString()}</Box>
+                    <Box>{minIsClipped && "≤ "}{roundToDP(barMin, 2).toLocaleString()}</Box>
+                    <Box>{maxIsClipped && "≥ "}{roundToDP(barMax, 2).toLocaleString()}</Box>
                 </Box>
             </Box>
 
