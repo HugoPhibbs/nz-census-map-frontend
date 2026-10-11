@@ -129,7 +129,8 @@ function SelectVariableItem(
 }
 
 function DisplayBySelect({ chosenVariable, onVariableChange, variableIdsToNameMap, chosenCensusYear, availableYearsForVariables }: DisplayBySelectProps) {
-  const [variableOptions, setVariableOptions] = useState<Record<string, string>>({ "none": "None", [DEFAULT_CHOSEN_MAP_VARIABLE]: "Population density" }); // Hard code in so its here on first paint
+  // Hard code the default on first paint (seen immediately), also use [] so DEFAULT_CHOSEN_MAP_VARIABLE is put in literally, not as a key
+  const [variableOptions, setVariableOptions] = useState<Record<string, string>>({ "none": "None", [DEFAULT_CHOSEN_MAP_VARIABLE]: "Median age" }) 
 
   const ITEM_HEIGHT = 36;
   const ITEM_PADDING_TOP = 8;
