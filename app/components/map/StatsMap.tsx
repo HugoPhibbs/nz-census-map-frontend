@@ -118,11 +118,12 @@ function getColourScaleFunction(
   if (isComparingCensusYears || isAboutSexRatio) {
     const centreOn = (isAboutSexRatio && !isComparingCensusYears) ? 50 : 0;
     const limit = quantile(values, 0.95, (v) => Math.abs(v - centreOn)) || 1; // || 1 for when 95% of of values equal centreOn, just so its not undefined
-    return scaleDiverging(interpolatePRGn).domain([centreOn - limit, centreOn, centreOn + limit]).clamp(true);
+    // Using a [min, c, max] domain clamps values outside of [min, max], meaning they take the extreme colour values
+    return scaleDiverging(interpolatePRGn).domain([centreOn - limit, centreOn, centreOn + limit])
   } else {
     const min = Math.min(...values);
-    const max = quantile(values, 0.95) as number;
-    return scaleSequential(interpolatePlasma).domain([min, max]);
+    const max = quantile(values, 0.99) as number;
+    return scaleSequential(interpolatePlasma).domain([min, max])
   }
 }
 
