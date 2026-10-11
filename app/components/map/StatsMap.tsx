@@ -53,10 +53,11 @@ const INTERACTIVE_LAYERS = ["ta-areas-fill", "sa3-areas-fill", "sa2-areas-fill",
 
 type AreaTypeToValues = Partial<Record<AREA_TYPE, number[]>> | null;
 
-function updateMapStatsEffect(chosenVariable: string | null,
+function updateMapStatsEffect(
+  chosenVariable: string | null,
   setMapStats: any,
   censusYear: number,
-  censusYearCompareTo: number | null
+  censusYearCompareTo: number | null,
 ) {
   const apiUrl = !censusYearCompareTo ?
     `/stats/variable/${chosenVariable}/${censusYear}` :
@@ -198,37 +199,38 @@ function getColourScaleFunction(
 function areaColouringEffect(
   mapRef: any,
   mapStats: Record<string, number> | null,
-  colourScalesForAreaType : Record<AREA_TYPE, ColourScale> | null
+  colourScalesForAreaType : Record<AREA_TYPE, ColourScale> | null,
+  areaIdsLastUpdated: React.RefObject<Set<string>>
 ) {
   const map = mapRef.current?.getMap();
   if (!map) return;
+  const updatedAreaIds = new Set<string>();
 
-  if (!mapStats || !colourScalesForAreaType) {
-    // Fallback to default grey colouring if no stats are available
-    for (const sourceLayer of ["ta", "sa3", "sa2", "sa1"]) {
-      map.removeFeatureState({
-        source: layerIdToSourceId(sourceLayer as AREA_TYPE),
-        sourceLayer,
-      });
-    }
-    return;
-  }
+  const mapTarget = (areaType : AREA_TYPE, areaId: string) => ({ source: layerIdToSourceId(areaType), sourceLayer: areaType, id: areaId });
 
-  for (const [areaId, variable_value] of Object.entries(mapStats)) {
-    if (variable_value === undefined) continue;
+  for (const [areaId, variable_value] of Object.entries(mapStats ?? {})) {
+    if (variable_value == null) continue;
 
-    const featureId = areaId;
-    const areaType = areaIdToAreaType(areaId);
-    if (!areaType) {
-      console.warn(`Unknown area type for areaId: ${areaId}`);
-      continue;
-    }
+    const areaType = areaIdToAreaType(areaId) as AREA_TYPE;
+    const colourScale = colourScalesForAreaType?.[areaType];
+
+    if (!areaType || !colourScale) continue; // Silently skip (logging a warning would be too spammy)
 
     map.setFeatureState(
-      { source: layerIdToSourceId(areaType as AREA_TYPE), sourceLayer: areaType, id: featureId },
-      { fillColor: colourScalesForAreaType[areaType](variable_value) }
+      mapTarget(areaType, areaId),
+      { fillColor: colourScale(variable_value) }
     );
+
+    updatedAreaIds.add(areaId);
   }
+
+  for (const areaId of areaIdsLastUpdated.current) {
+    if (!updatedAreaIds.has(areaId)) {
+      map.removeFeatureState(mapTarget(areaIdToAreaType(areaId) as AREA_TYPE, areaId), "fillColor");
+    }
+  }
+
+  areaIdsLastUpdated.current = updatedAreaIds;
 }
 
 function getAreaTypeByUsingZoomDefaults(zoomLevel: number): AREA_TYPE {
@@ -278,6 +280,7 @@ export default function StatsMap({
 
   const [chosenVariable, setChosenVariable] = useState<string | null>(DEFAULT_CHOSEN_MAP_VARIABLE);
   const [mapStats, setMapStats] = useState<Record<string, number> | null>({});
+  // const [areaIdsLastFetched, setAreaIdsLastUpdated] = useState<string[]>([]);
 
   const areaTypeToValues = useMemo(() => getAreaTypeToValues(mapStats), [mapStats]);
 
@@ -293,6 +296,8 @@ export default function StatsMap({
   const [autoAreaType, setAutoAreaType] = useState<AREA_TYPE>("ta"); // What auto would be
   // What is actually viewed
   const activeAreaType = chosenMapGranularity === "auto" ? autoAreaType : (chosenMapGranularity as AREA_TYPE);
+
+  const areaIdsLastUpdated = useRef<Set<string>>(new Set());
 
   // Adding pmtiles protocol
   useEffect(() => {
@@ -340,7 +345,8 @@ export default function StatsMap({
   }, [mapLoaded]);
 
   // Updating mapstats
-  useEffect(() => {
+   useEffect(() => {
+    // mapStats && setAreaIdsLastUpdated(Object.keys(mapStats));
     updateMapStatsEffect(
       chosenVariable,
       setMapStats,
@@ -363,7 +369,7 @@ export default function StatsMap({
 
   // Updating the map colouring whenever mapStats or the colour scales change
   useEffect(() => {
-    areaColouringEffect(mapRef, mapStats, colourScalesForAreaType);
+    areaColouringEffect(mapRef, mapStats, colourScalesForAreaType, areaIdsLastUpdated);
   }, [mapStats, colourScalesForAreaType]);
 
   const [activeMin, activeMax] = extent(areaTypeToValues?.[activeAreaType] ?? []);
