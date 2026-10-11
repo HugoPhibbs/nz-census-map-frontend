@@ -1,8 +1,9 @@
 "use client";
-import { Box, useColorScheme, useMediaQuery } from "@mui/material";
-import { formatSA1AreaId, formatVariableStat } from "@/app/utils";
+import { Box, Divider, useMediaQuery } from "@mui/material";
+import { formatSA1AreaId } from "@/app/utils";
 import { namedFlavor } from "@protomaps/basemaps";
-import { getMapColours, ColourScale } from "./MapConstants";
+import { ColourScale } from "@/app/types";
+import { getMapColours, useColourMode } from "@/app/utils";
 
 const MARKER_RADIUS = 8; // Half of #map-colour-indicator-marker's width (border-box, so includes the border)
 
@@ -15,6 +16,21 @@ type MapColourIndicatorProps = {
     showPlusSignForChange: boolean;
 };
 
+/**
+ * 
+ * Gets how a colour would typically look like on the map accounting for the earth colour and the fill opacity
+ * 
+ * @param colour colour string (e.g. "#8f0da4") or RGB ("rgb(162, 215, 158)")
+ * @param colourMode "light" or "dark"
+ * @returns 
+ */
+function mapLikeColour(colour: string, colourMode : "light" | "dark") {
+    const { areaFillOpacity } = getMapColours(colourMode);
+    const landColour = namedFlavor(colourMode).earth;
+    return `color-mix(in srgb, ${colour} ${areaFillOpacity * 100}%, ${landColour})`;
+}
+
+
 function MapColourIndicator({
     min,
     max,
@@ -24,12 +40,10 @@ function MapColourIndicator({
     showPlusSignForChange
 }:
     MapColourIndicatorProps) {
-    const { mode } = useColorScheme();
-    if (min === null || max === null || !isFinite(min) || !isFinite(max) || !colourScale) return null;
 
-    const resolvedMode = mode === "dark" ? "dark" : "light";
-    const { areaFillOpacity } = getMapColours(resolvedMode);
-    const landColour = namedFlavor(resolvedMode).earth;
+    const colourMode = useColourMode();
+
+    if (min === null || max === null || !isFinite(min) || !isFinite(max) || !colourScale) return null;
 
     // Diverging scales clamp outliers, so draw the bar over the scale's domain rather than the full data range
     // For diverging scales, the domain is set to [-A, 0, A] where A is the maximum absolute value in the data
@@ -44,12 +58,9 @@ function MapColourIndicator({
 
     const valueAt = (t: number) => barMin + t * (barMax - barMin);
 
-    const mapLikeColour = (value: number) =>
-        `color-mix(in srgb, ${colourScale(value)} ${areaFillOpacity * 100}%, ${landColour})`;
-
     const stops = Array.from({ length: 10 }, (_, i) => {
         const t = i / 9;
-        return `${mapLikeColour(valueAt(t))} ${(t * 100).toFixed(0)}%`;
+        return `${mapLikeColour(colourScale(valueAt(t)), colourMode)} ${(t * 100).toFixed(0)}%`;
     }).join(", ");
 
     const t = highlightedValue != null && barMax !== barMin
@@ -60,31 +71,43 @@ function MapColourIndicator({
     const markerLeftPosition = t !== null ? `clamp(${MARKER_RADIUS}px, ${t * 100}%, calc(100% - ${MARKER_RADIUS}px))` : undefined;
 
     const highlightedValuePrefix = (highlightedValue !== null && showPlusSignForChange && highlightedValue > 0) ? "+" : ""
-    
+
+    const emptyDataColour = mapLikeColour(getMapColours(colourMode).areaFill, colourMode);
+
     return (
-        <Box id="map-colour-indicator-box">
-            {t !== null && <Box sx={{ minHeight: "15px" }} />}
-            <Box
-                sx={{
-                    background: `linear-gradient(to right, ${stops})`,
-                }}
-                id="map-colour-indicator"
-            >
-                {highlightedValue !== null && (
-                    <Box id="map-colour-indicator-marker-container" sx={{ left: markerLeftPosition }}>
-                        <Box id="map-colour-indicator-value">
-                            {highlightedValuePrefix}{highlightedValue.toLocaleString()}
+        // Add margin to the top to clear space for the hover text
+        <Box id="map-colour-indicator-box" sx={{marginTop: t !== null ? "15px" : "0px" }}>
+            <Box id="map-colour-indicator-bar-container">
+                <Box
+                    sx={{
+                        background: `linear-gradient(to right, ${stops})`,
+                    }}
+                    id="map-colour-indicator-bar"
+                >
+                    {highlightedValue !== null && (
+                        <Box id="map-colour-indicator-marker-container" sx={{ left: markerLeftPosition }}>
+                            <Box id="map-colour-indicator-value">
+                                {highlightedValuePrefix}{highlightedValue.toLocaleString()}
+                            </Box>
+                            <Box
+                                id="map-colour-indicator-marker"
+                                sx={{ backgroundColor: mapLikeColour(colourScale(highlightedValue), colourMode) }}
+                            />
                         </Box>
-                        <Box
-                            id="map-colour-indicator-marker"
-                            sx={{ backgroundColor: mapLikeColour(highlightedValue) }}
-                        />
-                    </Box>
-                )}
+                    )}
+                </Box>
+
+                <Box id="map-info-box-number-indicators">
+                    <Box>{minIsClipped && "≤ "}{barMin.toLocaleString()}</Box>
+                    <Box>{maxIsClipped && "≥ "}{barMax.toLocaleString()}</Box>
+                </Box>
             </Box>
-            <Box id="map-info-box-number-indicators">
-                <span>{minIsClipped && "≤ "}{formatVariableStat(barMin, variableUnit)}</span>
-                <span>{maxIsClipped && "≥ "}{formatVariableStat(barMax, variableUnit)}</span>
+
+            <Divider orientation="vertical" flexItem/>
+
+            <Box id="map-info-box-empty-data-indicator-box">
+                <Box id="empty-data-indicator" sx={{ backgroundColor: emptyDataColour }} />
+                <Box>N/A</Box>
             </Box>
         </Box>
     );

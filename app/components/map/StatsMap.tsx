@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, useMediaQuery, useColorScheme } from "@mui/material";
+import { Box, useMediaQuery } from "@mui/material";
 import { Protocol } from "pmtiles";
 import { useEffect, useRef, useCallback, useState, useMemo } from "react";
 
@@ -15,9 +15,9 @@ import MapViewOptions from "./MapViewOptions";
 import MapInfoBox from "./MapInfoBox";
 import { layers, namedFlavor } from "@protomaps/basemaps";
 import api from "@/app/api";
-import { getMapColours, ColourScale } from "./MapConstants";
-import { DEFAULT_CHOSEN_MAP_VARIABLE, DEFAULT_ZOOM_RANGES } from "./MapConstants";
-import { areaIdToAreaType, AREA_TYPE, AREA_TYPES } from "@/app/utils";
+import { AREA_TYPE, ColourScale } from "@/app/types";
+import { DEFAULT_CHOSEN_MAP_VARIABLE, DEFAULT_ZOOM_RANGES } from "@/app/components/map/MapConstants";
+import { areaIdToAreaType, AREA_TYPES, useColourMode, getMapColours,  } from "@/app/utils";
 import { extent, quantile } from "d3-array";
 
 setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
@@ -231,23 +231,22 @@ export default function StatsMap({
   }, []);
 
   // Handling dark mode
-  const { mode } = useColorScheme();
-  const resolvedMode = mode === "dark" ? "dark" : "light";
-  const mapColours = getMapColours(resolvedMode);
+  const colourMode = useColourMode();
+  const mapColours = getMapColours(colourMode);
 
   const basemapLayers = useMemo(() => {
-    const flavour = { ...namedFlavor(resolvedMode), water: mapColours.background };
+    const flavour = { ...namedFlavor(colourMode), water: mapColours.background };
     return layers("stats-map", flavour, { lang: "en" })
       .filter((l) => !IGNORED_BASEMAP_LAYERS.includes(l.id));
-  }, [resolvedMode, mapColours.background]);
+  }, [colourMode, mapColours.background]);
 
   useEffect(() => {
     // Basically we need mapLoaded so sprites are set once the map is loaded.
-    // Without this, no sprites are rendered bc resolvedMode doesn't change before the map (this hook) is loaded
+    // Without this, no sprites are rendered bc colourMode doesn't change before the map (this hook) is loaded
     if (!mapLoaded) return;
-    const spriteUrl = `https://protomaps.github.io/basemaps-assets/sprites/v4/${resolvedMode}`;
+    const spriteUrl = `https://protomaps.github.io/basemaps-assets/sprites/v4/${colourMode}`;
     mapRef.current?.getMap().setSprite(spriteUrl);
-  }, [mapLoaded, resolvedMode]);
+  }, [mapLoaded, colourMode]);
 
   const handleMapClick = useCallback((e: MapLayerMouseEvent) => {
     const areaId = e.features?.[0]?.properties?.area_id as string | undefined;

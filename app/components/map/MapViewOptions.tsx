@@ -3,8 +3,9 @@
 import { Box, FormControl, InputLabel, ListSubheader, MenuItem, Select, Button, Typography, Accordion, AccordionSummary, AccordionDetails, useMediaQuery } from "@mui/material";
 import { useEffect, useState } from "react";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { DEFAULT_CHOSEN_MAP_VARIABLE, DEFAULT_ZOOM_RANGES } from "./MapConstants";
-import { AREA_TYPE_TO_NAME, AREA_TYPE, DEFAULT_CENSUS_YEAR, CENSUS_YEARS } from "@/app/utils";
+import { DEFAULT_CHOSEN_MAP_VARIABLE } from "./MapConstants";
+import { AREA_TYPE_TO_NAME, DEFAULT_CENSUS_YEAR, CENSUS_YEARS } from "@/app/utils";
+import {AREA_TYPE} from "@/app/types";
 import EastRoundedIcon from '@mui/icons-material/EastRounded';
 
 const DISPLAY_BY_CATEGORIES: Record<string, string[]> = {

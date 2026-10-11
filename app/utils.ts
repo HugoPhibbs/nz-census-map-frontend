@@ -1,3 +1,9 @@
+"use client"
+
+import { useColorScheme } from "@mui/material";
+import { AREA_TYPE, MapColours } from "./types";
+import { MAP_COLOURS_DARK, MAP_COLOURS_LIGHT } from "./components/map/MapConstants";
+
 export function roundToDP(value: number, dp: number) {
   const multiplier = Math.pow(10, dp);
   return Math.round(value * multiplier) / multiplier;
@@ -46,7 +52,6 @@ export const AREA_TYPE_TO_NAME: Record<AREA_TYPE, string> = {
   "sa1": "Neighbourhood"
 }
 
-export type AREA_TYPE = "ta" | "sa3" | "sa2" | "sa1";
 export const AREA_TYPES : AREA_TYPE[] = ["ta", "sa3", "sa2", "sa1"];
 
 export const DEFAULT_CENSUS_YEAR = 2023;
@@ -69,3 +74,18 @@ export function areaIdToAreaTypeName(areaId: string): string {
   const areaType = areaIdToAreaType(areaId);
   return AREA_TYPE_TO_NAME[areaType];
 }
+
+/**
+ * Get the current colour mode (light or dark) based on the user's website preferences.
+ * 
+ * Special handling, since we don't account for system colours (yet)
+ */
+export function useColourMode(): "light" | "dark" {
+  const { mode } = useColorScheme();
+  return mode === "dark" ? "dark" : "light";
+}
+
+export function getMapColours(mode: "light" | "dark"): MapColours {
+  return mode === "light" ? MAP_COLOURS_LIGHT : MAP_COLOURS_DARK;
+}
+
