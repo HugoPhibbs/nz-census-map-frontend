@@ -253,7 +253,7 @@ export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, var
     generalVariables.push({
         variableId: "area_type",
         variableName: "Area type",
-        variableValue: areaIdToAreaTypeName(areaId),
+        variableValue: areaId ? areaIdToAreaTypeName(areaId) : null,
     })
 
     const isPhone = useMediaQuery('(max-width:600px)');

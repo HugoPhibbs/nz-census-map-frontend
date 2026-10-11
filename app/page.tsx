@@ -47,6 +47,7 @@ export default function Home() {
       <TitleBar />
       <Box id="inner-content">
         <StatsMap
+          chosenAreaId={chosenAreaId}
           setChosenAreaId={setChosenAreaId}
           variableIdsToNameMap={variableIdsToNameMap}
           variableIdsToUnitMap={variableIdsToUnitMap}

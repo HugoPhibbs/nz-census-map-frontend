@@ -27,8 +27,6 @@ if (typeof window !== 'undefined') {
   maplibregl.prewarm();
 }
 
-type DBRow = Record<string, string | number>;
-
 const MAP_STYLE = {
   version: 8 as const,
   glyphs: "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf",
@@ -51,7 +49,16 @@ const IGNORED_BASEMAP_LAYERS = [
 
 const INTERACTIVE_LAYERS = ["ta-areas-fill", "sa3-areas-fill", "sa2-areas-fill", "sa1-areas-fill"];
 
-type AreaTypeToValues = Partial<Record<AREA_TYPE, number[]>> | null;
+type AreaTypeToValues = Partial<Record<AREA_TYPE, number[]>>;
+
+type HoveredArea = { id: string; name: string | null };
+
+type TargetFeature = { source: string; sourceLayer: AREA_TYPE; id: string | number };
+
+function getAreaTargetFeature(areaId: string): TargetFeature {
+  const areaType = areaIdToAreaType(areaId);
+  return { source: layerIdToSourceId(areaType), sourceLayer: areaType, id: areaId };
+}
 
 function updateMapStatsEffect(
   chosenVariable: string | null,
@@ -76,13 +83,13 @@ function updateMapStatsEffect(
   }
 }
 
-function getAreaTypeToValues(mapStats: Record<string, number> | null): AreaTypeToValues {
+function getAreaTypeToValues(mapStats: Record<string, number> | null): AreaTypeToValues | null {
   if (!mapStats) return null;
 
   const result: Partial<Record<AREA_TYPE, number[]>> = {};
   for (const [areaId, value] of Object.entries(mapStats)) {
     if (value == null) continue;
-    const areaType = areaIdToAreaType(areaId) as AREA_TYPE;
+    const areaType = areaIdToAreaType(areaId);
     (result[areaType] ??= []).push(value);
   }
   return result;
@@ -90,85 +97,6 @@ function getAreaTypeToValues(mapStats: Record<string, number> | null): AreaTypeT
 
 function layerIdToSourceId(sourceId: AREA_TYPE): string {
   return sourceId === "sa1" ? "sa1-map" : "stats-map";
-}
-
-function handleMapClick(e: MapLayerMouseEvent, mapRef: any, selectedFeature: any, setChosenAreaId: any) {
-  const feature = e.features?.[0];
-  const map = mapRef.current?.getMap();
-
-  if (!map) return;
-
-  if (selectedFeature.current) {
-    map.setFeatureState(selectedFeature.current, { selected: false });
-    selectedFeature.current = null;
-  }
-
-  if (feature?.id !== undefined && feature.sourceLayer) {
-    const next = { source: layerIdToSourceId(feature.sourceLayer as AREA_TYPE), sourceLayer: feature.sourceLayer, id: feature.id };
-    map.setFeatureState(next, { selected: true });
-    selectedFeature.current = next;
-  }
-  setChosenAreaId(feature?.properties?.area_id ?? null);
-}
-
-function setHoveredFeature(e: MapLayerMouseEvent, mapRef: any, hoveredFeature: any, clearHover: () => void) {
-  const feature = e.features?.[0];
-  const map = mapRef.current?.getMap();
-  if (!map) return;
-
-  clearHover();
-
-  if (feature?.id !== undefined && feature.sourceLayer) {
-    const next = { source: layerIdToSourceId(feature.sourceLayer as AREA_TYPE), sourceLayer: feature.sourceLayer, id: feature.id };
-    map.setFeatureState(next, { hover: true });
-    hoveredFeature.current = next;
-  }
-}
-
-function clearHoveredArea(
-  mapRef: any,
-  hoveredFeature: any,
-  setHoveredAreaId: (areaId: string | null) => void,
-  setHoveredAreaName: (areaName: string | null) => void,
-  setHoveredAreaStat: (areaStat: number | null) => void
-) {
-  const map = mapRef.current?.getMap();
-  if (map && hoveredFeature.current) {
-    map.setFeatureState(hoveredFeature.current, { hover: false });
-  }
-  hoveredFeature.current = null;
-  setHoveredAreaId(null);
-  setHoveredAreaName(null);
-  setHoveredAreaStat(null);
-}
-
-function updateHoveredArea(
-  e: MapLayerMouseEvent,
-  mapRef: any,
-  hoveredFeature: any,
-  clearHover: () => void,
-  mapStats: Record<string, number> | null,
-  setHoveredAreaId: (areaId: string | null) => void,
-  setHoveredAreaName: (areaName: string | null) => void,
-  setHoveredAreaStat: (areaStat: number | null) => void
-) {
-  const feature = e.features?.[0];
-  const featureId = feature?.id;
-  const sourceLayer = feature?.sourceLayer;
-
-  if (
-    hoveredFeature.current?.id === featureId &&
-    hoveredFeature.current?.sourceLayer === sourceLayer
-  ) {
-    return;
-  }
-
-  setHoveredFeature(e, mapRef, hoveredFeature, clearHover);
-
-  const areaId = (feature?.properties?.area_id as string) ?? null;
-  setHoveredAreaId(areaId);
-  setHoveredAreaName((feature?.properties?.area_name as string) ?? null);
-  setHoveredAreaStat(areaId ? mapStats?.[areaId] as number ?? null : null);
 }
 
 function getZoomRangeForLayer(layerId: AREA_TYPE, chosenMapGranularity: string | null) {
@@ -206,18 +134,16 @@ function areaColouringEffect(
   if (!map) return;
   const updatedAreaIds = new Set<string>();
 
-  const mapTarget = (areaType : AREA_TYPE, areaId: string) => ({ source: layerIdToSourceId(areaType), sourceLayer: areaType, id: areaId });
-
   for (const [areaId, variable_value] of Object.entries(mapStats ?? {})) {
     if (variable_value == null) continue;
 
-    const areaType = areaIdToAreaType(areaId) as AREA_TYPE;
+    const areaType = areaIdToAreaType(areaId);
     const colourScale = colourScalesForAreaType?.[areaType];
 
-    if (!areaType || !colourScale) continue; // Silently skip (logging a warning would be too spammy)
+    if (!colourScale) continue; // Silently skip (logging a warning would be too spammy)
 
     map.setFeatureState(
-      mapTarget(areaType, areaId),
+      getAreaTargetFeature(areaId),
       { fillColor: colourScale(variable_value) }
     );
 
@@ -226,7 +152,7 @@ function areaColouringEffect(
 
   for (const areaId of areaIdsLastUpdated.current) {
     if (!updatedAreaIds.has(areaId)) {
-      map.removeFeatureState(mapTarget(areaIdToAreaType(areaId) as AREA_TYPE, areaId), "fillColor");
+      map.removeFeatureState(getAreaTargetFeature(areaId), "fillColor");
     }
   }
 
@@ -257,6 +183,7 @@ function resetMapZoom(mapRef: any, defaultView: { longitude: number; latitude: n
 }
 
 type StatsMapProps = {
+  chosenAreaId: string | null;
   setChosenAreaId: (id: string | null) => void;
   variableIdsToNameMap: Record<string, string>;
   variableIdsToUnitMap: Record<string, string>;
@@ -266,6 +193,7 @@ type StatsMapProps = {
 };
 
 export default function StatsMap({
+  chosenAreaId,
   setChosenAreaId,
   variableIdsToNameMap,
   variableIdsToUnitMap,
@@ -275,18 +203,14 @@ export default function StatsMap({
 }: StatsMapProps) {
 
   const mapRef = useRef<MapRef>(null);
-  const hoveredFeature = useRef<{ source: string; sourceLayer: string; id: string | number } | null>(null);
-  const selectedFeature = useRef<{ source: string; sourceLayer: string; id: string | number } | null>(null);
 
   const [chosenVariable, setChosenVariable] = useState<string | null>(DEFAULT_CHOSEN_MAP_VARIABLE);
   const [mapStats, setMapStats] = useState<Record<string, number> | null>({});
-  // const [areaIdsLastFetched, setAreaIdsLastUpdated] = useState<string[]>([]);
 
   const areaTypeToValues = useMemo(() => getAreaTypeToValues(mapStats), [mapStats]);
 
-  const [hoveredAreaName, setHoveredAreaName] = useState<string | null>(null);
-  const [hoveredAreaId, setHoveredAreaId] = useState<string | null>(null);
-  const [hoveredAreaStat, setHoveredAreaStat] = useState<number | null>(null);
+  const [hoveredArea, setHoveredArea] = useState<HoveredArea | null>(null);
+  const hoveredAreaStat = hoveredArea ? mapStats?.[hoveredArea.id] ?? null : null;
 
   const [censusYearCompareTo, setCensusYearCompareTo] = useState<number | null>(null);
 
@@ -297,7 +221,7 @@ export default function StatsMap({
   // What is actually viewed
   const activeAreaType = chosenMapGranularity === "auto" ? autoAreaType : (chosenMapGranularity as AREA_TYPE);
 
-  const areaIdsLastUpdated = useRef<Set<string>>(new Set());
+  const areaIdsLastUpdated = useRef<Set<string>>(new Set()); // Is held between renders (not stateful - not causing re-renders)
 
   // Adding pmtiles protocol
   useEffect(() => {
@@ -325,14 +249,41 @@ export default function StatsMap({
     mapRef.current?.getMap().setSprite(spriteUrl);
   }, [mapLoaded, resolvedMode]);
 
-  // Handling hovers
-  const clearHover = useCallback(() => {
-    clearHoveredArea(mapRef, hoveredFeature, setHoveredAreaId, setHoveredAreaName, setHoveredAreaStat);
-  }, []);
+  const handleMapClick = useCallback((e: MapLayerMouseEvent) => {
+    const areaId = e.features?.[0]?.properties?.area_id as string | undefined;
+    // Clicking empty space or the already-selected area deselects
+    setChosenAreaId(areaId ?? null);
+  }, [chosenAreaId, setChosenAreaId]);
 
   const handleMapHover = useCallback((e: MapLayerMouseEvent) => {
-    updateHoveredArea(e, mapRef, hoveredFeature, clearHover, mapStats, setHoveredAreaId, setHoveredAreaName, setHoveredAreaStat);
-  }, [mapStats]);
+    const properties = e.features?.[0]?.properties;
+    const areaId = properties?.area_id as string | undefined;
+    setHoveredArea((prev) => {
+      if (areaId) {
+        if (prev?.id === areaId) {
+          return prev; // No change
+        }
+        return { id: areaId, name: (properties?.area_name as string) ?? null };
+      }
+      return null;
+    })
+  }, []);
+
+  useEffect(() => {
+    const map = mapRef.current?.getMap();
+    if (!map || !hoveredArea?.id) return;
+    const target = getAreaTargetFeature(hoveredArea.id);
+    map.setFeatureState(target, { hover: true });
+    return () => { map.setFeatureState(target, { hover: false }); };
+  }, [hoveredArea?.id]);
+
+  useEffect(() => {
+    const map = mapRef.current?.getMap();
+    if (!map || !chosenAreaId) return;
+    const target = getAreaTargetFeature(chosenAreaId);
+    map.setFeatureState(target, { selected: true });
+    return () => { map.setFeatureState(target, { selected: false }); }; // Clean up removes past selection (is run before the next effect is run)
+  }, [chosenAreaId]);
   
   // Update autoAreaType whenever the zoom level changes
   useEffect(() => {
@@ -341,12 +292,11 @@ export default function StatsMap({
     const onZoom = () => setAutoAreaType(getAreaTypeByUsingZoomDefaults(map.getZoom()));
     onZoom(); // Set the initial value, before any zooming happens
     map.on("zoom", onZoom);
-    return () => { map.off("zoom", onZoom); }; // Clean up call back
+    return () => { map.off("zoom", onZoom); }; // Clean up call back, just in case it's needed
   }, [mapLoaded]);
 
   // Updating mapstats
    useEffect(() => {
-    // mapStats && setAreaIdsLastUpdated(Object.keys(mapStats));
     updateMapStatsEffect(
       chosenVariable,
       setMapStats,
@@ -401,8 +351,8 @@ export default function StatsMap({
           min={activeMin ?? null}
           max={activeMax ?? null}
           colourScale={colourScalesForAreaType?.[activeAreaType] ?? null}
-          hoveredAreaName={hoveredAreaName}
-          hoveredAreaId={hoveredAreaId}
+          hoveredAreaName={hoveredArea?.name ?? null}
+          hoveredAreaId={hoveredArea?.id ?? null}
           hoveredAreaStat={hoveredAreaStat}
           variableUnit={chosenVariable && variableIdsToUnitMap[chosenVariable]}
           showPlusSignForChange={!!censusYearCompareTo}
@@ -414,9 +364,9 @@ export default function StatsMap({
           mapStyle={MAP_STYLE}
           onLoad={() => setMapLoaded(true)}
           interactiveLayerIds={INTERACTIVE_LAYERS}
-          onMouseMove={(e: MapLayerMouseEvent) => handleMapHover(e)}
-          onMouseLeave={clearHover}
-          onClick={(e: MapLayerMouseEvent) => handleMapClick(e, mapRef, selectedFeature, setChosenAreaId)}
+          onMouseMove={handleMapHover}
+          onMouseLeave={() => setHoveredArea(null)}
+          onClick={(e: MapLayerMouseEvent) => handleMapClick(e)}
           cursor="pointer"
           attributionControl={false}
           maxBounds={MAP_BOUNDS}

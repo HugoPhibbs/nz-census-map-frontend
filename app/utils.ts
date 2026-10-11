@@ -52,8 +52,7 @@ export const AREA_TYPES : AREA_TYPE[] = ["ta", "sa3", "sa2", "sa1"];
 export const DEFAULT_CENSUS_YEAR = 2023;
 export const CENSUS_YEARS = [2023, 2018, 2013];
 
-export function areaIdToAreaType(areaId: string | null): AREA_TYPE | null {
-    if (!areaId) return null;
+export function areaIdToAreaType(areaId: string): AREA_TYPE {
     if (areaId.length === 7) {
         return "sa1";
     } else if (areaId.length === 6) {
@@ -63,11 +62,10 @@ export function areaIdToAreaType(areaId: string | null): AREA_TYPE | null {
     } else if (areaId.length === 3) {
         return "ta";
     }
-    return null;
+    throw new Error(`Cannot determine area type for areaId: ${areaId}`);
 }
 
-export function areaIdToAreaTypeName(areaId: string | null): string | null {
+export function areaIdToAreaTypeName(areaId: string): string {
   const areaType = areaIdToAreaType(areaId);
-  if (!areaType) return null;
   return AREA_TYPE_TO_NAME[areaType];
 }
