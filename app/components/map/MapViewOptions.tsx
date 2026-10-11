@@ -317,7 +317,10 @@ export default function MapViewOptions({
               }}
               availableYearsForVariable={getAvailableYearsForYearSelect(chosenVariableLocal, availableYearsForVariables, null)}
             />
-            <EastRoundedIcon />
+            <Box id="census-year-compare-clue">
+              <EastRoundedIcon />
+              Compare
+            </Box>
             <CensusYearSelect
               censusYear={censusYearCompareTo}
               setCensusYear={setChosenCensusYearCompareTo}
