@@ -1,3 +1,5 @@
+"use client"
+
 import { useColorScheme } from "@mui/material";
 import { AREA_TYPE, MapColours } from "./types";
 import { MAP_COLOURS_DARK, MAP_COLOURS_LIGHT } from "./components/map/MapConstants";
