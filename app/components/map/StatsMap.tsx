@@ -65,11 +65,7 @@ function updateMapStatsEffect(chosenVariable: string | null,
   if (chosenVariable) {
     api.get(apiUrl)
       .then((res) => {
-        const newMapStats: Record<string, DBRow> = {};
-        for (let [areaId, variableValue] of res.data) {
-          newMapStats[areaId] = variableValue;
-        }
-        setMapStats(newMapStats);
+        setMapStats(res.data);
       }).catch((err) => {
         console.error("Error fetching map stats:", err);
         setMapStats(null);
