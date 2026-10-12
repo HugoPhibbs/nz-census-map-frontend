@@ -264,7 +264,7 @@ body {
 #map-filter-formcontrols-box {
     display: flex;
     flex-direction: column;
-    gap: 0.7em;
+    gap: 0.8em;
 }
 
 #map-view-options-summary {
@@ -296,12 +296,40 @@ body {
     font-size: 0.8em;
 }
 
+#area-type-select-container {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5em;
+    align-items: stretch;
+}
+
+.area-type-select {
+    flex: 1;
+}
+
+#lock-zoom-button {
+    background-color: var(--mui-palette-background-default);
+    padding: 6px;
+    min-width: 0;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-size: 0.6em;
+    flex: 1;
+}
+
+#lock-zoom-button,
+#lock-zoom-button.Mui-selected {
+    color: var(--mui-palette-text-secondary);
+}
+
 #census-year-selects-box {
     display: flex;
     flex-direction: row;
     gap: 0.5em;
     justify-content: space-between;
-    align-items: center;
+    align-items: stretch;
 }
 
 .census-year-select {
@@ -330,6 +358,11 @@ body {
 
 .map-filter-dropdown {
     z-index: 1;
+}
+
+/* FormControl is a flex column, so this makes the outlined input fill a stretched FormControl */
+.map-filter-dropdown .MuiInputBase-root {
+    flex: 1;
 }
 
 #map-colour-indicator-box {
