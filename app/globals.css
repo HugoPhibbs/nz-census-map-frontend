@@ -91,6 +91,7 @@ body {
 
 .close-info-panel-button {
     background-color: var(--mui-palette-background-default);
+    height: 2em;
 }
 
 .info-panel-divider {
@@ -117,8 +118,8 @@ body {
 
 .info-panel-header {
     display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
+    flex-direction: row;
+    justify-content: space-between;
 }
 
 @media (max-width: 600px) {
@@ -175,7 +176,6 @@ body {
 #info-panel-general-info-box {
     display: flex;
     flex-direction: column;
-    gap: 0.5em;
 }
 
 .grouped-variables-accordion {

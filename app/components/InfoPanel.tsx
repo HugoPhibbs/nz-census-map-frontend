@@ -274,13 +274,11 @@ export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, var
                                 <Typography component="h2" id="info-panel-title">
                                     {areaName}
                                 </Typography>
-
-                                <Typography component="h3" id="info-panel-title-year">
-                                    {`${chosenCensusYear}`}
-                                </Typography>
-
                                 {(areaId && isPhone) && <Button className={"close-info-panel-button rounded-button"} onClick={() => resetPanelState()}>Close</Button>}
                             </Box>
+                            <Typography component="h3" id="info-panel-title-year">
+                                    {`${chosenCensusYear}`}
+                            </Typography>
                         </Box>
 
                         <Divider className="info-panel-divider" />
