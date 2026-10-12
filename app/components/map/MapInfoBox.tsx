@@ -24,7 +24,7 @@ type MapColourIndicatorProps = {
  * @param colourMode "light" or "dark"
  * @returns 
  */
-function mapLikeColour(colour: string, colourMode : "light" | "dark") {
+function mapLikeColour(colour: string, colourMode: "light" | "dark") {
     const { areaFillOpacity } = getMapColours(colourMode);
     const landColour = namedFlavor(colourMode).earth;
     return `color-mix(in srgb, ${colour} ${areaFillOpacity * 100}%, ${landColour})`;
@@ -76,7 +76,7 @@ function MapColourIndicator({
 
     return (
         // Add margin to the top to clear space for the hover text
-        <Box id="map-colour-indicator-box" sx={{marginTop: t !== null ? "15px" : "0px" }}>
+        <Box id="map-colour-indicator-box" sx={{ marginTop: t !== null ? "15px" : "0px" }}>
             <Box id="map-colour-indicator-bar-container">
                 <Box
                     sx={{
@@ -103,10 +103,15 @@ function MapColourIndicator({
                 </Box>
             </Box>
 
-            <Divider orientation="vertical" flexItem/>
+            <Divider orientation="vertical" flexItem />
 
             <Box id="map-info-box-empty-data-indicator-box">
-                <Box id="empty-data-indicator" sx={{ backgroundColor: emptyDataColour }} />
+                <Box id="empty-data-indicator"
+                    sx={{
+                        backgroundColor: emptyDataColour,
+                        border: colourMode == "dark" ? "0.7px solid white;" : "none"
+                    }}
+                />
                 <Box>N/A</Box>
             </Box>
         </Box>
