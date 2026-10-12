@@ -1,9 +1,10 @@
 "use client";
-import { Box, Divider, useMediaQuery } from "@mui/material";
+import { Box, Collapse, Divider, useMediaQuery } from "@mui/material";
 import { formatSA1AreaId, roundToDP } from "@/app/utils";
 import { namedFlavor } from "@protomaps/basemaps";
 import { ColourScale } from "@/app/types";
 import { getMapColours, useColourMode } from "@/app/utils";
+import { useRef } from "react";
 
 const MARKER_RADIUS = 8; // Half of #map-colour-indicator-marker's width (border-box, so includes the border)
 
@@ -14,6 +15,7 @@ type MapColourIndicatorProps = {
     variableUnit: string | null;
     highlightedValue: number | null;
     showPlusSignForChange: boolean;
+    hoveredAreaId: string | null;
 };
 
 /**
@@ -24,7 +26,7 @@ type MapColourIndicatorProps = {
  * @param colourMode "light" or "dark"
  * @returns 
  */
-function mapLikeColour(colour: string, colourMode : "light" | "dark") {
+function mapLikeColour(colour: string, colourMode: "light" | "dark") {
     const { areaFillOpacity } = getMapColours(colourMode);
     const landColour = namedFlavor(colourMode).earth;
     return `color-mix(in srgb, ${colour} ${areaFillOpacity * 100}%, ${landColour})`;
@@ -37,7 +39,8 @@ function MapColourIndicator({
     colourScale,
     variableUnit,
     highlightedValue,
-    showPlusSignForChange
+    showPlusSignForChange,
+    hoveredAreaId
 }:
     MapColourIndicatorProps) {
 
@@ -76,7 +79,7 @@ function MapColourIndicator({
 
     return (
         // Add margin to the top to clear space for the hover text
-        <Box id="map-colour-indicator-box" sx={{marginTop: t !== null ? "15px" : "0px" }}>
+        <Box id="map-colour-indicator-box" sx={{ marginTop: highlightedValue !== null ? "15px" : 0 }}>
             <Box id="map-colour-indicator-bar-container">
                 <Box
                     sx={{
@@ -90,7 +93,7 @@ function MapColourIndicator({
                                 {highlightedValuePrefix}{roundToDP(highlightedValue, 1).toLocaleString()}
                             </Box>
                             <Box
-                                id="map-colour-indicator-marker"
+                                className="map-colour-indicator-marker"
                                 sx={{ backgroundColor: mapLikeColour(colourScale(highlightedValue), colourMode) }}
                             />
                         </Box>
@@ -103,23 +106,54 @@ function MapColourIndicator({
                 </Box>
             </Box>
 
-            <Divider orientation="vertical" flexItem/>
+            <Divider orientation="vertical" flexItem />
 
             <Box id="map-info-box-empty-data-indicator-box">
-                <Box id="empty-data-indicator" sx={{ backgroundColor: emptyDataColour }} />
+                <Box id="map-info-box-empty-indicator-slot">
+                    {(hoveredAreaId && highlightedValue == null) ?
+                        <Box className="map-colour-indicator-marker"
+                            sx={{ backgroundColor: emptyDataColour }}
+                        /> :
+                        <Box id="empty-data-indicator"
+                            sx={{
+                                backgroundColor: emptyDataColour,
+                                border: colourMode == "dark" ? "0.7px solid white" : "none"
+                            }}
+                        />
+                    }
+                </Box>
                 <Box>N/A</Box>
             </Box>
         </Box>
     );
 }
 
-function HoverInfoBox({ hoveredAreaName, hoveredAreaId, isPhone }: { hoveredAreaName: string | null; hoveredAreaId: string | null; isPhone: boolean }) {
-    if (!hoveredAreaId || isPhone) return null;
+type HoverInfoBoxProps = {
+    hoveredAreaName: string | null;
+    hoveredAreaId: string | null;
+    isPhone: boolean;
+    hoveredAreaStat: number | null;
+};
+
+function HoverInfoBox({
+    hoveredAreaName,
+    hoveredAreaId,
+    isPhone,
+    hoveredAreaStat }:
+    HoverInfoBoxProps
+) {
+    // Keep the last label, so it transitions down with the label (instead of being empty)
+    const lastLabel = useRef<string | null>(null);
+    if (hoveredAreaId) lastLabel.current = hoveredAreaName || formatSA1AreaId(hoveredAreaId);
+
+    if (isPhone) return null;
 
     return (
-        <Box id={"hover-info-box"}>
-            {hoveredAreaName || formatSA1AreaId(hoveredAreaId)}
-        </Box>
+        <Collapse in={!!hoveredAreaId} timeout={300}>
+            <Box id={"hover-info-box"}>
+                {lastLabel.current}
+            </Box>
+        </Collapse>
     );
 }
 
@@ -159,6 +193,7 @@ export default function MapInfoBox({
                         hoveredAreaName={hoveredAreaName}
                         hoveredAreaId={hoveredAreaId}
                         isPhone={isPhone}
+                        hoveredAreaStat={hoveredAreaStat}
                     />
                     <MapColourIndicator
                         min={min}
@@ -167,6 +202,7 @@ export default function MapInfoBox({
                         variableUnit={variableUnit}
                         highlightedValue={hoveredAreaStat}
                         showPlusSignForChange={showPlusSignForChange}
+                        hoveredAreaId={hoveredAreaId}
                     />
                 </Box>
             )}

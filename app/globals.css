@@ -370,6 +370,7 @@ body {
     display: flex;
     flex-direction: row;
     gap: 0.5em;
+    transition: margin-top 0.3s ease-out;
 }
 
 #map-colour-indicator-bar-container {
@@ -377,12 +378,14 @@ body {
     display: flex;
     flex-direction: column;
     gap: 0.5em;
+    justify-content: space-between;
 }
 
 #map-colour-indicator-bar {
     position: relative;
     height: 12px;
     border-radius: 1em;
+    margin: 2px;
 }
 
 #map-colour-indicator-marker-container {
@@ -395,12 +398,20 @@ body {
     transition: left 0.15s ease-out;
 }
 
-#map-colour-indicator-marker {
+.map-colour-indicator-marker {
     width: 16px;
     height: 16px;
     border-radius: 50%;
     border: 2px solid white;
     box-shadow: 0 0 3px rgba(0, 0, 0, 0.6);
+}
+
+#map-info-box-empty-indicator-slot {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 #map-colour-indicator-value {
@@ -418,11 +429,9 @@ body {
     padding: 0.5em;
     border: 1px solid var(--mui-palette-divider);
     border-radius: 1em;
-    /* background-color: var(--translucent-panel); */
     background-color: var(--mui-palette-background-paper);
     display: flex;
     flex-direction: column;
-    gap: 0.4em;
     z-index: 1;
 }
 
@@ -457,6 +466,10 @@ body {
     border-radius: 50%;
     width: 1em;
     height: 1em;
+}
+
+#hover-info-box {
+    padding-bottom: 0.4em;
 }
 
 button.rounded-button {
