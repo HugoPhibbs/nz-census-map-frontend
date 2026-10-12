@@ -15,7 +15,7 @@ import MapViewOptions from "./MapViewOptions";
 import MapInfoBox from "./MapInfoBox";
 import { layers, namedFlavor } from "@protomaps/basemaps";
 import api from "@/app/api";
-import { AREA_TYPE, ColourScale } from "@/app/types";
+import { AREA_TYPE, CHOSEN_MAP_GRANULARITY, ColourScale } from "@/app/types";
 import { DEFAULT_CHOSEN_MAP_VARIABLE, DEFAULT_ZOOM_RANGES } from "@/app/components/map/MapConstants";
 import { areaIdToAreaType, AREA_TYPES, useColourMode, getMapColours,  } from "@/app/utils";
 import { extent, quantile } from "d3-array";
@@ -99,7 +99,7 @@ function layerIdToSourceId(sourceId: AREA_TYPE): string {
   return sourceId === "sa1" ? "sa1-map" : "stats-map";
 }
 
-function getZoomRangeForLayer(layerId: AREA_TYPE, chosenMapGranularity: string | null) {
+function getZoomRangeForLayer(layerId: AREA_TYPE, chosenMapGranularity: CHOSEN_MAP_GRANULARITY): [number, number] {
   if (chosenMapGranularity === "auto") return DEFAULT_ZOOM_RANGES[layerId];
   return (chosenMapGranularity === layerId ? [0, 24] : [24, 24]);
 }
@@ -219,7 +219,7 @@ export default function StatsMap({
 
   const [mapLoaded, setMapLoaded] = useState(false);
 
-  const [chosenMapGranularity, setChosenMapGranularity] = useState<string | null>("auto"); // What user has chosen
+  const [chosenMapGranularity, setChosenMapGranularity] = useState<CHOSEN_MAP_GRANULARITY>("auto"); // What user has chosen
   const [autoAreaType, setAutoAreaType] = useState<AREA_TYPE>("ta"); // What auto would be
   // What is actually viewed
   const activeAreaType = chosenMapGranularity === "auto" ? autoAreaType : (chosenMapGranularity as AREA_TYPE);
