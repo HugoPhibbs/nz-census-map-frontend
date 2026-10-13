@@ -8,6 +8,7 @@ export const MAP_COLOURS_LIGHT : MapColours = {
   "areaBorderHover": COLOURS["off-black"],
   "areaBorderSelected": COLOURS["off-black"],
   "areaFillOpacity": 0.7,
+  "labelColour": COLOURS["off-black"],
 }
 
 export const MAP_COLOURS_DARK : MapColours = {
@@ -17,6 +18,7 @@ export const MAP_COLOURS_DARK : MapColours = {
   "areaBorderHover": COLOURS["bone-white"],
   "areaBorderSelected": COLOURS["bone-white"],
   "areaFillOpacity": 0.6,
+  "labelColour": COLOURS["bone-white"],
 }
 
 export const DEFAULT_CHOSEN_MAP_VARIABLE = "median_age";
