@@ -19,6 +19,7 @@ import { AREA_TYPE, CHOSEN_MAP_GRANULARITY, ColourScale } from "@/app/types";
 import { DEFAULT_CHOSEN_MAP_VARIABLE, DEFAULT_ZOOM_RANGES, BASEMAP_SOURCE_ID, areaSourceId, pmtilesSourceUrl } from "@/app/components/map/map-utils";
 import { areaIdToAreaType, AREA_TYPES, useColourMode, getMapColours, } from "@/app/utils";
 import { extent, quantile } from "d3-array";
+import { LngLatBounds } from "maplibre-gl";
 
 setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
@@ -57,6 +58,36 @@ type TargetFeature = { source: string; sourceLayer: AREA_TYPE; id: string | numb
 function getAreaTargetFeature(areaId: string): TargetFeature {
   const areaType = areaIdToAreaType(areaId);
   return { source: areaSourceId(areaType), sourceLayer: areaType, id: areaId };
+}
+
+function flyToArea(mapRef: React.RefObject<MapRef | null>, areaId: string) {
+  const map = mapRef.current?.getMap();
+  if (!map) return;
+
+  const { source, sourceLayer } = getAreaTargetFeature(areaId);
+  // An area can be split across several tiles, so union every piece's bounds
+  const pieces = map.querySourceFeatures(source, {
+    sourceLayer,
+    filter: ["==", ["get", "area_id"], areaId],
+  });
+  if (!pieces.length) return;
+
+  const bounds = new LngLatBounds();
+  for (const f of pieces) {
+    const geom = f.geometry;
+    const polygons = geom.type === "Polygon"
+      ? [geom.coordinates]
+      : (geom.type === "MultiPolygon" ? geom.coordinates : []);
+    for (const ring of polygons.flat()) {
+      for (const coord of ring) bounds.extend(coord as [number, number]);
+    }
+  }
+
+  map.fitBounds(bounds, {
+    padding: { top: 80, bottom: 80, left: 80, right: 80 },
+    maxZoom: 15,
+    duration: 1000,
+  });
 }
 
 function updateMapStatsEffect(
@@ -244,6 +275,7 @@ export default function StatsMap({
   const handleMapClick = useCallback((e: MapLayerMouseEvent) => {
     const areaId = e.features?.[0]?.properties?.area_id as string | undefined;
     // Clicking empty space or the already-selected area deselects
+    if (areaId) flyToArea(mapRef, areaId);
     setChosenAreaId(areaId ?? null);
   }, [chosenAreaId, setChosenAreaId]);
 
@@ -269,13 +301,13 @@ export default function StatsMap({
     return () => { map.setFeatureState(target, { hover: false }); };
   }, [hoveredArea?.id]);
 
-  useEffect(() => {
-    const map = mapRef.current?.getMap();
-    if (!map || !chosenAreaId) return;
-    const target = getAreaTargetFeature(chosenAreaId);
-    map.setFeatureState(target, { selected: true });
-    return () => { map.setFeatureState(target, { selected: false }); }; // Clean up removes past selection (is run before the next effect is run)
-  }, [chosenAreaId]);
+  // useEffect(() => {
+  //   const map = mapRef.current?.getMap();
+  //   if (!map || !chosenAreaId) return;
+  //   const target = getAreaTargetFeature(chosenAreaId);
+  //   map.setFeatureState(target, { selected: true });
+  //   return () => { map.setFeatureState(target, { selected: false }); }; // Clean up removes past selection (is run before the next effect is run)
+  // }, [chosenAreaId]);
 
   // Update autoAreaType whenever the zoom level changes
   useEffect(() => {
@@ -395,6 +427,18 @@ export default function StatsMap({
               colours={mapColours}
             />
           ))}
+
+          {chosenAreaId && (
+            <Layer
+              key={areaIdToAreaType(chosenAreaId)}
+              id="selected-area-outline"
+              type="line"
+              source={areaSourceId(areaIdToAreaType(chosenAreaId))}
+              source-layer={areaIdToAreaType(chosenAreaId)}
+              filter={["==", ["get", "area_id"], chosenAreaId]}
+              paint={{ "line-color": mapColours.areaBorderSelected, "line-width": 2 }}
+            />
+          )}
 
           {placeLabelLayers.map((l) => <Layer key={l.id} {...l} />)}
         </Map>
