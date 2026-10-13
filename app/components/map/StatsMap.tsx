@@ -238,7 +238,7 @@ export default function StatsMap({
     city_label: mapColours.labelColour,
     subplace_label: mapColours.labelColour
   }),
-    [colourMode, mapColours.background]
+    [colourMode, mapColours.background, mapColours.labelColour]
   );
 
   const handleMapClick = useCallback((e: MapLayerMouseEvent) => {
