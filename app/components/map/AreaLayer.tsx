@@ -2,7 +2,7 @@
 
 import { Layer, Source } from "react-map-gl/maplibre";
 import { AREA_TYPE, MapColours } from "@/app/types";
-import {areaSourceId} from "./map-utils";
+import {areaSourceId, pmtilesSourceUrl} from "./map-utils";
 
 type AreaLayerProps = {
   areaType: AREA_TYPE;
@@ -18,9 +18,10 @@ export default function AreaLayer({ areaType, zoomRange, colours }: AreaLayerPro
     <Source
       id={sourceId}
       type="vector"
-      url={`pmtiles://${process.env.NEXT_PUBLIC_GCP_BUCKET_URL}/area_boundaries_${areaType}.pmtiles`}
+      url={pmtilesSourceUrl(`area_boundaries_${areaType}`)}
       promoteId={{ [areaType]: "area_id" }} // Key for featureIds
     >
+      {/* No need to include source id when a Layer is a direct descendant of a Source */}
       <Layer
         id={`${areaType}-areas-fill`}
         type="fill"

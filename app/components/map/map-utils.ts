@@ -31,3 +31,11 @@ export const DEFAULT_ZOOM_RANGES : Record<AREA_TYPE, [number, number]> = {
 export const BASEMAP_SOURCE_ID = "basemap";
 
 export const areaSourceId = (areaType: AREA_TYPE) => `boundaries-${areaType}`;
+
+/**
+ * Returns the URL for a PMTiles source file stored in the GCP bucket.
+ * 
+ * @param filename The name of the PMTiles file (without the .pmtiles extension).
+ * @returns The full URL to the PMTiles source file
+ */
+export const pmtilesSourceUrl = (filename: string) => `pmtiles://${process.env.NEXT_PUBLIC_GCP_BUCKET_URL}/${filename}.pmtiles`;

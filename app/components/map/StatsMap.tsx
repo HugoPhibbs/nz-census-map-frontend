@@ -16,7 +16,7 @@ import MapInfoBox from "./MapInfoBox";
 import { layers, namedFlavor } from "@protomaps/basemaps";
 import api from "@/app/api";
 import { AREA_TYPE, CHOSEN_MAP_GRANULARITY, ColourScale } from "@/app/types";
-import { DEFAULT_CHOSEN_MAP_VARIABLE, DEFAULT_ZOOM_RANGES, BASEMAP_SOURCE_ID, areaSourceId } from "@/app/components/map/map-utils";
+import { DEFAULT_CHOSEN_MAP_VARIABLE, DEFAULT_ZOOM_RANGES, BASEMAP_SOURCE_ID, areaSourceId, pmtilesSourceUrl } from "@/app/components/map/map-utils";
 import { areaIdToAreaType, AREA_TYPES, useColourMode, getMapColours, } from "@/app/utils";
 import { extent, quantile } from "d3-array";
 
@@ -377,7 +377,7 @@ export default function StatsMap({
           <Source
             id={BASEMAP_SOURCE_ID}
             type="vector"
-            url={`pmtiles://${process.env.NEXT_PUBLIC_GCP_BUCKET_URL}/nz_basemap.pmtiles`}
+            url={pmtilesSourceUrl("nz_basemap")}
           >
              {baseLayers.map((l) => <Layer key={l.id} {...l} />)}  
           </Source>
