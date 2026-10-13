@@ -17,7 +17,7 @@ import { layers, namedFlavor } from "@protomaps/basemaps";
 import api from "@/app/api";
 import { AREA_TYPE, CHOSEN_MAP_GRANULARITY, ColourScale } from "@/app/types";
 import { DEFAULT_CHOSEN_MAP_VARIABLE, DEFAULT_ZOOM_RANGES } from "@/app/components/map/MapConstants";
-import { areaIdToAreaType, AREA_TYPES, useColourMode, getMapColours,  } from "@/app/utils";
+import { areaIdToAreaType, AREA_TYPES, useColourMode, getMapColours, } from "@/app/utils";
 import { extent, quantile } from "d3-array";
 
 setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
@@ -44,7 +44,12 @@ const IGNORED_BASEMAP_LAYERS = [
   "pois",
   "buildings",
   "boundaries",
-  "background" // Only way I could figure out how to set the background to what I want for non-existent tiles
+  "background", // Only way I could figure out how to set the background to what I want for non-existent tiles
+  "roads_labels_major",
+  "roads_labels_minor",
+  "roads_shields",   // highway number badges
+  "roads_oneway",
+  "water_waterway_label"
 ]
 
 const INTERACTIVE_LAYERS = ["ta-areas-fill", "sa3-areas-fill", "sa2-areas-fill", "sa1-areas-fill"];
@@ -130,7 +135,7 @@ function getColourScaleFunction(
 function areaColouringEffect(
   mapRef: any,
   mapStats: Record<string, number> | null,
-  colourScalesForAreaType : Record<AREA_TYPE, ColourScale> | null,
+  colourScalesForAreaType: Record<AREA_TYPE, ColourScale> | null,
   areaIdsLastUpdated: React.RefObject<Set<string>>
 ) {
   const map = mapRef.current?.getMap();
@@ -236,20 +241,10 @@ export default function StatsMap({
   // Handling dark mode
   const colourMode = useColourMode();
   const mapColours = getMapColours(colourMode);
-
-  const basemapLayers = useMemo(() => {
-    const flavour = { ...namedFlavor(colourMode), water: mapColours.background };
-    return layers("stats-map", flavour, { lang: "en" })
-      .filter((l) => !IGNORED_BASEMAP_LAYERS.includes(l.id));
-  }, [colourMode, mapColours.background]);
-
-  useEffect(() => {
-    // Basically we need mapLoaded so sprites are set once the map is loaded.
-    // Without this, no sprites are rendered bc colourMode doesn't change before the map (this hook) is loaded
-    if (!mapLoaded) return;
-    const spriteUrl = `https://protomaps.github.io/basemaps-assets/sprites/v4/${colourMode}`;
-    mapRef.current?.getMap().setSprite(spriteUrl);
-  }, [mapLoaded, colourMode]);
+  const mapFlavour = useMemo(() =>
+  ({ ...namedFlavor(colourMode), water: mapColours.background }),
+    [colourMode, mapColours.background]
+  );
 
   const handleMapClick = useCallback((e: MapLayerMouseEvent) => {
     const areaId = e.features?.[0]?.properties?.area_id as string | undefined;
@@ -286,7 +281,7 @@ export default function StatsMap({
     map.setFeatureState(target, { selected: true });
     return () => { map.setFeatureState(target, { selected: false }); }; // Clean up removes past selection (is run before the next effect is run)
   }, [chosenAreaId]);
-  
+
   // Update autoAreaType whenever the zoom level changes
   useEffect(() => {
     const map = mapLoaded ? mapRef.current?.getMap() ?? null : null;
@@ -298,7 +293,7 @@ export default function StatsMap({
   }, [mapLoaded]);
 
   // Updating mapstats
-   useEffect(() => {
+  useEffect(() => {
     updateMapStatsEffect(
       chosenVariable,
       setMapStats,
@@ -306,6 +301,16 @@ export default function StatsMap({
       censusYearCompareTo
     );
   }, [chosenVariable, censusYear, censusYearCompareTo]);
+
+  const { baseLayers, placeLabelLayers } = useMemo(() => {
+    const all = layers("stats-map", mapFlavour, { lang: "en" })
+      .filter((l) => !IGNORED_BASEMAP_LAYERS.includes(l.id));
+    const isPlaceLabel = (l: { id: string }) => l.id.startsWith("places_");
+    return {
+      baseLayers: all.filter((l) => !isPlaceLabel(l)),
+      placeLabelLayers: all.filter(isPlaceLabel),
+    };
+  }, [mapFlavour]);
 
   // Updating colour scales for each area type, given the current mapStats and chosenVariable
   const colourScalesForAreaType = useMemo(() => {
@@ -385,9 +390,8 @@ export default function StatsMap({
             url={`pmtiles://${process.env.NEXT_PUBLIC_GCP_BUCKET_URL}/combined.pmtiles`}
             promoteId={{ ta: "area_id", sa3: "area_id", sa2: "area_id" }} // Keys for featureIds per layer
           >
-            {basemapLayers.map((l) => {
-              return <Layer key={l.id} {...l} />;
-            })}
+            {/* stats-map needs to be registered first */}
+             {baseLayers.map((l) => <Layer key={l.id} {...l} />)}  
 
             {(["ta", "sa3", "sa2"] as const).map((id) => {
               const [minZoom, maxZoom] = getZoomRangeForLayer(id, chosenMapGranularity);
@@ -422,6 +426,8 @@ export default function StatsMap({
               );
             })()}
           </Source>
+
+          {placeLabelLayers.map((l) => <Layer key={l.id} {...l} />)}
         </Map>
       </Box >
     </>
