@@ -64,30 +64,13 @@ function flyToArea(mapRef: React.RefObject<MapRef | null>, areaId: string) {
   const map = mapRef.current?.getMap();
   if (!map) return;
 
-  const { source, sourceLayer } = getAreaTargetFeature(areaId);
-  // An area can be split across several tiles, so union every piece's bounds
-  const pieces = map.querySourceFeatures(source, {
-    sourceLayer,
-    filter: ["==", ["get", "area_id"], areaId],
-  });
-  if (!pieces.length) return;
-
-  const bounds = new LngLatBounds();
-  for (const f of pieces) {
-    const geom = f.geometry;
-    const polygons = geom.type === "Polygon"
-      ? [geom.coordinates]
-      : (geom.type === "MultiPolygon" ? geom.coordinates : []);
-    for (const ring of polygons.flat()) {
-      for (const coord of ring) bounds.extend(coord as [number, number]);
-    }
-  }
-
-  map.fitBounds(bounds, {
-    padding: { top: 80, bottom: 80, left: 80, right: 80 },
-    maxZoom: 15,
-    duration: 1000,
-  });
+  api.get(`/area/${areaId}/bounding-box`).then(res => {
+    map.fitBounds(res.data, {
+      padding: { top: 80, bottom: 80, left: 80, right: 80 },
+      maxZoom: 15,
+      duration: 1000,
+    });
+  })
 }
 
 function updateMapStatsEffect(
@@ -210,9 +193,9 @@ function ResetChosenArea({
   if (!chosenAreaId || isPhone) return null;
 
   return (
-    <Button 
-      onClick={onReset} 
-      id = "reset-chosen-area-button"
+    <Button
+      onClick={onReset}
+      id="reset-chosen-area-button"
       className="rounded-button"
     >
       Reset selection
@@ -294,7 +277,7 @@ export default function StatsMap({
   }),
     [colourMode, mapColours.background, mapColours.labelColour]
   );
-  
+
   const resetChosenArea = useCallback(() => {
     setChosenAreaId(null);
     setChosenMapGranularity(granularityBeforeAreaSelection.current);
@@ -425,7 +408,7 @@ export default function StatsMap({
           variableUnit={chosenVariable && variableIdsToUnitMap[chosenVariable]}
           showPlusSignForChange={!!censusYearCompareTo}
         />
-        
+
         <ResetChosenArea
           chosenAreaId={chosenAreaId}
           onReset={resetChosenArea}
