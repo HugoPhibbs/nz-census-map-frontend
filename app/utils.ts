@@ -2,7 +2,7 @@
 
 import { useColorScheme } from "@mui/material";
 import { AREA_TYPE, MapColours } from "./types";
-import { MAP_COLOURS_DARK, MAP_COLOURS_LIGHT } from "./components/map/MapConstants";
+import { MAP_COLOURS_DARK, MAP_COLOURS_LIGHT } from "./components/map/map-utils";
 
 export function roundToDP(value: number, dp: number) {
   const multiplier = Math.pow(10, dp);

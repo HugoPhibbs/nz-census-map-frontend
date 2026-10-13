@@ -3,7 +3,7 @@
 import { Box, FormControl, InputLabel, ListSubheader, MenuItem, Select, Button, Typography, Accordion, ToggleButton, AccordionSummary, AccordionDetails, useMediaQuery, Tooltip } from "@mui/material";
 import { useEffect, useState } from "react";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { DEFAULT_CHOSEN_MAP_VARIABLE } from "./MapConstants";
+import { DEFAULT_CHOSEN_MAP_VARIABLE } from "./map-utils";
 import { AREA_TYPE_TO_NAME, DEFAULT_CENSUS_YEAR, CENSUS_YEARS } from "@/app/utils";
 import { AREA_TYPE } from "@/app/types";
 import EastRoundedIcon from '@mui/icons-material/EastRounded';

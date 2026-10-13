@@ -16,7 +16,7 @@ import MapInfoBox from "./MapInfoBox";
 import { layers, namedFlavor } from "@protomaps/basemaps";
 import api from "@/app/api";
 import { AREA_TYPE, CHOSEN_MAP_GRANULARITY, ColourScale } from "@/app/types";
-import { DEFAULT_CHOSEN_MAP_VARIABLE, DEFAULT_ZOOM_RANGES } from "@/app/components/map/MapConstants";
+import { DEFAULT_CHOSEN_MAP_VARIABLE, DEFAULT_ZOOM_RANGES, BASEMAP_SOURCE_ID, areaSourceId, pmtilesSourceUrl } from "@/app/components/map/map-utils";
 import { areaIdToAreaType, AREA_TYPES, useColourMode, getMapColours, } from "@/app/utils";
 import { extent, quantile } from "d3-array";
 
@@ -36,13 +36,7 @@ const MAP_STYLE = {
 
 const MAP_BOUNDS: [number, number, number, number] = [-205.400391, -60, -169.628906, -20];
 
-const IGNORED_BASEMAP_LAYERS = [
-  "ta",
-  "sa3",
-  "sa2",
-  "landuse",
-  "pois",
-  "buildings",
+const LAYERS_TO_EXCLUDE_FROM_BASEMAP = [
   "boundaries",
   "background", // Only way I could figure out how to set the background to what I want for non-existent tiles
   "roads_labels_major",
@@ -62,7 +56,7 @@ type TargetFeature = { source: string; sourceLayer: AREA_TYPE; id: string | numb
 
 function getAreaTargetFeature(areaId: string): TargetFeature {
   const areaType = areaIdToAreaType(areaId);
-  return { source: layerIdToSourceId(areaType), sourceLayer: areaType, id: areaId };
+  return { source: areaSourceId(areaType), sourceLayer: areaType, id: areaId };
 }
 
 function updateMapStatsEffect(
@@ -98,10 +92,6 @@ function getAreaTypeToValues(mapStats: Record<string, number> | null): AreaTypeT
     (result[areaType] ??= []).push(value);
   }
   return result;
-}
-
-function layerIdToSourceId(sourceId: AREA_TYPE): string {
-  return sourceId === "sa1" ? "sa1-map" : "stats-map";
 }
 
 function getZoomRangeForLayer(layerId: AREA_TYPE, chosenMapGranularity: CHOSEN_MAP_GRANULARITY): [number, number] {
@@ -303,12 +293,12 @@ export default function StatsMap({
   }, [chosenVariable, censusYear, censusYearCompareTo]);
 
   const { baseLayers, placeLabelLayers } = useMemo(() => {
-    const all = layers("stats-map", mapFlavour, { lang: "en" })
-      .filter((l) => !IGNORED_BASEMAP_LAYERS.includes(l.id));
+    const allLayers = layers(BASEMAP_SOURCE_ID, mapFlavour, { lang: "en" })
+      .filter((l) => !LAYERS_TO_EXCLUDE_FROM_BASEMAP.includes(l.id));
     const isPlaceLabel = (l: { id: string }) => l.id.startsWith("places_");
     return {
-      baseLayers: all.filter((l) => !isPlaceLabel(l)),
-      placeLabelLayers: all.filter(isPlaceLabel),
+      baseLayers: allLayers.filter((l) => !isPlaceLabel(l)),
+      placeLabelLayers: allLayers.filter(isPlaceLabel),
     };
   }, [mapFlavour]);
 
@@ -385,47 +375,21 @@ export default function StatsMap({
           />
 
           <Source
-            id="stats-map"
+            id={BASEMAP_SOURCE_ID}
             type="vector"
-            url={`pmtiles://${process.env.NEXT_PUBLIC_GCP_BUCKET_URL}/combined.pmtiles`}
-            promoteId={{ ta: "area_id", sa3: "area_id", sa2: "area_id" }} // Keys for featureIds per layer
+            url={pmtilesSourceUrl("nz_basemap")}
           >
-            {/* stats-map needs to be registered first */}
              {baseLayers.map((l) => <Layer key={l.id} {...l} />)}  
-
-            {(["ta", "sa3", "sa2"] as const).map((id) => {
-              const [minZoom, maxZoom] = getZoomRangeForLayer(id, chosenMapGranularity);
-              return <AreaLayer
-                key={id}
-                layerId={id}
-                sourceId={"stats-map"}
-                minZoom={minZoom}
-                maxZoom={maxZoom}
-                colours={mapColours}
-              />;
-            })}
           </Source>
 
-          <Source
-            id="sa1-map"
-            type="vector"
-            url={`pmtiles://${process.env.NEXT_PUBLIC_GCP_BUCKET_URL}/sa1.pmtiles`}
-            promoteId={{ sa1: "area_id" }}
-          >
-            {(() => {
-              const [minZoom, maxZoom] = getZoomRangeForLayer("sa1", chosenMapGranularity);
-              return (
-                <AreaLayer
-                  key={"sa1"}
-                  layerId={"sa1"}
-                  sourceId={"sa1-map"}
-                  minZoom={minZoom}
-                  maxZoom={maxZoom}
-                  colours={mapColours}
-                />
-              );
-            })()}
-          </Source>
+          {AREA_TYPES.map((areaType) => (
+            <AreaLayer
+              key={areaType}
+              areaType={areaType}
+              zoomRange={getZoomRangeForLayer(areaType, chosenMapGranularity)}
+              colours={mapColours}
+            />
+          ))}
 
           {placeLabelLayers.map((l) => <Layer key={l.id} {...l} />)}
         </Map>
