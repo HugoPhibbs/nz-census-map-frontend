@@ -12,7 +12,6 @@ type MapColourIndicatorProps = {
     min: number | null;
     max: number | null;
     colourScale: ColourScale | null;
-    variableUnit: string | null;
     highlightedValue: number | null;
     showPlusSignForChange: boolean;
     hoveredAreaId: string | null;
@@ -37,7 +36,6 @@ function MapColourIndicator({
     min,
     max,
     colourScale,
-    variableUnit,
     highlightedValue,
     showPlusSignForChange,
     hoveredAreaId
@@ -199,7 +197,6 @@ export default function MapInfoBox({
                         min={min}
                         max={max}
                         colourScale={colourScale}
-                        variableUnit={variableUnit}
                         highlightedValue={hoveredAreaStat}
                         showPlusSignForChange={showPlusSignForChange}
                         hoveredAreaId={hoveredAreaId}

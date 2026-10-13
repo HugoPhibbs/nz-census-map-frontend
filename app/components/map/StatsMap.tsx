@@ -20,6 +20,7 @@ import { DEFAULT_CHOSEN_MAP_VARIABLE, DEFAULT_ZOOM_RANGES, BASEMAP_SOURCE_ID, ar
 import { areaIdToAreaType, AREA_TYPES, useColourMode, getMapColours, } from "@/app/utils";
 import { extent, quantile } from "d3-array";
 import { LngLatBounds } from "maplibre-gl";
+import axios from "axios";
 
 setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
@@ -60,17 +61,28 @@ function getAreaTargetFeature(areaId: string): TargetFeature {
   return { source: areaSourceId(areaType), sourceLayer: areaType, id: areaId };
 }
 
-function flyToArea(mapRef: React.RefObject<MapRef | null>, areaId: string) {
-  const map = mapRef.current?.getMap();
-  if (!map) return;
+function flyToArea(map: maplibregl.Map, areaId: string, signal: AbortSignal) {
+  // Code is complex, but basically, if we have the map filter, account for this
+  const filter = document.getElementById("map-filter");
+  const content = filter?.querySelector<HTMLElement>(".MuiCollapse-root");
+  const filterInset = (filter?.classList.contains("Mui-expanded") && content)
+    ? filter.offsetLeft + content.offsetWidth + 40
+    : 0;
 
-  api.get(`/area/${areaId}/bounding-box`).then(res => {
-    map.fitBounds(res.data, {
-      padding: { top: 80, bottom: 80, left: 80, right: 80 },
-      maxZoom: 15,
-      duration: 1000,
+  // Axios request isn't cancelled if areaId changes, so we need to send a signal to cancel if this happens
+  // This stops us flying to a stale area Say we requested area1 then area2, but area1's request finishes after area2's
+  api.get(`/area/${areaId}/bounding-box`, { signal })
+    .then(res => {
+      map.fitBounds(res.data, {
+        padding: { top: 80, bottom: 80, left: filterInset || 80, right: 80 },
+        maxZoom: 15,
+        duration: 1000,
+      });
+    })
+    .catch(err => {
+      if (axios.isCancel(err)) return;
+      console.error("Error fetching bounding box:", err);
     });
-  })
 }
 
 function updateMapStatsEffect(
@@ -283,6 +295,15 @@ export default function StatsMap({
     setChosenMapGranularity(granularityBeforeAreaSelection.current);
   }, [setChosenAreaId]);
 
+  useEffect(() => {
+    const map = mapRef.current?.getMap();
+    if (!chosenAreaId || !map) return;
+
+    const controller = new AbortController();
+    flyToArea(map, chosenAreaId, controller.signal);
+    return () => controller.abort();
+  }, [chosenAreaId]);
+
   const handleMapClick = useCallback((e: MapLayerMouseEvent) => {
     const areaId = e.features?.[0]?.properties?.area_id as string | undefined;
     // If this area is chosen, but no current selection exists, save the current granularity, so it can be reset
@@ -293,7 +314,6 @@ export default function StatsMap({
     if (areaId && !chosenAreaId) granularityBeforeAreaSelection.current = chosenMapGranularity;
     setChosenMapGranularity(areaIdToAreaType(areaId));
     setChosenAreaId(areaId);
-    if (areaId) flyToArea(mapRef, areaId)
   }, [chosenAreaId, chosenMapGranularity, setChosenAreaId]);
 
   const handleMapHover = useCallback((e: MapLayerMouseEvent) => {
