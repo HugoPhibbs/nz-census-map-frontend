@@ -29,5 +29,5 @@ export const DEFAULT_ZOOM_RANGES : Record<AREA_TYPE, [number, number]> = {
 }
 
 export const BASEMAP_SOURCE_ID = "basemap";
-export const BOUNDARIES_SA2_SA3_TA_SOURCE_ID = "boundaries-sa2-sa3-ta";
-export const BOUNDARIES_SA1_SOURCE_ID = "boundaries-sa1";
+
+export const areaSourceId = (areaType: AREA_TYPE) => `boundaries-${areaType}`;

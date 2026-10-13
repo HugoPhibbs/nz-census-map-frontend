@@ -1,82 +1,87 @@
 "use client";
 
-import { Layer } from "react-map-gl/maplibre";
-import { MapColours } from "@/app/types";
+import { Layer, Source } from "react-map-gl/maplibre";
+import { AREA_TYPE, MapColours } from "@/app/types";
+import {areaSourceId} from "./map-utils";
 
-export default function AreaLayer({
-  layerId, maxZoom, minZoom, sourceId, colours
-}: {
-  layerId: string;
-  maxZoom?: number;
-  minZoom?: number;
-  sourceId: string;
+type AreaLayerProps = {
+  areaType: AREA_TYPE;
+  zoomRange: [number, number];
   colours: MapColours;
-}) {
-  return <>
-    <Layer
-      id={`${layerId}-areas-fill`}
-      type="fill"
-      source={sourceId}
-      source-layer={layerId}
-      minzoom={minZoom}
-      maxzoom={maxZoom}
-      paint={{
-        "fill-color": [
-          "coalesce",
-          ["feature-state", "fillColor"],
-          colours.areaFill,
-        ],
-        "fill-opacity": colours.areaFillOpacity,
-      }}
-    />
+};
 
-    <Layer
-      id={`${layerId}-areas-border`}
-      type="line"
-      source={sourceId}
-      source-layer={layerId}
-      minzoom={minZoom}
-      maxzoom={maxZoom}
-      paint={{
-        "line-color": colours.areaBorder,
-        "line-width": layerId === "sa1" ? 0.5 : 1
-      }}
-    />
+export default function AreaLayer({ areaType, zoomRange, colours }: AreaLayerProps) {
+  const [minZoom, maxZoom] = zoomRange;
+  const sourceId = areaSourceId(areaType);
 
-    <Layer
-      id={`${layerId}-areas-hover`}
-      type="line"
-      source={sourceId}
-      source-layer={layerId}
-      minzoom={minZoom}
-      maxzoom={maxZoom}
-      paint={{
-        "line-color": [
-          "case",
-          ["boolean", ["feature-state", "hover"], false],
-          colours.areaBorderHover,
-          "rgba(0,0,0,0)",
-        ],
-        "line-width": 2,
-      }}
-    />
+  return (
+    <Source
+      id={sourceId}
+      type="vector"
+      url={`pmtiles://${process.env.NEXT_PUBLIC_GCP_BUCKET_URL}/area_boundaries_${areaType}.pmtiles`}
+      promoteId={{ [areaType]: "area_id" }} // Key for featureIds
+    >
+      <Layer
+        id={`${areaType}-areas-fill`}
+        type="fill"
+        source-layer={areaType}
+        minzoom={minZoom}
+        maxzoom={maxZoom}
+        paint={{
+          "fill-color": [
+            "coalesce",
+            ["feature-state", "fillColor"],
+            colours.areaFill,
+          ],
+          "fill-opacity": colours.areaFillOpacity,
+        }}
+      />
 
-    <Layer
-      id={`${layerId}-areas-selected`}
-      type="line"
-      source={sourceId}
-      source-layer={layerId}
-      minzoom={minZoom}
-      maxzoom={maxZoom}
-      paint={{
-        "line-color": [
-          "case",
-          ["boolean", ["feature-state", "selected"], false], 
-          colours.areaBorderSelected,
-          "rgba(0,0,0,0)",
-        ],
-        "line-width": 2,
-      }}
-    />
-  </>
+      <Layer
+        id={`${areaType}-areas-border`}
+        type="line"
+        source-layer={areaType}
+        minzoom={minZoom}
+        maxzoom={maxZoom}
+        paint={{
+          "line-color": colours.areaBorder,
+          "line-width": areaType === "sa1" ? 0.5 : 1
+        }}
+      />
+
+      <Layer
+        id={`${areaType}-areas-hover`}
+        type="line"
+        source-layer={areaType}
+        minzoom={minZoom}
+        maxzoom={maxZoom}
+        paint={{
+          "line-color": [
+            "case",
+            ["boolean", ["feature-state", "hover"], false],
+            colours.areaBorderHover,
+            "rgba(0,0,0,0)",
+          ],
+          "line-width": 2,
+        }}
+      />
+
+      <Layer
+        id={`${areaType}-areas-selected`}
+        type="line"
+        source-layer={areaType}
+        minzoom={minZoom}
+        maxzoom={maxZoom}
+        paint={{
+          "line-color": [
+            "case",
+            ["boolean", ["feature-state", "selected"], false],
+            colours.areaBorderSelected,
+            "rgba(0,0,0,0)",
+          ],
+          "line-width": 2,
+        }}
+      />
+    </Source>
+  );
 }

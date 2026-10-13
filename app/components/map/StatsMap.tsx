@@ -16,7 +16,7 @@ import MapInfoBox from "./MapInfoBox";
 import { layers, namedFlavor } from "@protomaps/basemaps";
 import api from "@/app/api";
 import { AREA_TYPE, CHOSEN_MAP_GRANULARITY, ColourScale } from "@/app/types";
-import { DEFAULT_CHOSEN_MAP_VARIABLE, DEFAULT_ZOOM_RANGES, BASEMAP_SOURCE_ID, BOUNDARIES_SA1_SOURCE_ID, BOUNDARIES_SA2_SA3_TA_SOURCE_ID } from "@/app/components/map/MapConstants";
+import { DEFAULT_CHOSEN_MAP_VARIABLE, DEFAULT_ZOOM_RANGES, BASEMAP_SOURCE_ID, areaSourceId } from "@/app/components/map/map-utils";
 import { areaIdToAreaType, AREA_TYPES, useColourMode, getMapColours, } from "@/app/utils";
 import { extent, quantile } from "d3-array";
 
@@ -56,7 +56,7 @@ type TargetFeature = { source: string; sourceLayer: AREA_TYPE; id: string | numb
 
 function getAreaTargetFeature(areaId: string): TargetFeature {
   const areaType = areaIdToAreaType(areaId);
-  return { source: layerIdToSourceId(areaType), sourceLayer: areaType, id: areaId };
+  return { source: areaSourceId(areaType), sourceLayer: areaType, id: areaId };
 }
 
 function updateMapStatsEffect(
@@ -92,10 +92,6 @@ function getAreaTypeToValues(mapStats: Record<string, number> | null): AreaTypeT
     (result[areaType] ??= []).push(value);
   }
   return result;
-}
-
-function layerIdToSourceId(sourceId: AREA_TYPE): string {
-  return sourceId === "sa1" ? BOUNDARIES_SA1_SOURCE_ID : BOUNDARIES_SA2_SA3_TA_SOURCE_ID;
 }
 
 function getZoomRangeForLayer(layerId: AREA_TYPE, chosenMapGranularity: CHOSEN_MAP_GRANULARITY): [number, number] {
@@ -386,46 +382,14 @@ export default function StatsMap({
              {baseLayers.map((l) => <Layer key={l.id} {...l} />)}  
           </Source>
 
-          <Source
-            id={BOUNDARIES_SA2_SA3_TA_SOURCE_ID}
-            type="vector"
-            url={`pmtiles://${process.env.NEXT_PUBLIC_GCP_BUCKET_URL}/area_boundaries_sa2_sa3_ta.pmtiles`}
-            promoteId={{ ta: "area_id", sa3: "area_id", sa2: "area_id" }} // Keys for featureIds per layer
-          >
-            {(["ta", "sa3", "sa2"] as const).map((id) => {
-              const [minZoom, maxZoom] = getZoomRangeForLayer(id, chosenMapGranularity);
-              return <AreaLayer
-                key={id}
-                layerId={id}
-                sourceId={BOUNDARIES_SA2_SA3_TA_SOURCE_ID}
-                minZoom={minZoom}
-                maxZoom={maxZoom}
-                colours={mapColours}
-              />;
-            })}
-          </Source>
-
-          <Source
-            id={BOUNDARIES_SA1_SOURCE_ID}
-            type="vector"
-            url={`pmtiles://${process.env.NEXT_PUBLIC_GCP_BUCKET_URL}/area_boundaries_sa1.pmtiles`}
-            promoteId={{ sa1: "area_id" }}
-          >
-            {(() => {
-              // Using this trick with () allows us to a plain TS segment in TSX code
-              const [minZoom, maxZoom] = getZoomRangeForLayer("sa1", chosenMapGranularity);
-              return (
-                <AreaLayer
-                  key={"sa1"}
-                  layerId={"sa1"}
-                  sourceId={BOUNDARIES_SA1_SOURCE_ID}
-                  minZoom={minZoom}
-                  maxZoom={maxZoom}
-                  colours={mapColours}
-                />
-              );
-            })()}
-          </Source>
+          {AREA_TYPES.map((areaType) => (
+            <AreaLayer
+              key={areaType}
+              areaType={areaType}
+              zoomRange={getZoomRangeForLayer(areaType, chosenMapGranularity)}
+              colours={mapColours}
+            />
+          ))}
 
           {placeLabelLayers.map((l) => <Layer key={l.id} {...l} />)}
         </Map>
