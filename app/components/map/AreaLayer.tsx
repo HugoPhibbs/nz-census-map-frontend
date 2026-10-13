@@ -65,7 +65,7 @@ export default function AreaLayer({ areaType, zoomRange, colours }: AreaLayerPro
           ],
           "line-width": 2,
         }}
-      />
+        />
 
       <Layer
         id={`${areaType}-areas-selected`}

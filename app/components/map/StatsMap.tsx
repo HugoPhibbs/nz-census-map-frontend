@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, useMediaQuery } from "@mui/material";
+import { Box, useMediaQuery, Button } from "@mui/material";
 import { Protocol } from "pmtiles";
 import { useEffect, useRef, useCallback, useState, useMemo } from "react";
 
@@ -19,6 +19,7 @@ import { AREA_TYPE, CHOSEN_MAP_GRANULARITY, ColourScale } from "@/app/types";
 import { DEFAULT_CHOSEN_MAP_VARIABLE, DEFAULT_ZOOM_RANGES, BASEMAP_SOURCE_ID, areaSourceId, pmtilesSourceUrl } from "@/app/components/map/map-utils";
 import { areaIdToAreaType, AREA_TYPES, useColourMode, getMapColours, } from "@/app/utils";
 import { extent, quantile } from "d3-array";
+import { LngLatBounds } from "maplibre-gl";
 
 setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
@@ -57,6 +58,19 @@ type TargetFeature = { source: string; sourceLayer: AREA_TYPE; id: string | numb
 function getAreaTargetFeature(areaId: string): TargetFeature {
   const areaType = areaIdToAreaType(areaId);
   return { source: areaSourceId(areaType), sourceLayer: areaType, id: areaId };
+}
+
+function flyToArea(mapRef: React.RefObject<MapRef | null>, areaId: string) {
+  const map = mapRef.current?.getMap();
+  if (!map) return;
+
+  api.get(`/area/${areaId}/bounding-box`).then(res => {
+    map.fitBounds(res.data, {
+      padding: { top: 80, bottom: 80, left: 80, right: 80 },
+      maxZoom: 15,
+      duration: 1000,
+    });
+  })
 }
 
 function updateMapStatsEffect(
@@ -167,6 +181,28 @@ function getAreaTypeByUsingZoomDefaults(zoomLevel: number): AREA_TYPE {
   return "ta"; // Default
 }
 
+function ResetChosenArea({
+  chosenAreaId,
+  onReset,
+  isPhone
+}: {
+  chosenAreaId: string | null;
+  onReset: () => void;
+  isPhone: boolean;
+}) {
+  if (!chosenAreaId || isPhone) return null;
+
+  return (
+    <Button
+      onClick={onReset}
+      id="reset-chosen-area-button"
+      className="rounded-button"
+    >
+      Reset selection
+    </Button>
+  );
+}
+
 function resetMapZoom(mapRef: any, defaultView: { longitude: number; latitude: number; zoom: number }) {
   const map = mapRef.current?.getMap();
   if (!map) return;
@@ -214,6 +250,7 @@ export default function StatsMap({
 
   const [mapLoaded, setMapLoaded] = useState(false);
 
+  const granularityBeforeAreaSelection = useRef<CHOSEN_MAP_GRANULARITY>("auto");
   const [chosenMapGranularity, setChosenMapGranularity] = useState<CHOSEN_MAP_GRANULARITY>("auto"); // What user has chosen
   const [autoAreaType, setAutoAreaType] = useState<AREA_TYPE>("ta"); // What auto would be
   // What is actually viewed
@@ -241,11 +278,23 @@ export default function StatsMap({
     [colourMode, mapColours.background, mapColours.labelColour]
   );
 
+  const resetChosenArea = useCallback(() => {
+    setChosenAreaId(null);
+    setChosenMapGranularity(granularityBeforeAreaSelection.current);
+  }, [setChosenAreaId]);
+
   const handleMapClick = useCallback((e: MapLayerMouseEvent) => {
     const areaId = e.features?.[0]?.properties?.area_id as string | undefined;
-    // Clicking empty space or the already-selected area deselects
-    setChosenAreaId(areaId ?? null);
-  }, [chosenAreaId, setChosenAreaId]);
+    // If this area is chosen, but no current selection exists, save the current granularity, so it can be reset
+    if (!areaId) {
+      resetChosenArea();
+      return;
+    }
+    if (areaId && !chosenAreaId) granularityBeforeAreaSelection.current = chosenMapGranularity;
+    setChosenMapGranularity(areaIdToAreaType(areaId));
+    setChosenAreaId(areaId);
+    if (areaId) flyToArea(mapRef, areaId)
+  }, [chosenAreaId, chosenMapGranularity, setChosenAreaId]);
 
   const handleMapHover = useCallback((e: MapLayerMouseEvent) => {
     const properties = e.features?.[0]?.properties;
@@ -360,6 +409,12 @@ export default function StatsMap({
           showPlusSignForChange={!!censusYearCompareTo}
         />
 
+        <ResetChosenArea
+          chosenAreaId={chosenAreaId}
+          onReset={resetChosenArea}
+          isPhone={isPhone}
+        />
+
         <Map
           ref={mapRef}
           initialViewState={defaultView} // Centered on approx the tasman, zoom includes outlying islands
@@ -395,6 +450,18 @@ export default function StatsMap({
               colours={mapColours}
             />
           ))}
+
+          {/* {chosenAreaId && (
+            <Layer
+              key={areaIdToAreaType(chosenAreaId)}
+              id="selected-area-outline"
+              type="line"
+              source={areaSourceId(areaIdToAreaType(chosenAreaId))}
+              source-layer={areaIdToAreaType(chosenAreaId)}
+              filter={["==", ["get", "area_id"], chosenAreaId]}
+              paint={{ "line-color": mapColours.areaBorderSelected, "line-width": 2 }}
+            />
+          )} */}
 
           {placeLabelLayers.map((l) => <Layer key={l.id} {...l} />)}
         </Map>

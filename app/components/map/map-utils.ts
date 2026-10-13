@@ -5,7 +5,7 @@ export const MAP_COLOURS_LIGHT : MapColours = {
   "background": "#86D7EB",
   "areaFill": "grey",
   "areaBorder": "white",
-  "areaBorderHover": COLOURS["off-black"],
+  "areaBorderHover": COLOURS["dark-divider"], // COLOURS["off-black"]
   "areaBorderSelected": COLOURS["off-black"],
   "areaFillOpacity": 0.7,
   "labelColour": COLOURS["off-black"],
@@ -15,7 +15,7 @@ export const MAP_COLOURS_DARK : MapColours = {
   "background": "#003852",
   "areaFill": "#363840",
   "areaBorder": COLOURS["off-black"],
-  "areaBorderHover": COLOURS["bone-white"],
+  "areaBorderHover": COLOURS["light-divider"], // COLOURS["bone-white"]
   "areaBorderSelected": COLOURS["bone-white"],
   "areaFillOpacity": 0.6,
   "labelColour": COLOURS["bone-white"],

@@ -251,11 +251,7 @@ export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, var
         variableValue: areaVariables?.[variableInfo[0]]?.variable_value ?? null,
     }));
 
-    generalVariables.push({
-        variableId: "area_type",
-        variableName: "Area type",
-        variableValue: areaId ? areaIdToAreaTypeName(areaId) : null,
-    })
+    const areaType = areaId ? areaIdToAreaTypeName(areaId) : null;
 
     const isPhone = useMediaQuery('(max-width:600px)');
 
@@ -277,7 +273,7 @@ export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, var
                                 {(areaId && isPhone) && <Button className={"close-info-panel-button rounded-button"} onClick={() => resetPanelState()}>Close</Button>}
                             </Box>
                             <Typography component="h3" id="info-panel-title-year">
-                                    {`${chosenCensusYear}`}
+                                    {`${areaType}, ${chosenCensusYear}`}
                             </Typography>
                         </Box>
 
