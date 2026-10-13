@@ -11,6 +11,7 @@ export type MapColours = {
   areaBorderHover: string;
   areaBorderSelected: string;
   areaFillOpacity: number;
+  labelColour: string;
 };
 
 export type ColourScale = ScaleDiverging<string> | ScaleSequential<string>;

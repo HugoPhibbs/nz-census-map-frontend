@@ -232,7 +232,12 @@ export default function StatsMap({
   const colourMode = useColourMode();
   const mapColours = getMapColours(colourMode);
   const mapFlavour = useMemo(() =>
-  ({ ...namedFlavor(colourMode), water: mapColours.background }),
+  ({
+    ...namedFlavor(colourMode),
+    water: mapColours.background,
+    city_label: mapColours.labelColour,
+    subplace_label: mapColours.labelColour
+  }),
     [colourMode, mapColours.background]
   );
 
@@ -379,7 +384,7 @@ export default function StatsMap({
             type="vector"
             url={pmtilesSourceUrl("nz_basemap")}
           >
-             {baseLayers.map((l) => <Layer key={l.id} {...l} />)}  
+            {baseLayers.map((l) => <Layer key={l.id} {...l} />)}
           </Source>
 
           {AREA_TYPES.map((areaType) => (
