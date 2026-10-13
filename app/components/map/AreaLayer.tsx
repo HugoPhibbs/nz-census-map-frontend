@@ -65,6 +65,23 @@ export default function AreaLayer({ areaType, zoomRange, colours }: AreaLayerPro
           ],
           "line-width": 2,
         }}
+        />
+
+      <Layer
+        id={`${areaType}-areas-selected`}
+        type="line"
+        source-layer={areaType}
+        minzoom={minZoom}
+        maxzoom={maxZoom}
+        paint={{
+          "line-color": [
+            "case",
+            ["boolean", ["feature-state", "selected"], false],
+            colours.areaBorderSelected,
+            "rgba(0,0,0,0)",
+          ],
+          "line-width": 2,
+        }}
       />
     </Source>
   );

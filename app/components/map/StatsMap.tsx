@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, useMediaQuery } from "@mui/material";
+import { Box, useMediaQuery, Button } from "@mui/material";
 import { Protocol } from "pmtiles";
 import { useEffect, useRef, useCallback, useState, useMemo } from "react";
 
@@ -198,6 +198,28 @@ function getAreaTypeByUsingZoomDefaults(zoomLevel: number): AREA_TYPE {
   return "ta"; // Default
 }
 
+function ResetChosenArea({
+  chosenAreaId,
+  onReset,
+  isPhone
+}: {
+  chosenAreaId: string | null;
+  onReset: () => void;
+  isPhone: boolean;
+}) {
+  if (!chosenAreaId || isPhone) return null;
+
+  return (
+    <Button 
+      onClick={onReset} 
+      id = "reset-chosen-area-button"
+      className="rounded-button"
+    >
+      Reset selection
+    </Button>
+  );
+}
+
 function resetMapZoom(mapRef: any, defaultView: { longitude: number; latitude: number; zoom: number }) {
   const map = mapRef.current?.getMap();
   if (!map) return;
@@ -245,6 +267,7 @@ export default function StatsMap({
 
   const [mapLoaded, setMapLoaded] = useState(false);
 
+  const granularityBeforeAreaSelection = useRef<CHOSEN_MAP_GRANULARITY>("auto");
   const [chosenMapGranularity, setChosenMapGranularity] = useState<CHOSEN_MAP_GRANULARITY>("auto"); // What user has chosen
   const [autoAreaType, setAutoAreaType] = useState<AREA_TYPE>("ta"); // What auto would be
   // What is actually viewed
@@ -271,13 +294,24 @@ export default function StatsMap({
   }),
     [colourMode, mapColours.background, mapColours.labelColour]
   );
+  
+  const resetChosenArea = useCallback(() => {
+    setChosenAreaId(null);
+    setChosenMapGranularity(granularityBeforeAreaSelection.current);
+  }, [setChosenAreaId]);
 
   const handleMapClick = useCallback((e: MapLayerMouseEvent) => {
     const areaId = e.features?.[0]?.properties?.area_id as string | undefined;
-    // Clicking empty space or the already-selected area deselects
-    if (areaId) flyToArea(mapRef, areaId);
-    setChosenAreaId(areaId ?? null);
-  }, [chosenAreaId, setChosenAreaId]);
+    // If this area is chosen, but no current selection exists, save the current granularity, so it can be reset
+    if (!areaId) {
+      resetChosenArea();
+      return;
+    }
+    if (areaId && !chosenAreaId) granularityBeforeAreaSelection.current = chosenMapGranularity;
+    setChosenMapGranularity(areaIdToAreaType(areaId));
+    setChosenAreaId(areaId);
+    if (areaId) flyToArea(mapRef, areaId)
+  }, [chosenAreaId, chosenMapGranularity, setChosenAreaId]);
 
   const handleMapHover = useCallback((e: MapLayerMouseEvent) => {
     const properties = e.features?.[0]?.properties;
@@ -301,13 +335,13 @@ export default function StatsMap({
     return () => { map.setFeatureState(target, { hover: false }); };
   }, [hoveredArea?.id]);
 
-  // useEffect(() => {
-  //   const map = mapRef.current?.getMap();
-  //   if (!map || !chosenAreaId) return;
-  //   const target = getAreaTargetFeature(chosenAreaId);
-  //   map.setFeatureState(target, { selected: true });
-  //   return () => { map.setFeatureState(target, { selected: false }); }; // Clean up removes past selection (is run before the next effect is run)
-  // }, [chosenAreaId]);
+  useEffect(() => {
+    const map = mapRef.current?.getMap();
+    if (!map || !chosenAreaId) return;
+    const target = getAreaTargetFeature(chosenAreaId);
+    map.setFeatureState(target, { selected: true });
+    return () => { map.setFeatureState(target, { selected: false }); }; // Clean up removes past selection (is run before the next effect is run)
+  }, [chosenAreaId]);
 
   // Update autoAreaType whenever the zoom level changes
   useEffect(() => {
@@ -391,6 +425,12 @@ export default function StatsMap({
           variableUnit={chosenVariable && variableIdsToUnitMap[chosenVariable]}
           showPlusSignForChange={!!censusYearCompareTo}
         />
+        
+        <ResetChosenArea
+          chosenAreaId={chosenAreaId}
+          onReset={resetChosenArea}
+          isPhone={isPhone}
+        />
 
         <Map
           ref={mapRef}
@@ -428,7 +468,7 @@ export default function StatsMap({
             />
           ))}
 
-          {chosenAreaId && (
+          {/* {chosenAreaId && (
             <Layer
               key={areaIdToAreaType(chosenAreaId)}
               id="selected-area-outline"
@@ -438,7 +478,7 @@ export default function StatsMap({
               filter={["==", ["get", "area_id"], chosenAreaId]}
               paint={{ "line-color": mapColours.areaBorderSelected, "line-width": 2 }}
             />
-          )}
+          )} */}
 
           {placeLabelLayers.map((l) => <Layer key={l.id} {...l} />)}
         </Map>

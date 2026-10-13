@@ -478,12 +478,24 @@ button.rounded-button {
     color: var(--mui-palette-text-primary);
 }
 
+button.rounded-button:hover {
+    border-color: var(--mui-palette-text-primary);
+}
+
 #reset-map-view-button {
     background-color: var(--mui-palette-background-paper);
     z-index: 1;
     box-shadow: none;
     color: var(--mui-palette-text-primary);
     font-size: 0.8em;
+}
+
+#reset-chosen-area-button {
+    position: absolute;
+    top: 0.8em;
+    right: 0.8em;
+    z-index: 1;
+    background-color: var(--translucent-panel);
 }
 
 .bottom-buffer-box {
