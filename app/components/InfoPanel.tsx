@@ -2,7 +2,7 @@
 
 import { Accordion, AccordionDetails, AccordionSummary, Box, Table, TableBody, Button, TableHead, TableCell, TableContainer, TableRow, Typography, Divider, useMediaQuery } from "@mui/material";
 import { useEffect, useState } from "react";
-import { formatVariableStat, formatSA1AreaId, roundToDP } from "../utils";
+import { formatVariableStat, formatSA1AreaId, roundToDP, areaIdToAreaTypeFormatted } from "../utils";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import api from "@/app/api";
 import { areaIdToAreaTypeName } from "@/app/utils";
@@ -106,28 +106,20 @@ function VariableDifferenceCell({ variableDiff }: { variableDiff: number | null 
 
 type GroupedVariablesProps = {
     groupName: string;
-    groupVariables: string[][];
-    areaVariables: Record<string, any> | null;
-    variableIdsToNameMap: Record<string, string>;
-    variableIdsToUnitMap: Record<string, string>;
+    rows: GroupedVariableInfo[];
+    showHeader?: boolean;
+    showAvgDiff?: boolean;
     expanded: boolean;
     handleGroupAccordionChange: any;
-    variableAvgs: Record<string, any> | null;
-    chosenCensusYear: number;
-    availableYearsForVariables: Record<string, number[]>;
 };
 
 function GroupedVariables({
     groupName,
-    groupVariables,
-    areaVariables,
-    variableIdsToNameMap,
-    variableIdsToUnitMap,
+    rows,
+    showHeader = true,
+    showAvgDiff = true,
     expanded,
-    handleGroupAccordionChange,
-    variableAvgs,
-    chosenCensusYear,
-    availableYearsForVariables }
+    handleGroupAccordionChange }
     : GroupedVariablesProps) {
     return (
         <Accordion elevation={0} className="grouped-variables-accordion" disableGutters onChange={handleGroupAccordionChange(groupName)} expanded={expanded}>
@@ -141,31 +133,23 @@ function GroupedVariables({
             <AccordionDetails>
                 <TableContainer>
                     <Table size="small">
-                        {groupName !== "Employment" && (
+                        {showHeader && (
                             <TableHead>
                                 <TableRow>
                                     <TableCell className="variable-table-cell table-head-cell">Statistic</TableCell>
                                     <TableCell className="variable-table-cell table-head-cell">Value</TableCell>
-                                    <TableCell className="variable-table-cell table-head-cell">vs NZ</TableCell>
+                                    {showAvgDiff && <TableCell className="variable-table-cell table-head-cell">vs NZ</TableCell>}
                                 </TableRow>
                             </TableHead>
                         )}
                         <TableBody>
-                            {prepareGroupVariables(
-                                groupName,
-                                groupVariables,
-                                areaVariables,
-                                variableIdsToNameMap,
-                                variableIdsToUnitMap,
-                                variableAvgs, 
-                                chosenCensusYear,
-                                availableYearsForVariables).map((variableInfo) => (
-                                    <TableRow key={variableInfo.id}>
-                                        <TableCell className="variable-table-cell">{variableInfo.name}</TableCell>
-                                        <TableCell className="variable-table-cell">{variableInfo.formattedValue}</TableCell>
-                                        <VariableDifferenceCell variableDiff={variableInfo.avgDiff} />
-                                    </TableRow>
-                                ))}
+                            {rows.map((variableInfo) => (
+                                <TableRow key={variableInfo.id}>
+                                    <TableCell className="variable-table-cell">{variableInfo.name}</TableCell>
+                                    <TableCell className="variable-table-cell">{variableInfo.formattedValue}</TableCell>
+                                    {showAvgDiff && <VariableDifferenceCell variableDiff={variableInfo.avgDiff} />}
+                                </TableRow>
+                            ))}
                         </TableBody>
                     </Table>
                 </TableContainer>
@@ -251,6 +235,13 @@ export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, var
         variableValue: areaVariables?.[variableInfo[0]]?.variable_value ?? null,
     }));
 
+
+    const AREA_INFO_GROUP_NAME = "Census Area Info";
+    const areaInfoRows: GroupedVariableInfo[] = areaId ? [
+        { id: "area_id", name: "Census area code", formattedValue: areaId, avgDiff: null },
+        { id: "area_type", name: "Census area type", formattedValue: areaIdToAreaTypeFormatted(areaId), avgDiff: null },
+    ] : [];
+
     const areaType = areaId ? areaIdToAreaTypeName(areaId) : null;
 
     const isPhone = useMediaQuery('(max-width:600px)');
@@ -309,17 +300,28 @@ export default function InfoPanel({ areaId, setAreaId, variableIdsToNameMap, var
                                     <GroupedVariables
                                         key={groupName}
                                         groupName={groupName}
-                                        groupVariables={groupVariables}
-                                        areaVariables={areaVariables}
-                                        variableIdsToNameMap={variableIdsToNameMap}
-                                        variableIdsToUnitMap={variableIdsToUnitMap}
+                                        rows={prepareGroupVariables(
+                                            groupName,
+                                            groupVariables,
+                                            areaVariables,
+                                            variableIdsToNameMap,
+                                            variableIdsToUnitMap,
+                                            variableAvgs,
+                                            chosenCensusYear,
+                                            availableYearsForVariables)}
+                                        showHeader={groupName !== "Employment"}
                                         expanded={expandedGroupName === groupName}
                                         handleGroupAccordionChange={handleGroupAccordionChange}
-                                        variableAvgs={variableAvgs}
-                                        chosenCensusYear={chosenCensusYear}
-                                        availableYearsForVariables={availableYearsForVariables}
                                     />
                                 ))}
+                                <GroupedVariables
+                                    groupName={AREA_INFO_GROUP_NAME}
+                                    rows={areaInfoRows}
+                                    showHeader={false}
+                                    showAvgDiff={false}
+                                    expanded={expandedGroupName === AREA_INFO_GROUP_NAME}
+                                    handleGroupAccordionChange={handleGroupAccordionChange}
+                                />
                             </Box>
                         </Box>
                     </>

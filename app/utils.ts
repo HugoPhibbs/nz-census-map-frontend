@@ -55,6 +55,13 @@ export const AREA_TYPE_TO_NAME: Record<AREA_TYPE, string> = {
   "sa1": "Neighbourhood"
 }
 
+export const AREA_TYPE_FORMATTED: Record<AREA_TYPE, string> = {
+  "ta": "Territorial authority",
+  "sa3": "Statistical area 3",
+  "sa2": "Statistical area 2",
+  "sa1": "Statistical area 1"
+}
+
 export const AREA_TYPES : AREA_TYPE[] = ["ta", "sa3", "sa2", "sa1"];
 
 export const DEFAULT_CENSUS_YEAR = 2023;
@@ -76,6 +83,11 @@ export function areaIdToAreaType(areaId: string): AREA_TYPE {
 export function areaIdToAreaTypeName(areaId: string): string {
   const areaType = areaIdToAreaType(areaId);
   return AREA_TYPE_TO_NAME[areaType];
+}
+
+export function areaIdToAreaTypeFormatted(areaId: string): string {
+  const areaType = areaIdToAreaType(areaId);
+  return AREA_TYPE_FORMATTED[areaType];
 }
 
 /**
