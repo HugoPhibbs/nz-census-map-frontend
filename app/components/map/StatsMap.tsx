@@ -448,6 +448,8 @@ export default function StatsMap({
           cursor="pointer"
           attributionControl={false}
           maxBounds={MAP_BOUNDS}
+          dragRotate={false}
+          maxPitch={0}
         >
           <Layer
             id="background"
@@ -471,18 +473,6 @@ export default function StatsMap({
               colours={mapColours}
             />
           ))}
-
-          {/* {chosenAreaId && (
-            <Layer
-              key={areaIdToAreaType(chosenAreaId)}
-              id="selected-area-outline"
-              type="line"
-              source={areaSourceId(areaIdToAreaType(chosenAreaId))}
-              source-layer={areaIdToAreaType(chosenAreaId)}
-              filter={["==", ["get", "area_id"], chosenAreaId]}
-              paint={{ "line-color": mapColours.areaBorderSelected, "line-width": 2 }}
-            />
-          )} */}
 
           {placeLabelLayers.map((l) => <Layer key={l.id} {...l} />)}
         </Map>
