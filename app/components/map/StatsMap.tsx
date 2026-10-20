@@ -142,8 +142,9 @@ function getColourScaleFunction(
     // Using a [min, c, max] domain clamps values outside of [min, max], meaning they take the extreme colour values
     return scaleDiverging(interpolatePRGn).domain([centreOn - limit, centreOn, centreOn + limit])
   } else {
-    const min = Math.min(...values);
-    const max = quantile(values, 0.99) as number;
+    const QUANTILE = 0.99
+    const min = quantile(values, 1 - QUANTILE) as number;
+    const max = quantile(values, QUANTILE) as number;
     return scaleSequential(interpolatePlasma).domain([min, max])
   }
 }

@@ -101,6 +101,7 @@ body {
 
 #info-panel-general-table-container {
     flex-shrink: 0;
+    padding-left: 0.5em;
 }
 
 .variable-table-cell {
